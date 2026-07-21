@@ -38,6 +38,7 @@ if (!mainScript) {
 }
 
 await fetchOK(mainScript);
+await fetchOK('annotations/not-a-marketing-screenshot-underline.png');
 await fetchOK('emulator');
 await fetchOK('scenario');
 await fetchOK('run?event=2&platform=telegram&view=rendered');
