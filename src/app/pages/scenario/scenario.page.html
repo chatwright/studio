@@ -1,0 +1,198 @@
+<section class="page scenario-page">
+  <div class="page-heading">
+    <div>
+      <p class="page-kicker">Executable specification · greeting & onboarding</p>
+      <h1>Language choice</h1>
+      <p>One scenario states conversational intent; the adapter owns Telegram callback and edit mechanics.</p>
+    </div>
+    <div class="heading-actions">
+      <p-button label="Try manually" icon="pi pi-comments" severity="secondary" outlined routerLink="/emulator" />
+      <p-button label="Run scenario" icon="pi pi-play" routerLink="/run" />
+    </div>
+  </div>
+
+  <div class="scenario-status surface">
+    <div class="status-title">
+      <span class="status-icon"><i class="pi pi-check"></i></span>
+      <div><strong>Passing on Telegram</strong><small>4 / 4 assertions · latest {{ 'run-1842' }}</small></div>
+    </div>
+    <div class="status-coverage">
+      <span>Scenario confidence</span><strong>100%</strong>
+      <p-progressbar [value]="100" [showValue]="false" />
+    </div>
+    <div class="status-modes">
+      <p-tag value="Go API" severity="info" />
+      <p-tag value="HTTP" severity="success" />
+      <p-tag value="Telegram" icon="pi pi-send" />
+      <p-tag value="WhatsApp · probe" severity="secondary" />
+    </div>
+  </div>
+
+  <div class="scenario-workbench">
+    <aside class="scenario-outline surface">
+      <header class="surface-header">
+        <div><h2>Scenario tree</h2><p>greetbot / main</p></div>
+        <p-button icon="pi pi-plus" text rounded ariaLabel="Add scenario" />
+      </header>
+      <div class="outline-tree">
+        <div class="outline-group expanded">
+          <button type="button"><i class="pi pi-chevron-down"></i><span>Greeting & onboarding</span><b>7/7</b></button>
+          <div class="outline-children">
+            <a class="current"><i class="pi pi-check-circle"></i><span>Language choice</span><small>4/4</small></a>
+            <a><i class="pi pi-check-circle"></i><span>Returning user</span><small>3/3</small></a>
+          </div>
+        </div>
+        <div class="outline-group expanded">
+          <button type="button"><i class="pi pi-chevron-down"></i><span>Commands</span><b class="warning">3/4</b></button>
+          <div class="outline-children">
+            <a><i class="pi pi-check-circle"></i><span>Time command</span><small>2/2</small></a>
+            <a class="failing"><i class="pi pi-times-circle"></i><span>Help fallback</span><small>1 fail</small></a>
+          </div>
+        </div>
+        <div class="outline-group">
+          <button type="button"><i class="pi pi-chevron-right"></i><span>Error recovery</span><b class="draft">draft</b></button>
+        </div>
+      </div>
+      <footer class="outline-footer"><i class="pi pi-sparkles"></i><span>AI exploration is planned for Phase 2.</span></footer>
+    </aside>
+
+    <main class="scenario-editor surface">
+      <header class="editor-header">
+        <div>
+          <span class="eyebrow">scenario/greeting/language-choice</span>
+          <div class="editor-title"><h2>Language choice</h2><span>specified</span></div>
+        </div>
+        <div class="editor-actions">
+          <p-button icon="pi pi-copy" text rounded pTooltip="Copy link" />
+          <p-button icon="pi pi-ellipsis-h" text rounded pTooltip="More actions" />
+        </div>
+      </header>
+
+      <section class="scenario-intent">
+        <div class="section-label"><span>01</span><div><strong>Intent</strong><small>What a user should be able to accomplish</small></div></div>
+        <div class="intent-card">
+          <i class="pi pi-bullseye"></i>
+          <p>A first-time user can choose a reply language and see the bot update its existing greeting without adding noise to the conversation.</p>
+        </div>
+      </section>
+
+      <section class="scenario-flow">
+        <div class="section-label"><span>02</span><div><strong>Conversation</strong><small>Platform-neutral steps and observable outcomes</small></div></div>
+
+        <div class="step-list">
+          <article class="scenario-step">
+            <span class="step-index">1</span>
+            <div class="step-content">
+              <div class="step-card actor-step">
+                <header><span><i class="pi pi-user"></i> Alice</span><p-tag value="scripted actor" severity="secondary" /></header>
+                <div class="step-command"><span>send text</span><code>“Hi”</code></div>
+              </div>
+              <div class="expectations-branch">
+                <div class="expectations-card">
+                  <header>
+                    <span><i class="pi pi-sparkles"></i><strong>Expectations</strong><small>Bot reply after “Hi”</small></span>
+                    <button type="button" (click)="addExpectation('greeting')" [disabled]="draftGreetingExpectationVisible()"><i class="pi pi-plus"></i> Add</button>
+                  </header>
+                  <div class="expectation-items">
+                    <div class="expectation-item">
+                      <span class="expectation-icon"><i class="pi pi-align-left"></i></span>
+                      <span><small>MESSAGE TEXT</small><strong>Contains “Howdy stranger”</strong></span>
+                      <i class="pi pi-check-circle expectation-passed"></i>
+                    </div>
+                    <div class="expectation-item">
+                      <span class="expectation-icon latency"><i class="pi pi-stopwatch"></i></span>
+                      <span><small>RESPONSE LATENCY</small><strong>Arrives within 1 second</strong></span>
+                      <i class="pi pi-check-circle expectation-passed"></i>
+                    </div>
+                    @if (draftGreetingExpectationVisible()) {
+                      <button type="button" class="expectation-item expectation-draft">
+                        <span class="expectation-icon"><i class="pi pi-plus"></i></span>
+                        <span><small>NEW EXPECTATION</small><strong>Choose an observable condition…</strong></span>
+                        <i class="pi pi-angle-right"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div class="branch-action">
+                <span class="branch-index">2</span>
+                <div class="step-card actor-step">
+                  <header><span><i class="pi pi-hand-pointer"></i> Alice</span><p-tag value="semantic action" severity="info" /></header>
+                  <div class="step-command action-command"><span>click action</span><code>label = “Español”</code><code>id = “lang:es”</code></div>
+                  <p class="adapter-note"><i class="pi pi-link"></i> Telegram maps this to callback data. The scenario does not.</p>
+                </div>
+                <div class="expectations-branch">
+                  <div class="expectations-card">
+                    <header>
+                      <span><i class="pi pi-sparkles"></i><strong>Expectations</strong><small>Message update after “Español”</small></span>
+                      <button type="button" (click)="addExpectation('update')" [disabled]="draftUpdateExpectationVisible()"><i class="pi pi-plus"></i> Add</button>
+                    </header>
+                    <div class="expectation-items">
+                      <div class="expectation-item">
+                        <span class="expectation-icon"><i class="pi pi-pencil"></i></span>
+                        <span><small>MESSAGE EDIT</small><strong>Same message changes to “¡Hola, forastero!”</strong></span>
+                        <i class="pi pi-check-circle expectation-passed"></i>
+                      </div>
+                      <div class="expectation-item">
+                        <span class="expectation-icon latency"><i class="pi pi-stopwatch"></i></span>
+                        <span><small>EDIT LATENCY</small><strong>Update arrives within 1 second</strong></span>
+                        <i class="pi pi-check-circle expectation-passed"></i>
+                      </div>
+                      @if (draftUpdateExpectationVisible()) {
+                        <button type="button" class="expectation-item expectation-draft">
+                          <span class="expectation-icon"><i class="pi pi-plus"></i></span>
+                          <span><small>NEW EXPECTATION</small><strong>Choose an observable condition…</strong></span>
+                          <i class="pi pi-angle-right"></i>
+                        </button>
+                      }
+                    </div>
+                    <a class="expectation-link" routerLink="/emulator">See the in-place edit in the emulator <i class="pi pi-arrow-up-right"></i></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="scenario-end">
+        <div class="section-label"><span>03</span><div><strong>End conditions</strong><small>Checks after the conversation settles</small></div></div>
+        <div class="end-checks">
+          <span><i class="pi pi-check-circle"></i> No additional bot message</span>
+          <span><i class="pi pi-check-circle"></i> Exactly one edit</span>
+          <span><i class="pi pi-check-circle"></i> Total message count ≤ 2</span>
+        </div>
+      </section>
+    </main>
+
+    <aside class="scenario-config surface">
+      <header class="surface-header"><div><h2>Effective configuration</h2><p>Inherited values stay explainable</p></div></header>
+      <div class="config-list">
+        <div class="config-row"><small>PLATFORM</small><strong><i class="pi pi-send"></i> Telegram</strong><span>from suite</span></div>
+        <div class="config-row"><small>EXECUTION</small><strong><i class="pi pi-globe"></i> Real HTTP</strong><span>from workspace</span></div>
+        <div class="config-row"><small>FIDELITY</small><strong><i class="pi pi-shield"></i> Faithful</strong><span>from suite</span></div>
+        <div class="config-row local"><small>TIMEOUT</small><strong><i class="pi pi-stopwatch"></i> 1 second</strong><span>overridden here</span></div>
+        <div class="config-row"><small>ACTOR</small><strong><i class="pi pi-user"></i> Alice · scripted</strong><span>from parent</span></div>
+        <div class="config-row"><small>BOT</small><strong><i class="pi pi-sparkles"></i> Greeter bot</strong><span>from suite</span></div>
+      </div>
+
+      <div class="source-preview">
+        <div class="source-title"><span>Go preview</span><p-tag value="illustrative" severity="secondary" /></div>
+        <pre><span class="line">1</span>chat.SendText(<b>"Hi"</b>)
+<span class="line">2</span>msg := chat.ExpectBotMessage().
+<span class="line">3</span>  Within(time.Second)
+<span class="line">4</span>msg.ExpectAction(<em>1, 0</em>).
+<span class="line">5</span>  Label(<b>"Español"</b>).
+<span class="line">6</span>  ID(<b>"lang:es"</b>).Click()
+<span class="line">7</span>msg.ExpectEdited().
+<span class="line">8</span>  Text(<b>"¡Hola, forastero!"</b>)</pre>
+      </div>
+
+      <a class="latest-run" routerLink="/run">
+        <span class="passed-mark"><i class="pi pi-check"></i></span>
+        <span><small>LATEST EVIDENCE</small><strong>run-1842 · passed</strong><em>342 ms · 4 assertions</em></span>
+        <i class="pi pi-arrow-right"></i>
+      </a>
+    </aside>
+  </div>
+</section>

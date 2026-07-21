@@ -1,0 +1,105 @@
+<div
+  class="studio-shell"
+  [class.app-light]="store.appTheme() === 'light'"
+  [class.app-dark]="store.appTheme() === 'dark'"
+>
+  <aside class="studio-sidebar" aria-label="Studio navigation">
+    <a class="brand" routerLink="/workspace" aria-label="Chatwright home">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </span>
+      <span class="brand-copy">
+        <strong>Chatwright</strong>
+        <small>Studio prototype</small>
+      </span>
+    </a>
+
+    <div class="workspace-switcher">
+      <span class="workspace-icon">GB</span>
+      <span>
+        <small>Workspace</small>
+        <strong>{{ store.workspace }}</strong>
+      </span>
+      <i class="pi pi-angle-down" aria-hidden="true"></i>
+    </div>
+
+    <nav class="primary-nav">
+      @for (item of navigation; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [pTooltip]="item.label"
+          tooltipPosition="right"
+        >
+          <i [class]="item.icon" aria-hidden="true"></i>
+          <span>
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.eyebrow }}</small>
+          </span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-note">
+      <div class="note-label"><span></span> Local runtime</div>
+      <strong>Connected over HTTP</strong>
+      <small>No platform account required</small>
+    </div>
+
+    <div class="sidebar-user">
+      <p-avatar label="AT" shape="circle" />
+      <span><strong>Alex</strong><small>Local owner</small></span>
+      <button type="button" class="icon-button" aria-label="Account options">
+        <i class="pi pi-ellipsis-h"></i>
+      </button>
+    </div>
+  </aside>
+
+  <div class="studio-stage">
+    <header class="studio-topbar">
+      <div class="mobile-brand">
+        <span class="brand-mark small" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+        <strong>Chatwright</strong>
+      </div>
+      <div class="context-path" aria-label="Current context">
+        <span>{{ store.workspace }}</span>
+        <i class="pi pi-angle-right" aria-hidden="true"></i>
+        <strong>{{ store.scenario }}</strong>
+      </div>
+      <div class="topbar-actions">
+        <button
+          type="button"
+          class="theme-toggle"
+          role="switch"
+          [attr.aria-checked]="store.appTheme() === 'dark'"
+          [attr.aria-label]="store.appTheme() === 'light' ? 'Switch Chatwright to dark and Telegram to light' : 'Switch Chatwright to light and Telegram to dark'"
+          [pTooltip]="store.appTheme() === 'light' ? 'Chatwright light · Telegram dark' : 'Chatwright dark · Telegram light'"
+          tooltipPosition="bottom"
+          (click)="store.toggleTheme()"
+        >
+          <i [class]="store.appTheme() === 'light' ? 'pi pi-sun' : 'pi pi-moon'" aria-hidden="true"></i>
+          <span>{{ store.appTheme() === 'light' ? 'Light' : 'Dark' }}</span>
+          <b aria-hidden="true"><i></i></b>
+        </button>
+        <p-tag value="Telegram" icon="pi pi-send" severity="info" />
+        <span class="run-pill"><span></span>{{ store.runID }}</span>
+        <p-button icon="pi pi-play" label="Run" size="small" routerLink="/emulator" />
+      </div>
+    </header>
+
+    <main class="studio-content">
+      <router-outlet />
+    </main>
+
+    <nav class="mobile-nav" aria-label="Mobile navigation">
+      @for (item of navigation; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active">
+          <i [class]="item.icon" aria-hidden="true"></i>
+          <span>{{ item.shortLabel }}</span>
+        </a>
+      }
+    </nav>
+  </div>
+</div>

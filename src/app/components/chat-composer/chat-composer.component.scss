@@ -1,0 +1,16 @@
+:host { display: contents; }
+
+.composer { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.55rem; padding: 0.8rem 1rem; border-top: 1px solid var(--cw-line); background: color-mix(in srgb, var(--tg-panel) 86%, transparent); }
+.composer input { min-width: 0; width: 100%; color: var(--tg-text); border-color: var(--tg-line); background: var(--tg-panel); }
+.composer input::placeholder { color: var(--tg-muted); }
+.composer input:focus { border-color: color-mix(in srgb, var(--brand-color) 38%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 6%, transparent); }
+.composer.telegram { --brand-color: #2aabee; --brand-hover: #55bbed; --brand-ink: #06131a; }
+.composer.whatsapp { --brand-color: #25d366; --brand-hover: #51dd84; --brand-ink: #06150d; }
+.composer-action { width: 2.25rem; height: 2.25rem; border: 0; border-radius: 0.62rem; color: var(--brand-color); background: color-mix(in srgb, var(--brand-color) 9%, transparent); cursor: pointer; }
+.composer-action:hover { background: color-mix(in srgb, var(--brand-color) 16%, transparent); }
+.composer-hint { grid-column: 2; color: var(--cw-muted); font-size: 0.5rem; }
+kbd { margin-right: 0.18rem; padding: 0.08rem 0.22rem; border: 1px solid var(--cw-line-strong); border-radius: 0.24rem; font: 500 0.47rem var(--cw-mono); }
+
+:host ::ng-deep .composer p-button .p-button { color: var(--brand-ink); background: var(--brand-color); }
+:host ::ng-deep .composer p-button .p-button:hover { background: var(--brand-hover); }
+:host ::ng-deep .composer p-button .p-button:disabled { color: var(--cw-muted); background: color-mix(in srgb, var(--cw-muted) 12%, transparent); }

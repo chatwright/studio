@@ -1,0 +1,27 @@
+name: Deploy prototype
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chatwright-dev-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    uses: sneat-co/cicd/.github/workflows/cf-deploy.yml@main
+    with:
+      working-directory: .
+      build-command: pnpm build:cloudflare
+      cloudflare-account-id: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      smoke-command: pnpm smoke:prototype
+      pnpm-version: "11.9.0"
+      node-version: "22"
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}

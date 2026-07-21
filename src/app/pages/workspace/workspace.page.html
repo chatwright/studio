@@ -1,0 +1,137 @@
+<section class="page workspace-page">
+  <div class="page-heading">
+    <div>
+      <p class="page-kicker">Workspace · greetbot</p>
+      <h1>Conversation confidence,<br />at a glance.</h1>
+      <p>
+        One hierarchy connects executable scenarios, manual sessions and the evidence from every run.
+      </p>
+    </div>
+    <div class="heading-actions">
+      <p-button label="New scenario" icon="pi pi-plus" severity="secondary" outlined />
+      <p-button label="Open live emulator" icon="pi pi-comments" routerLink="/emulator" />
+    </div>
+  </div>
+
+  <div class="confidence-strip surface">
+    <div class="confidence-score">
+      <div class="score-ring"><strong>92</strong><span>/100</span></div>
+      <div>
+        <span class="eyebrow">Conversation confidence</span>
+        <h2>Ready for the next change</h2>
+        <p>11 of 12 executable scenarios pass on the supported Telegram slice.</p>
+      </div>
+    </div>
+    <div class="confidence-progress">
+      <div><span>Coverage</span><strong>92%</strong></div>
+      <p-progressbar [value]="92" [showValue]="false" />
+      <small>1 failing · 2 drafts · WhatsApp compatibility probe excluded</small>
+    </div>
+    <div class="confidence-action">
+      <span class="signal"><i class="pi pi-bolt"></i></span>
+      <div><strong>Fastest next gain</strong><small>Fix /help fallback deadline</small></div>
+      <p-button icon="pi pi-arrow-right" text rounded ariaLabel="Inspect the failed run" routerLink="/run" />
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <article class="metric-card surface">
+      <span class="metric-icon mint-bg"><i class="pi pi-check-circle"></i></span>
+      <div><small>Passing</small><strong>11</strong><span>+2 this week</span></div>
+    </article>
+    <article class="metric-card surface">
+      <span class="metric-icon red-bg"><i class="pi pi-times-circle"></i></span>
+      <div><small>Failing</small><strong>1</strong><span>deadline missed</span></div>
+    </article>
+    <article class="metric-card surface">
+      <span class="metric-icon blue-bg"><i class="pi pi-stopwatch"></i></span>
+      <div><small>p95 latency</small><strong>184<span>ms</span></strong><span>within 250 ms budget</span></div>
+    </article>
+    <article class="metric-card surface">
+      <span class="metric-icon violet-bg"><i class="pi pi-send"></i></span>
+      <div><small>Messages</small><strong>47</strong><span>across 12 runs</span></div>
+    </article>
+  </div>
+
+  <div class="workspace-grid">
+    <article class="surface scenario-surface">
+      <header class="surface-header">
+        <div><h2>Scenario hierarchy</h2><p>Effective platform · Telegram / faithful HTTP</p></div>
+        <p-tag value="12 executable" severity="info" />
+      </header>
+      <div class="scenario-body">
+        <p-tree [value]="scenarioTree" (onNodeSelect)="openScenario()" selectionMode="single">
+          <ng-template #node let-node>
+            <div class="tree-node">
+              <span>{{ node.label }}</span>
+              @if (node.key === 'language') {
+                <span class="current-badge">current</span>
+              }
+            </div>
+          </ng-template>
+        </p-tree>
+      </div>
+      <footer class="surface-footer">
+        <span><i class="pi pi-info-circle"></i> Select a node to open its executable specification.</span>
+        <a routerLink="/scenario">Open language choice <i class="pi pi-arrow-right"></i></a>
+      </footer>
+    </article>
+
+    <article class="surface activity-surface">
+      <header class="surface-header">
+        <div><h2>What changed</h2><p>Evidence, not just activity</p></div>
+        <button class="more-button" type="button" aria-label="More activity options"><i class="pi pi-ellipsis-h"></i></button>
+      </header>
+      <div class="activity-list">
+        <div class="activity-row featured">
+          <span class="activity-mark"><i class="pi pi-pencil"></i></span>
+          <div>
+            <strong>Greeting edited in place</strong>
+            <p>Message 27 switched to Español and kept its identity.</p>
+            <span><code>editMessageText</code> · 58 ms</span>
+          </div>
+          <small>now</small>
+        </div>
+        <div class="activity-row">
+          <span class="activity-mark"><i class="pi pi-check"></i></span>
+          <div>
+            <strong>Language scenario passed</strong>
+            <p>4 assertions · Telegram · real HTTP webhook</p>
+          </div>
+          <small>now</small>
+        </div>
+        <div class="activity-row">
+          <span class="activity-mark warning"><i class="pi pi-clock"></i></span>
+          <div>
+            <strong>/help missed its deadline</strong>
+            <p>Expected within 1 s · observed 1.73 s</p>
+          </div>
+          <small>43m</small>
+        </div>
+      </div>
+      <a class="activity-link" routerLink="/run">Inspect latest run <i class="pi pi-arrow-right"></i></a>
+    </article>
+  </div>
+
+  <article class="surface recent-runs">
+    <header class="surface-header">
+      <div><h2>Recent runs</h2><p>Local and CI evidence share one result shape</p></div>
+      <p-button label="View run inspector" icon="pi pi-wave-pulse" severity="secondary" text routerLink="/run" />
+    </header>
+    <p-table [value]="recentRuns" styleClass="runs-table">
+      <ng-template #header>
+        <tr><th>Run</th><th>Scenario</th><th>Status</th><th>Duration</th><th>Started</th><th></th></tr>
+      </ng-template>
+      <ng-template #body let-run>
+        <tr>
+          <td><span class="mono run-id">{{ run.id }}</span></td>
+          <td><strong>{{ run.scenario }}</strong><small>{{ run.branch }}</small></td>
+          <td><p-tag [value]="run.status" [severity]="run.status === 'Passed' ? 'success' : 'danger'" /></td>
+          <td class="mono">{{ run.duration }}</td>
+          <td class="quiet">{{ run.started }}</td>
+          <td><p-button icon="pi pi-arrow-up-right" text rounded ariaLabel="Open run" routerLink="/run" /></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </article>
+</section>

@@ -1,0 +1,21 @@
+<footer class="composer" [class.telegram]="platform() === 'telegram'" [class.whatsapp]="platform() === 'whatsapp'">
+  <button type="button" class="composer-action" aria-label="Attach a test event"><i class="pi pi-paperclip"></i></button>
+  <input
+    #composerInput
+    pInputText
+    [placeholder]="placeholder() || 'Act as ' + actor() + '…'"
+    [attr.aria-label]="'Message as ' + actor()"
+    autocomplete="off"
+    [value]="draft()"
+    (input)="updateDraft($event)"
+    (keydown.enter)="send()"
+  />
+  <p-button
+    icon="pi pi-send"
+    rounded
+    [ariaLabel]="'Send as ' + actor()"
+    [disabled]="!draft().trim()"
+    (onClick)="send()"
+  />
+  <div class="composer-hint"><kbd>↵</kbd> send · every action is recorded</div>
+</footer>

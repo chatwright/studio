@@ -1,0 +1,297 @@
+<section class="page emulator-page">
+  <div class="page-heading">
+    <div>
+      <p class="page-kicker">Manual testing · faithful platform mode</p>
+      <h1>Live emulator</h1>
+      <p>Drive several local conversations while the runtime keeps platform state and evidence honest.</p>
+    </div>
+    <div class="heading-actions">
+      <p-button label="Reset run" icon="pi pi-refresh" severity="secondary" outlined (onClick)="reset()" />
+      <p-button label="Inspect evidence" icon="pi pi-wave-pulse" routerLink="/run" />
+    </div>
+  </div>
+
+  <div class="emulator-toolbar surface">
+    <div class="connection-state">
+      <span class="pulse"><span></span></span>
+      <div><strong>greetbot is listening</strong><small>http://127.0.0.1:4317/webhook</small></div>
+    </div>
+    <div class="toolbar-flow" aria-label="Execution path">
+      <span>Actor</span><i class="pi pi-arrow-right"></i>
+      <span>{{ activePlatformLabel() }} update</span><i class="pi pi-arrow-right"></i>
+      <span>HTTP webhook</span><i class="pi pi-arrow-right"></i>
+      <span>Fake {{ activePlatformAPIName() }}</span>
+    </div>
+    <div class="toolbar-tags">
+      <p-tag value="HTTP" severity="success" />
+      <p-tag [value]="activePlatformLabel()" severity="secondary" />
+      <p-tag value="faithful" severity="info" />
+      <span class="mono">00:03.342</span>
+    </div>
+  </div>
+
+  <div class="emulator-frame surface">
+    <aside class="chat-list">
+      <header>
+        <div><span class="eyebrow">Active actors</span><strong>3 conversations</strong></div>
+        <button
+          type="button"
+          class="add-chat-button"
+          [class.platform-telegram]="activePlatformID() === 'telegram'"
+          [class.platform-whatsapp]="activePlatformID() === 'whatsapp'"
+          aria-label="Add a platform chat"
+          aria-controls="platform-picker"
+          [attr.aria-expanded]="platformPickerOpen()"
+          (click)="togglePlatformPicker()"
+        ><i class="pi pi-plus"></i></button>
+        @if (platformPickerOpen()) {
+          <div id="platform-picker" class="platform-picker" role="menu" aria-label="Choose a messenger platform">
+            <header><span>New emulator chat</span><small>Choose a platform boundary</small></header>
+            <div class="platform-options">
+              @for (platform of platformOptions; track platform.id) {
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="platform-option"
+                  [class]="'platform-option platform-' + platform.id"
+                  (click)="choosePlatform(platform)"
+                >
+                  <span class="platform-option-avatar"><i [class]="platform.icon"></i></span>
+                  <span><strong>{{ platform.label }}</strong><small>{{ platform.description }}</small></span>
+                  <b [class.planned]="platform.status === 'Planned'">{{ platform.status }}</b>
+                </button>
+              }
+            </div>
+            @if (platformSelectionNotice()) {
+              <footer><i class="pi pi-clock"></i>{{ platformSelectionNotice() }}</footer>
+            }
+          </div>
+        }
+      </header>
+
+      <div class="chat-items">
+        @for (chat of chats; track chat.id) {
+          <button
+            type="button"
+            class="chat-preview"
+            [class.active]="activeChat() === chat.id"
+            (click)="selectChat(chat.id)"
+          >
+            <span class="preview-avatar" [class]="'preview-avatar platform-' + chat.platform">
+              @if (chat.group) { <i class="pi pi-users"></i> } @else { {{ chat.initials }} }
+              <span class="platform-badge"><i [class]="chat.platformIcon"></i></span>
+            </span>
+            <span class="preview-copy">
+              <strong>{{ chat.actor }}</strong>
+              <small class="bot-name"><span [class]="'platform-name platform-' + chat.platform">{{ chat.platformLabel }}</span>{{ chat.bot }}</small>
+              <small class="message-preview">{{ chat.preview }}</small>
+            </span>
+            <span class="preview-meta">
+              <small>{{ chat.time }}</small>
+              @if (chat.unread) { <b>{{ chat.unread }}</b> }
+            </span>
+          </button>
+        }
+      </div>
+
+      <div class="actor-callout">
+        <i class="pi pi-user-edit"></i>
+        <div><strong>Human actor mode</strong><small>Your next action still traverses the real webhook.</small></div>
+      </div>
+    </aside>
+
+    <section
+      class="chat-stage"
+      [class.telegram-window]="activePlatformID() === 'telegram'"
+      [class.whatsapp-window]="activePlatformID() === 'whatsapp'"
+      [class.telegram-dark]="store.telegramTheme() === 'dark'"
+      [class.telegram-light]="store.telegramTheme() === 'light'"
+    >
+      @if (activeChat() === 'alice-greeter') {
+        <header class="chat-header">
+          <div class="chat-identity">
+            <p-avatar label="AL" shape="circle" />
+            <div><strong><i class="pi pi-send platform-icon"></i> Telegram · Alice ↔ Greeter bot</strong><small><span></span> Private chat · ID 894211</small></div>
+          </div>
+          <div class="chat-header-actions">
+            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/scenario" />
+            <p-button icon="pi pi-ellipsis-v" text rounded pTooltip="Chat options" />
+          </div>
+        </header>
+
+        <div #messageCanvas class="message-canvas">
+          <div class="day-marker"><span>Run started locally</span></div>
+
+          <div class="message-row outgoing">
+            <div class="message-bubble user-message">
+              <p>Hi</p>
+              <footer><span>00.000</span><i class="pi pi-check"></i></footer>
+            </div>
+            <span class="message-author">Alice</span>
+          </div>
+
+          <div class="path-chip"><i class="pi pi-bolt"></i> HTTP round trip · 49 ms</div>
+
+          <div class="message-row incoming">
+            <span class="bot-avatar"><i class="pi pi-sparkles"></i></span>
+            <div class="message-stack">
+              <span class="message-author">Greeter bot <b>BOT</b></span>
+              <div class="message-bubble bot-message" [class.edited]="store.messageVersion() > 1">
+                <div class="message-version">
+                  <span>message 27</span>
+                  <span>v{{ store.messageVersion() }}</span>
+                </div>
+                <p>{{ store.greeting() }}</p>
+
+                <footer>
+                  <span>00.049</span>
+                  @if (store.lastEdited()) {
+                    <span class="edit-state"><i class="pi pi-pencil"></i> edited {{ store.lastEdited() }}</span>
+                  } @else {
+                    <span class="delivered"><i class="pi pi-check-circle"></i> captured</span>
+                  }
+                </footer>
+              </div>
+              <div class="telegram-inline-keyboard" aria-label="Choose reply language">
+                @for (language of store.languages; track language.code) {
+                  <button
+                    type="button"
+                    class="language-action"
+                    [class.selected]="store.selectedLanguageCode() === language.code"
+                    [attr.aria-pressed]="store.selectedLanguageCode() === language.code"
+                    [attr.aria-label]="'Translate greeting to ' + language.label"
+                    (click)="translate(language.code)"
+                  >
+                    <span>{{ language.label }}</span>
+                    @if (store.selectedLanguageCode() === language.code) {
+                      <i class="pi pi-check" aria-hidden="true"></i>
+                    }
+                  </button>
+                }
+              </div>
+              @if (store.messageVersion() > 1) {
+                <div class="edit-proof"><span></span> Same platform message · version {{ store.messageVersion() }} · edit matched in 58 ms</div>
+              }
+            </div>
+          </div>
+
+          @for (message of activeSentMessages(); track message.id) {
+            <div class="message-row outgoing sent-message">
+              <div class="message-bubble user-message">
+                <p>{{ message.text }}</p>
+                <footer><span>{{ message.time }}</span><i class="pi pi-check"></i></footer>
+              </div>
+              <span class="message-author">{{ message.author }}</span>
+            </div>
+          }
+        </div>
+
+        <cw-chat-composer actor="Alice" platform="telegram" (messageSent)="sendMessage($event)" />
+      } @else if (activeChat() === 'bob-reminder') {
+        <header class="chat-header">
+          <div class="chat-identity">
+            <span class="chat-platform-avatar platform-whatsapp">BO<i class="pi pi-whatsapp"></i></span>
+            <div><strong><i class="pi pi-whatsapp platform-icon"></i> WhatsApp · Bob ↔ Reminder bot</strong><small><span></span> Cloud API contact · +353 86 000 1227</small></div>
+          </div>
+          <div class="chat-header-actions">
+            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/scenario" />
+            <p-button icon="pi pi-ellipsis-v" text rounded pTooltip="Chat options" />
+          </div>
+        </header>
+        <div #messageCanvas class="message-canvas alternate-chat">
+          <div class="message-row outgoing"><div class="message-bubble user-message"><p>Anything due this week?</p><footer><span>00.000</span></footer></div></div>
+          <div class="path-chip"><i class="pi pi-bolt"></i> HTTP round trip · 81 ms</div>
+          <div class="message-row incoming">
+            <span class="bot-avatar blue"><i class="pi pi-bell"></i></span>
+            <div class="message-stack"><span class="message-author">Reminder bot <b>BOT</b></span><div class="message-bubble bot-message"><p>Your car insurance renews in 6 days.</p><div class="simple-actions"><button>Open renewal</button><button>Remind me tomorrow</button></div><footer><span>00.081</span><span class="delivered"><i class="pi pi-check-circle"></i> captured</span></footer></div></div>
+          </div>
+          @for (message of activeSentMessages(); track message.id) {
+            <div class="message-row outgoing sent-message"><div class="message-bubble user-message"><p>{{ message.text }}</p><footer><span>{{ message.time }}</span><i class="pi pi-check"></i></footer></div><span class="message-author">{{ message.author }}</span></div>
+          }
+        </div>
+        <cw-chat-composer actor="Bob" platform="whatsapp" (messageSent)="sendMessage($event)" />
+      } @else {
+        <header class="chat-header">
+          <div class="chat-identity">
+            <p-avatar icon="pi pi-users" shape="circle" />
+            <div><strong><i class="pi pi-send platform-icon"></i> Telegram · Launch crew</strong><small><span></span> Logical group chat · 3 actors · 2 bots</small></div>
+          </div>
+          <p-tag value="logical mode" severity="secondary" />
+        </header>
+        <div #messageCanvas class="message-canvas alternate-chat">
+          <div class="mode-warning"><i class="pi pi-info-circle"></i><span>This panel demonstrates abstract multi-bot conversation mode, not a claim about Telegram bot-to-bot delivery.</span></div>
+          <div class="message-row outgoing"><div class="message-bubble user-message"><p>Ship it?</p><footer><span>00.000 · Alice</span></footer></div></div>
+          <div class="message-row incoming compact"><span class="bot-avatar violet">BO</span><div class="message-bubble peer-message"><p>Once <code>/help</code> is green.</p><footer><span>00.420 · Bob</span></footer></div></div>
+          <div class="message-row incoming"><span class="bot-avatar"><i class="pi pi-sparkles"></i></span><div class="message-stack"><span class="message-author">Chatwright bot <b>BOT</b></span><div class="message-bubble bot-message"><p>1 scenario still failing: <strong>help-fallback</strong> missed its 1 s deadline.</p><div class="simple-actions"><button>Inspect failure</button><button>Run again</button></div><footer><span>00.611</span></footer></div></div></div>
+          @for (message of activeSentMessages(); track message.id) {
+            <div class="message-row outgoing sent-message"><div class="message-bubble user-message"><p>{{ message.text }}</p><footer><span>{{ message.time }}</span><i class="pi pi-check"></i></footer></div><span class="message-author">{{ message.author }}</span></div>
+          }
+        </div>
+        <cw-chat-composer actor="Alice" platform="telegram" placeholder="Act as Alice in Launch crew…" (messageSent)="sendMessage($event)" />
+      }
+    </section>
+
+    <aside class="trace-rail">
+      <header>
+        <div><span class="eyebrow">Live evidence</span><strong>Execution trace</strong><small class="trace-hint">Hover an event for JSON</small></div>
+        <span class="recording-dot"><span></span> REC</span>
+      </header>
+
+      <div class="trace-context">
+        <div><small>RUN</small><strong>{{ store.runID }}</strong></div>
+        <div><small>PLATFORM</small><strong>{{ activePlatformProtocol() }}</strong></div>
+        <div><small>MODE</small><strong>HTTP · faithful</strong></div>
+      </div>
+
+      <div class="trace-list">
+        @for (event of visibleTraceEvents(); track $index) {
+          <a
+            class="trace-event"
+            [class.active]="event.active"
+            [routerLink]="['/run']"
+            [queryParams]="{
+              event: $index,
+              platform: activePlatformID(),
+              view: event.title === 'sendMessage' || event.title === 'editMessageText' || event.title === 'messages.create' ? 'rendered' : 'request'
+            }"
+            [attr.aria-label]="'Inspect ' + event.title + ' in the full run inspector'"
+            (mouseenter)="showTracePreview($event, event)"
+            (mouseleave)="hideTracePreview()"
+            (focus)="showTracePreview($event, event)"
+            (blur)="hideTracePreview()"
+          >
+            <span class="trace-line"></span>
+            <span class="trace-marker" [class]="'trace-marker ' + event.kind">
+              <i
+                [class]="event.kind === 'actor' ? 'pi pi-user' : event.kind === 'http' ? 'pi pi-globe' : event.kind === 'api' ? 'pi pi-send' : event.kind === 'assertion' ? 'pi pi-check' : 'pi pi-database'"
+              ></i>
+            </span>
+            <div>
+              <small>{{ event.time }}</small>
+              <strong>{{ event.title }}</strong>
+              <p>{{ event.detail }}</p>
+            </div>
+          </a>
+        }
+      </div>
+
+      @if (tracePreview(); as preview) {
+        <aside
+          class="trace-preview-tooltip"
+          role="tooltip"
+          [style.top.px]="tracePreviewTop()"
+          [style.left.px]="tracePreviewLeft()"
+        >
+          <header>
+            <div><span>{{ preview.operation }}</span><strong>{{ preview.title }}</strong></div>
+            <div class="preview-metrics"><b>{{ preview.status }}</b><span>{{ preview.durationMs }} ms</span></div>
+          </header>
+          <pre><code class="hljs language-json" [innerHTML]="highlightedTracePayload()"></code></pre>
+          <footer><i class="pi pi-arrow-up-right"></i> Click this event to open its correlated inspector view.</footer>
+        </aside>
+      }
+
+      <a class="trace-link" routerLink="/run"><span>Open full run inspector</span><i class="pi pi-arrow-up-right"></i></a>
+    </aside>
+  </div>
+</section>
