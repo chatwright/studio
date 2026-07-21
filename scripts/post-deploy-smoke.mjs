@@ -2,11 +2,21 @@ const baseURL = new URL(process.argv[2] ?? 'https://chatwright.dev/prototype/');
 
 async function fetchOK(pathname) {
   const url = new URL(pathname, baseURL);
-  const response = await fetch(url, { redirect: 'follow' });
-  if (!response.ok) {
-    throw new Error(`${url} returned HTTP ${response.status}`);
+  let response;
+
+  for (let attempt = 1; attempt <= 6; attempt += 1) {
+    response = await fetch(url, { redirect: 'follow' });
+    if (response.ok) {
+      return response;
+    }
+    if (attempt < 6 && (response.status === 404 || response.status >= 500)) {
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+      continue;
+    }
+    break;
   }
-  return response;
+
+  throw new Error(`${url} returned HTTP ${response?.status ?? 'no response'} after propagation retries`);
 }
 
 const shellResponse = await fetchOK('./');
