@@ -14,6 +14,7 @@ The implemented hero keeps the selected direction's important relationship: conc
 - **Colour and contrast:** all primary landing surfaces remain light. Mint is reserved for primary actions and status; blue is used for technical labels. The emulator is dark by design so it reads as a product surface rather than a decorative screenshot.
 - **Product representation:** the hero contains the real Studio iframe, not fabricated artwork. Its address bar is an accessible link to `/studio/`, opening the Studio in a new tab.
 - **Copy:** “Works offline” is present in the primary proof line, alongside the open-source CLI and platform emulators.
+- **Positioning:** the hero explicitly identifies Chatwright as a local-first chat-platform emulator and distinguishes it from automation of an end user's Telegram or WhatsApp client. “Works offline” is the emphasized proof badge.
 - **Responsive behaviour:** the two-column hero collapses cleanly to one column at 960 px; navigation and iframe dimensions have dedicated mobile rules.
 - **Known intentional difference (P3):** the reference uses an isolated concept mock; this version uses the actual interactive emulator, therefore showing genuine Studio chrome and content. That is a deliberate usability gain for the requested live demo.
 
