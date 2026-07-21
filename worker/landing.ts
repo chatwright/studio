@@ -33,7 +33,7 @@ export const landingDocument = String.raw`<!doctype html>
     </style>
   </head>
   <body>
-    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by Sneat</small></a><nav class="links" aria-label="Primary navigation"><a href="#live-lab">Emulators</a><a href="#how-it-works">How it works</a><a href="https://github.com/chatwright/cli">CLI</a><a href="https://sneat.dev/">Sneat.dev</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
+    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="#live-lab">Emulators</a><a href="#how-it-works">How it works</a><a href="https://github.com/chatwright/cli">CLI</a><a href="https://sneat.dev/">sneat.dev</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
     <main>
       <section class="hero wrap"><div class="hero-intro"><p class="eyebrow fade">Chat-platform emulator · conversational testing runtime</p><h1 class="fade">Your bot has a user interface.<br>Test it like one.</h1><p class="hero-copy fade delay">Chatwright is a local-first chat-platform emulator—not automation of someone’s Telegram or WhatsApp client. Run your bot locally and keep every platform call as evidence, not a guess.</p><pre class="hero-terminal fade delay"><b>$</b> chatwright run onboarding.yaml --platform telegram
 <b>✓</b> 4 assertions passed · 342 ms</pre><div class="actions fade delay"><a class="button primary" href="#live-lab">Try the emulator</a><a class="button quiet" href="https://github.com/chatwright/cli">Explore the CLI</a></div><p class="proof"><span class="offline">Works offline</span><span>Open-source CLI</span><span>Faithful Telegram &amp; WhatsApp emulators</span></p></div><section id="live-lab" class="hero-preview" aria-label="Interactive Studio preview"><div class="preview-head"><div><h2>Live chat-platform emulator</h2><p>It is the product, not a marketing screenshot.</p></div><a href="/studio/">Open in a full tab →</a></div><div class="browser"><div class="browser-bar"><a class="address" href="/studio/" target="_blank" rel="noopener" aria-label="Open Chatwright Studio in a new tab">https://chatwright.dev/studio/</a><span class="live">live</span></div><iframe src="/studio/emulator" title="Chatwright live emulator" loading="eager"></iframe></div></section></section>
@@ -42,6 +42,6 @@ export const landingDocument = String.raw`<!doctype html>
 <b>✓</b> 4 assertions passed · 342 ms · evidence captured
 <b>$</b> chatwright studio open</pre></section>
     </main>
-    <footer><div class="wrap"><span>© 2026 Chatwright · Part of the Sneat developer platform</span><a href="https://sneat.dev/">Explore Sneat.dev →</a></div></footer>
+    <footer><div class="wrap"><span>© 2026 Chatwright · by sneat.dev</span><a href="https://sneat.dev/">Explore sneat.dev →</a></div></footer>
   </body>
 </html>`;
