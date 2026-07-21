@@ -14,12 +14,12 @@ const shell = await shellResponse.text();
 
 const rootResponse = await fetchOK('/');
 const root = await rootResponse.text();
-if (!root.includes('<title>Chatwright</title>') || root.includes('/prototype/')) {
-  throw new Error('Root domain is not the standalone Chatwright placeholder');
+if (!root.includes('Your bot has a user interface.') || !root.includes('/studio/emulator')) {
+  throw new Error('Root domain is not the Chatwright landing page with the live Studio preview');
 }
 
-if (!shell.includes('<base href="/prototype/">')) {
-  throw new Error('Deployed shell does not use the /prototype/ Angular base href');
+if (!shell.includes('<base href="/studio/">')) {
+  throw new Error('Deployed shell does not use the /studio/ Angular base href');
 }
 
 const mainScript = shell.match(/src="([^"]*main[^"?]*\.js)"/)?.[1];
@@ -31,5 +31,6 @@ await fetchOK(mainScript);
 await fetchOK('emulator');
 await fetchOK('scenario');
 await fetchOK('run?event=2&platform=telegram&view=rendered');
+await fetchOK('/prototype/emulator');
 
-console.log(`Chatwright prototype smoke passed at ${baseURL}`);
+console.log(`Chatwright Studio smoke passed at ${baseURL}`);

@@ -8,11 +8,11 @@
     "prepare:config": "node scripts/prepare-local-config.mjs",
     "start": "pnpm prepare:config && ng serve --host 127.0.0.1",
     "build": "pnpm prepare:config && ng build",
-    "build:cloudflare": "pnpm prepare:config && ng build --configuration production --base-href /prototype/",
+    "build:cloudflare": "pnpm prepare:config && ng build --configuration production --base-href /studio/",
     "build:dev": "pnpm prepare:config && ng build --configuration development",
     "deploy:cloudflare": "pnpm build:cloudflare && wrangler deploy",
     "deploy:dry-run": "pnpm build:cloudflare && wrangler deploy --dry-run",
-    "smoke:prototype": "node scripts/post-deploy-smoke.mjs https://chatwright.dev/prototype/",
+    "smoke:prototype": "node scripts/post-deploy-smoke.mjs https://chatwright.dev/studio/",
     "typecheck": "pnpm prepare:config && ng build --configuration development"
   },
   "dependencies": {

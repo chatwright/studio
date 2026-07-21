@@ -5,4 +5,4 @@ coverage/
 .DS_Store
 .env.local
 src/app/primeui-license.local.ts
-
+.wrangler/

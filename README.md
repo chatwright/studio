@@ -24,14 +24,14 @@ Open [http://localhost:4200](http://localhost:4200). Production compilation:
 pnpm build
 ```
 
-## Deploy the prototype
+## Production site and Studio
 
-The production prototype is mounted at
-[https://chatwright.dev/prototype/](https://chatwright.dev/prototype/). Angular
-builds with `/prototype/` as its base href, and a small Cloudflare Worker strips
-that mount prefix before serving static assets with SPA fallback. The
-`chatwright-dev` Worker owns `chatwright.dev` as a Custom Domain; `/` serves a
-small standalone placeholder while `/prototype/` opens the live emulator.
+The light-only landing page lives at [chatwright.dev](https://chatwright.dev/)
+and embeds the live emulator as an interactive product preview. The Studio is
+mounted at [chatwright.dev/studio/](https://chatwright.dev/studio/), where Angular
+builds with `/studio/` as its base href. `chatwright-dev` owns the domain as a
+Cloudflare Custom Domain; the former `/prototype/` path remains as a redirect for
+existing links.
 
 ```bash
 pnpm deploy:dry-run
