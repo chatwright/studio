@@ -14,7 +14,9 @@
     "deploy:cloudflare": "pnpm build:cloudflare && wrangler deploy",
     "deploy:dry-run": "pnpm build:cloudflare && wrangler deploy --dry-run",
     "smoke:prototype": "node scripts/post-deploy-smoke.mjs https://chatwright.dev/studio/",
-    "typecheck": "pnpm prepare:config && ng build --configuration development"
+    "typecheck": "pnpm prepare:config && ng build --configuration development",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@angular/cdk": "22.0.5",
@@ -36,6 +38,7 @@
     "@angular/cli": "22.0.7",
     "@angular/compiler-cli": "22.0.7",
     "typescript": "~6.0.3",
+    "vitest": "^3.2.7",
     "wrangler": "^4.112.0"
   }
 }
