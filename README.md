@@ -29,7 +29,7 @@ pnpm build
 ## Production site and Studio
 
 The light-only landing page lives at [chatwright.dev](https://chatwright.dev/)
-and embeds the live emulator as an interactive product preview. The Studio is
+and embeds the Playground as an interactive product preview. The Studio is
 mounted at [chatwright.dev/studio/](https://chatwright.dev/studio/), where Angular
 builds with `/studio/` as its base href. `chatwright-dev` owns the domain as a
 Cloudflare Custom Domain; the former `/prototype/` path remains as a redirect for
@@ -54,7 +54,7 @@ to an account gate or closed local Studio.
 | View | Route | Primary question |
 |---|---|---|
 | Workspace | `/workspace` | Can users understand hierarchy, coverage and the next useful action? |
-| Live emulator (default) | `/emulator` | Can several actor/chat contexts stay legible while all actions use one run? |
+| Playground (default) | `/emulator` | Can several actor/chat contexts stay legible while all actions use one run? |
 | Scenario | `/scenario` | Can conversational intent and executable assertions read as one specification? |
 | Run inspector | `/run` | Can a failure or edit be explained from transcript, trace and metrics without a debugger? |
 
@@ -63,14 +63,14 @@ All views refer to the same workspace, `greetbot/language-choice` scenario and
 
 ## Dynamic interaction
 
-In the live emulator, select one of the four Telegram inline language actions. The
+In the Playground, select one of the four Telegram inline language actions. The
 reply text changes in place, its version increments, an “edited” marker appears,
 and a matching `editMessageText` event is added to the trace rail. User messages
 can also be sent through the composer. Hover a trace event for formatted JSON or
 click it to open the correlated full inspector; message events open directly in
 the rendered representation tab. Reset returns the run to the English v1 state.
 
-The live-emulator mock is a consumer of a Telegram Platform Emulator. In this
+The Playground mock is a consumer of a Telegram Platform Emulator. In this
 static prototype the platform/runtime data is illustrative; in the product, the
 emulator—not the UI—owns Telegram updates, Bot API behaviour and chat state while
 the bot under development remains real.
