@@ -1,0 +1,174 @@
+:host {
+  display: block;
+}
+
+.transport {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1rem;
+}
+
+.transport-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.play-button {
+  --p-button-icon-only-width: 2.6rem;
+}
+
+.scrubber {
+  position: relative;
+  padding: 0.9rem 0.4rem;
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+
+  &:focus-visible .scrubber-track {
+    box-shadow: 0 0 0 2px var(--cw-blue);
+  }
+}
+
+.scrubber-track {
+  position: relative;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--cw-panel-soft);
+  border: 1px solid var(--cw-line);
+  overflow: visible;
+}
+
+.chapter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: rgba(38, 120, 189, 0.12);
+
+  &.even {
+    background: rgba(110, 87, 204, 0.14);
+  }
+}
+
+.scrubber-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cw-mint), var(--cw-blue));
+  box-shadow: 0 0 12px rgba(38, 120, 189, 0.35);
+  pointer-events: none;
+}
+
+.scrubber-thumb {
+  position: absolute;
+  top: 50%;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-left: -0.475rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--cw-blue);
+  box-shadow: 0 2px 8px var(--cw-shadow);
+  transform: translateY(-50%);
+  transition: transform 0.12s ease;
+  pointer-events: none;
+}
+
+.marker-tick {
+  position: absolute;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.9rem;
+  margin-left: -0.275rem;
+  padding: 0;
+  border: 1.5px solid var(--cw-panel);
+  border-radius: 0.2rem;
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  z-index: 2;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-50%) scale(1.28);
+    filter: brightness(1.08);
+    outline: none;
+  }
+}
+
+.tick-part {
+  background: var(--cw-muted-strong);
+}
+.tick-task {
+  background: var(--cw-green);
+}
+.tick-bookmark {
+  background: var(--cw-violet);
+}
+.tick-finding.tick-danger {
+  background: var(--cw-red);
+}
+.tick-finding.tick-warn {
+  background: var(--cw-amber);
+}
+.tick-finding.tick-info {
+  background: var(--cw-blue);
+}
+
+.transport-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.position {
+  font-size: 0.72rem;
+  color: var(--cw-muted-strong);
+  white-space: nowrap;
+}
+
+.speed {
+  display: inline-flex;
+  padding: 0.15rem;
+  gap: 0.1rem;
+  background: var(--cw-panel-soft);
+  border: 1px solid var(--cw-line);
+  border-radius: 0.6rem;
+}
+
+.speed-stop {
+  border: none;
+  background: transparent;
+  color: var(--cw-muted-strong);
+  font-size: 0.68rem;
+  font-weight: 650;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    color: var(--cw-text);
+  }
+
+  &.active {
+    background: var(--cw-panel);
+    color: var(--cw-blue);
+    box-shadow: 0 1px 4px var(--cw-shadow);
+  }
+}
+
+@media (max-width: 720px) {
+  .transport {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .transport-meta {
+    justify-content: space-between;
+  }
+}

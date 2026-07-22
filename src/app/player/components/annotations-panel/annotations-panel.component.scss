@@ -1,0 +1,149 @@
+:host {
+  display: block;
+  padding: 0.8rem 0.9rem 1rem;
+}
+
+.annotations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.annotations-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .count {
+    font-size: 0.72rem;
+    color: var(--cw-muted-strong);
+    font-weight: 650;
+  }
+}
+
+.draft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem;
+  border: 1px solid var(--cw-blue);
+  border-radius: 0.7rem;
+  background: rgba(38, 120, 189, 0.05);
+}
+.draft-title {
+  font-size: 0.68rem;
+  color: var(--cw-muted-strong);
+  font-weight: 650;
+}
+.draft-authors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+
+  input {
+    width: 100%;
+    font-size: 0.76rem;
+  }
+}
+.draft textarea {
+  width: 100%;
+  font-size: 0.8rem;
+  resize: vertical;
+}
+.draft-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.empty {
+  font-size: 0.76rem;
+  margin: 0.4rem 0;
+
+  i {
+    font-size: 0.7rem;
+  }
+}
+
+.thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.thread {
+  border: 1px solid var(--cw-line);
+  border-radius: 0.7rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--cw-panel-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &.focused {
+    border-color: var(--cw-violet);
+    box-shadow: 0 0 0 2px rgba(110, 87, 204, 0.14);
+  }
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  &.reply {
+    margin-left: 0.8rem;
+    padding-left: 0.6rem;
+    border-left: 2px solid var(--cw-line-strong);
+  }
+}
+.comment-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.comment-author {
+  font-weight: 650;
+  font-size: 0.76rem;
+}
+.comment-time {
+  font-size: 0.58rem;
+  color: var(--cw-muted);
+}
+.comment-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.comment-foot {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.1rem;
+}
+.link {
+  border: none;
+  background: none;
+  color: var(--cw-blue);
+  font-size: 0.66rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+.dangling {
+  color: var(--cw-amber);
+  font-size: 0.64rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}

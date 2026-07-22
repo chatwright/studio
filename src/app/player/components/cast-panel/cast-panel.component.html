@@ -1,0 +1,35 @@
+@if (actors().length === 0) {
+  <p class="empty quiet">No actors in this run.</p>
+}
+<ul class="cast">
+  @for (actor of actors(); track actor.id) {
+    <li class="cast-member">
+      <p-avatar [label]="initials(actor)" shape="circle" class="cast-avatar" />
+      <div class="cast-body">
+        <div class="cast-title">
+          <span class="cast-name">{{ actor.name ?? actor.id }}</span>
+          <p-tag [value]="actor.type" [severity]="typeSeverity(actor.type)" />
+        </div>
+        <div class="cast-id mono">{{ actor.id }}</div>
+
+        @for (identity of identities(actor); track identity.platform) {
+          <div class="cast-identity mono">
+            <span class="plat">{{ identity.platform }}</span>
+            <span class="uid">#{{ identity.userId }}</span>
+            @if (identity.handle) { <span class="handle">{{ identity.handle }}</span> }
+          </div>
+        }
+
+        @if (actor.provider) {
+          <div class="cast-provider">
+            <i class="pi pi-microchip-ai"></i>
+            <span>{{ actor.provider.name }}</span>
+            @if (actor.provider.modelIds && actor.provider.modelIds.length) {
+              <span class="models mono">{{ actor.provider.modelIds.join(', ') }}</span>
+            }
+          </div>
+        }
+      </div>
+    </li>
+  }
+</ul>

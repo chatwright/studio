@@ -1,0 +1,166 @@
+<div class="transcript-scroll" #scrollRegion>
+  @if (chats().length === 0) {
+    <div class="empty-transcript">
+      <i class="pi pi-play-circle"></i>
+      <p>Press play, step forward, or drag the scrubber to replay the conversation.</p>
+    </div>
+  }
+
+  @for (chat of chats(); track chat.chatId) {
+    <section class="chat">
+      <header class="chat-head">
+        <span class="chat-dot"></span>
+        <span class="mono">chat {{ chat.chatId }}</span>
+      </header>
+
+      <div class="chat-stream">
+        @for (item of chat.items; track item.kind === 'message' ? item.message.key : 'note-' + item.order) {
+          @if (item.kind === 'note') {
+            <div class="method-note mono" [class.landing]="engine.animatingIndex() === item.note.timelineIndex && !engine.reducedMotion()">
+              <i class="pi pi-cog"></i> {{ item.note.method || 'method call' }}
+              @if (item.note.text) { <span>· {{ item.note.text }}</span> }
+            </div>
+          } @else {
+            @let message = item.message;
+            @let author = who(message.fromId);
+            @if (chapterStarts().has(message.key)) {
+              <div class="chapter-divider">
+                <span class="chapter-line"></span>
+                <span class="chapter-label mono"><i class="pi pi-bookmark"></i> {{ chapterStarts().get(message.key) }}</span>
+                <span class="chapter-line"></span>
+              </div>
+            }
+            <div
+              class="row"
+              [class.from-bot]="message.direction === 'bot'"
+              [class.from-user]="message.direction === 'user'"
+            >
+              @if (message.direction === 'bot') {
+                <p-avatar [label]="initials(author.name)" shape="circle" class="msg-avatar bot" />
+              }
+
+              <div class="bubble-wrap">
+                <div class="attribution">
+                  <span class="author">{{ author.name }}</span>
+                  @if (author.type) { <span class="role mono">{{ author.type }}</span> }
+                  @if (author.handle) { <span class="handle mono">{{ author.handle }}</span> }
+                  @if (message.fromId === 0) { <span class="role mono unattributed">unattributed</span> }
+                </div>
+
+                <button
+                  type="button"
+                  class="bubble"
+                  [class]="messageAnim(message)"
+                  (click)="onMessageClick(message)"
+                  [attr.aria-label]="'Inspect message ' + message.messageId"
+                >
+                  @if (message.deleted) {
+                    <span class="vapour-text"><i class="pi pi-eraser"></i> message deleted</span>
+                  } @else if (messageAnim(message) === 'morphing') {
+                    <span class="morph">
+                      <span class="morph-old">{{ previousText(message) }}</span>
+                      <span class="morph-new">{{ message.text }}</span>
+                    </span>
+                  } @else {
+                    @if (messageAnim(message) === 'landing-bot') {
+                      <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    }
+                    <span class="bubble-text">{{ message.text }}</span>
+                  }
+
+                  @if (message.actions && message.actions.length && !message.deleted) {
+                    <span
+                      class="actions"
+                      [class.kbd-in]="messageAnim(message) === 'landing-bot'"
+                    >
+                      @for (rowActions of message.actions; track $index) {
+                        <span class="action-row">
+                          @for (action of rowActions; track action.ID) {
+                            <span
+                              class="action-btn"
+                              role="button"
+                              tabindex="0"
+                              [class.pressed]="isActionPressed(message, action)"
+                              (click)="onActionClick(message, action, $event)"
+                              (keydown.enter)="onActionClick(message, action, $event)"
+                              [pTooltip]="'callback: ' + action.ID"
+                              tooltipPosition="top"
+                            >
+                              {{ action.Label }}
+                              @if (action.URL) { <i class="pi pi-external-link"></i> }
+                            </span>
+                          }
+                        </span>
+                      }
+                    </span>
+                  }
+
+                  <span class="bubble-meta mono">
+                    @if (message.edited) {
+                      <span class="edited"><i class="pi pi-pencil"></i> v{{ message.version }}</span>
+                    }
+                    <span class="msg-id">#{{ message.messageId }}</span>
+                  </span>
+                </button>
+
+                <div class="bubble-under">
+                  @if (threadCount(message) > 0) {
+                    @for (thread of threadsFor(message); track thread.root.annotation.id) {
+                      <button
+                        type="button"
+                        class="pin"
+                        [class.focused]="ui.focusedAnnotationId() === thread.root.annotation.id"
+                        (click)="onPinClick(thread, $event)"
+                        [pTooltip]="thread.root.annotation.text"
+                        tooltipPosition="bottom"
+                      >
+                        <i class="pi pi-comment"></i>
+                        {{ 1 + thread.replies.length }}
+                      </button>
+                    }
+                  }
+                  <button
+                    type="button"
+                    class="add-comment"
+                    (click)="onAddComment(message, $event)"
+                    pTooltip="Comment on this moment"
+                    tooltipPosition="bottom"
+                    aria-label="Add comment"
+                  >
+                    <i class="pi pi-plus"></i>
+                  </button>
+                </div>
+              </div>
+
+              @if (message.direction === 'user') {
+                <p-avatar [label]="initials(author.name)" shape="circle" class="msg-avatar user" />
+              }
+            </div>
+          }
+        }
+
+        <!-- Playback composer: driven by the compose-and-send primitive. -->
+        <div class="composer" [class.active]="engine.composerTyping()?.chatId === chat.chatId">
+          @if (engine.composerTyping()?.chatId === chat.chatId) {
+            @let typing = engine.composerTyping()!;
+            <div class="composer-field">
+              <span class="typed">{{ typing.text.slice(0, typing.chars) }}</span><span class="caret"></span>
+            </div>
+            <span class="composer-send pressing"><i class="pi pi-send"></i></span>
+          } @else {
+            <div class="composer-field idle">Message…</div>
+            <span class="composer-send"><i class="pi pi-send"></i></span>
+          }
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (annotationLayout().dangling.length > 0) {
+    <div class="dangling-notice">
+      <i class="pi pi-exclamation-triangle"></i>
+      {{ annotationLayout().dangling.length }} annotation(s) reference a moment that is not in this
+      run and are shown in the Notes panel.
+    </div>
+  }
+</div>

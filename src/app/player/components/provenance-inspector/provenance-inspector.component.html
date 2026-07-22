@@ -1,0 +1,74 @@
+@if (target(); as target) {
+  <div class="inspector">
+    <header class="inspector-head">
+      <div>
+        <span class="eyebrow">Provenance</span>
+        <h3 class="mono">chat {{ target.chatId }} · message #{{ target.messageId }}</h3>
+      </div>
+      <p-button icon="pi pi-times" text rounded severity="secondary" (click)="close()" ariaLabel="Close inspector" />
+    </header>
+
+    @if (lineage(); as lineage) {
+      <section class="section">
+        <span class="section-label">Version lineage</span>
+        <ol class="versions">
+          @for (version of lineage.versions; track version.entryIndex) {
+            <li class="version" [class.is-edit]="version.edit">
+              <span class="v-badge mono">v{{ version.version }}</span>
+              <div class="v-body">
+                <span class="v-role mono">{{ version.edit ? 'editMessageText' : 'original send' }}</span>
+                <span class="v-text">{{ version.text }}</span>
+                @if (version.actions && version.actions.length) {
+                  <span class="v-actions mono">{{ version.actions.length }} action row(s)</span>
+                }
+                <span class="v-at mono">{{ version.at }}</span>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+
+      @if (lineage.presses.length) {
+        <section class="section">
+          <span class="section-label">Callbacks fired</span>
+          @for (press of lineage.presses; track press.entryIndex) {
+            <div class="press" [class.focused]="focusedPress()?.entryIndex === press.entryIndex">
+              <div class="press-head">
+                <p-tag [value]="press.actionLabel" severity="info" />
+                <span class="mono press-id">{{ press.actionId }}</span>
+              </div>
+              @if (press.response) {
+                <div class="press-response">
+                  <i class="pi pi-arrow-right"></i>
+                  <span>bot replied</span>
+                  <span class="resp-text">{{ press.response.text }}</span>
+                  <span class="mono resp-meta">#{{ press.response.messageId }} v{{ press.response.version }}</span>
+                </div>
+              } @else {
+                <div class="press-response quiet"><i class="pi pi-minus"></i> no captured response</div>
+              }
+            </div>
+          }
+        </section>
+      }
+    } @else {
+      <p class="quiet">No lineage available for this message.</p>
+    }
+
+    @if (loopLink()) {
+      <section class="section reasoning">
+        <span class="section-label">AI reasoning</span>
+        <p class="reasoning-copy">
+          This message was observed by the actor loop. Jump to the moment it was seen and what the
+          actor proposed next.
+        </p>
+        <p-button
+          label="Jump to reasoning"
+          icon="pi pi-sitemap"
+          size="small"
+          (click)="jumpToReasoning()"
+        />
+      </section>
+    }
+  </div>
+}

@@ -1,0 +1,244 @@
+:host {
+  display: block;
+  padding: 0.9rem 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.not-ai {
+  color: var(--cw-muted);
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+
+  i {
+    font-size: 1.4rem;
+    color: var(--cw-muted-strong);
+  }
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+}
+
+.goal-card,
+.report-card,
+.evidence-card {
+  background: var(--cw-panel-soft);
+  border: 1px solid var(--cw-line);
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  h4 {
+    margin: 0;
+    font-size: 0.92rem;
+  }
+}
+
+.goal-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--cw-muted-strong);
+}
+
+.tasks,
+.task-outcomes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.tasks li {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.76rem;
+  border-left: 2px solid var(--cw-line-strong);
+  padding-left: 0.5rem;
+}
+.task-crit {
+  color: var(--cw-muted);
+  font-size: 0.7rem;
+}
+.task-outcomes li {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.event {
+  border: 1px solid var(--cw-line);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--cw-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  opacity: 0.45;
+  transform: translateY(2px);
+  transition: opacity 0.3s ease, transform 0.3s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &.revealed {
+    opacity: 1;
+    transform: none;
+  }
+  &.active {
+    border-color: var(--cw-blue);
+    box-shadow: 0 0 0 3px rgba(38, 120, 189, 0.12);
+  }
+}
+
+.event-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.step-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--cw-blue);
+  background: rgba(38, 120, 189, 0.12);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+}
+.task {
+  font-size: 0.64rem;
+  color: var(--cw-muted);
+}
+.beat {
+  margin-left: auto;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cw-mint);
+  background: rgba(8, 126, 104, 0.12);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.35rem;
+}
+
+.beat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+}
+.beat-label {
+  flex: 0 0 4.3rem;
+  color: var(--cw-muted);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.beat-value {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.reason {
+  color: var(--cw-muted-strong);
+  font-size: 0.7rem;
+}
+.rationale {
+  margin: 0 0 0 4.8rem;
+  font-size: 0.74rem;
+  font-style: italic;
+  color: var(--cw-muted-strong);
+}
+
+.usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  font-size: 0.62rem;
+  color: var(--cw-muted);
+  border-top: 1px dashed var(--cw-line);
+  padding-top: 0.35rem;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.72rem;
+
+  span {
+    color: var(--cw-muted);
+  }
+  strong {
+    color: var(--cw-text);
+  }
+}
+
+.findings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.finding {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--cw-muted);
+  background: var(--cw-panel-soft);
+
+  &.sev-danger {
+    border-left-color: var(--cw-red);
+  }
+  &.sev-warn {
+    border-left-color: var(--cw-amber);
+  }
+  &.sev-info {
+    border-left-color: var(--cw-blue);
+  }
+}
+.finding-kind {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cw-muted-strong);
+}
+.finding-summary {
+  font-size: 0.76rem;
+}
+
+.evidence {
+  border: 1px solid var(--cw-line);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.evidence-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+.evidence-query {
+  font-size: 0.68rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.evidence-meta {
+  font-size: 0.62rem;
+  color: var(--cw-muted);
+}

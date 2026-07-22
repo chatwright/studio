@@ -1,0 +1,145 @@
+@if (!isAiPart()) {
+  <div class="not-ai">
+    <i class="pi pi-hashtag"></i>
+    <p>
+      This chapter is <strong>{{ activePart()?.kind ?? 'transcript-only' }}</strong> — it plays as a
+      transcript, with no AI mind to trace.
+    </p>
+  </div>
+} @else {
+  @if (goal(); as goal) {
+    <div class="goal-card">
+      <span class="eyebrow">Goal</span>
+      <h4>{{ goal.Title || goal.ID }}</h4>
+      @if (goal.Description) { <p class="goal-desc">{{ goal.Description }}</p> }
+      @if (goal.Tasks && goal.Tasks.length) {
+        <ul class="tasks">
+          @for (task of goal.Tasks; track task.ID) {
+            <li>
+              <span class="task-title">{{ task.Title || task.ID }}</span>
+              @if (task.SuccessCriteria) { <span class="task-crit">{{ task.SuccessCriteria }}</span> }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <div class="events">
+    @for (event of events(); track event.Index; let i = $index) {
+      <article
+        class="event"
+        [class.revealed]="isRevealed(i)"
+        [class.active]="isActive(i)"
+      >
+        <header class="event-head">
+          <span class="step-badge mono">#{{ event.Index }}</span>
+          <span class="task mono">{{ event.TaskID }}</span>
+          @if (isActive(i) && activeBeat()) {
+            <span class="beat mono">{{ activeBeat() }}</span>
+          }
+        </header>
+
+        <div class="beat-row observe">
+          <span class="beat-label">Observed</span>
+          <span class="beat-value mono">seq {{ event.ObservationSequence }}</span>
+        </div>
+
+        <div class="beat-row propose">
+          <span class="beat-label">Proposed</span>
+          <span class="beat-value">
+            <p-tag [value]="proposalLabel(event)" [severity]="proposalSeverity(event)" />
+          </span>
+        </div>
+        @if (event.Proposal.Rationale) {
+          <p class="rationale">"{{ event.Proposal.Rationale }}"</p>
+        }
+
+        @if (event.Validation.Checked) {
+          <div class="beat-row validate">
+            <span class="beat-label">Validated</span>
+            <span class="beat-value">
+              <p-tag
+                [value]="event.Validation.Verdict || 'unchecked'"
+                [severity]="verdictSeverity(event.Validation.Verdict)"
+              />
+              @if (event.Validation.Reason) { <span class="reason">{{ event.Validation.Reason }}</span> }
+            </span>
+          </div>
+        }
+
+        <div class="beat-row act">
+          <span class="beat-label">Acted</span>
+          <span class="beat-value">
+            <p-tag [value]="event.Action.Kind" [severity]="outcomeSeverity(event.Action.Kind)" />
+            @if (event.Action.Detail) { <span class="reason">{{ event.Action.Detail }}</span> }
+          </span>
+        </div>
+
+        @if (event.Usage.Model) {
+          <footer class="usage mono">
+            <span pTooltip="Model">{{ event.Usage.Model }}</span>
+            <span pTooltip="Input / output tokens">{{ event.Usage.InputTokens }}▸{{ event.Usage.OutputTokens }} tok</span>
+            <span pTooltip="Latency">{{ latencyMs(event.Usage.Latency) }} ms</span>
+            @if (event.Usage.cost !== undefined) { <span pTooltip="Cost">${{ event.Usage.cost }}</span> }
+          </footer>
+        }
+      </article>
+    }
+  </div>
+
+  @if (report(); as report) {
+    <div class="report-card">
+      <span class="eyebrow">Report</span>
+      <div class="report-grid mono">
+        <span>stop</span><strong>{{ report.stopReason }}</strong>
+        <span>steps</span><strong>{{ report.steps }}</strong>
+        <span>tokens</span><strong>{{ report.usage.inputTokens }}▸{{ report.usage.outputTokens }}</strong>
+        <span>calls</span><strong>{{ report.usage.callCount }}</strong>
+        @if (report.cost !== undefined) { <span>cost</span><strong>${{ report.cost }}</strong> }
+      </div>
+
+      @if (report.tasks && report.tasks.length) {
+        <ul class="task-outcomes">
+          @for (task of report.tasks; track task.taskId) {
+            <li>
+              <p-tag
+                [value]="task.status"
+                [severity]="task.status === 'completed' ? 'success' : 'warn'"
+              />
+              <span>{{ task.title || task.taskId }}</span>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (report.findings && report.findings.length) {
+        <div class="findings">
+          <span class="eyebrow">Findings</span>
+          @for (finding of report.findings; track $index) {
+            <div class="finding" [class]="'sev-' + findingSeverity(finding.kind)">
+              <span class="finding-kind mono">{{ finding.kind }}</span>
+              <span class="finding-summary">{{ finding.summary }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (evidence().length) {
+    <div class="evidence-card">
+      <span class="eyebrow">Data-state evidence</span>
+      @for (item of evidence(); track $index) {
+        <div class="evidence" [class.passed]="item.Outcome === 'passed'">
+          <div class="evidence-head">
+            <strong>{{ item.Name }}</strong>
+            <p-tag [value]="item.Outcome" [severity]="item.Outcome === 'passed' ? 'success' : 'danger'" />
+          </div>
+          <code class="evidence-query">{{ item.Query }}</code>
+          <span class="evidence-meta mono">{{ item.Holder }} · {{ item.ReturnedRows }}/{{ item.TotalRows }} rows</span>
+        </div>
+      }
+    </div>
+  }
+}

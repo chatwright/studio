@@ -1,0 +1,101 @@
+<div class="annotations">
+  <header class="annotations-head">
+    <span class="count">{{ totalCount() }} comment(s)</span>
+    <p-button
+      label="Export"
+      icon="pi pi-download"
+      size="small"
+      severity="secondary"
+      outlined
+      (click)="exportBundle()"
+      pTooltip="Download this bundle with your comments (client-side)"
+      tooltipPosition="bottom"
+    />
+  </header>
+
+  @if (draft(); as draft) {
+    <form class="draft" (submit)="$event.preventDefault(); submit()">
+      <span class="draft-title">
+        {{ draft.replyTo ? 'Reply' : 'New comment' }} on chat {{ draft.anchor.chatId }}, entry
+        {{ draft.anchor.entryIndex }}
+      </span>
+      <div class="draft-authors">
+        <input
+          pInputText
+          type="text"
+          placeholder="Name (optional)"
+          [value]="draft.authorName"
+          (input)="updateName($event)"
+        />
+        <input
+          pInputText
+          type="email"
+          placeholder="Email (optional)"
+          [value]="draft.authorEmail"
+          (input)="updateEmail($event)"
+        />
+      </div>
+      <textarea
+        pTextarea
+        rows="3"
+        placeholder="What did you notice at this moment?"
+        [value]="draft.text"
+        (input)="updateText($event)"
+      ></textarea>
+      <div class="draft-actions">
+        <p-button label="Cancel" size="small" severity="secondary" text (click)="cancel()" />
+        <p-button label="Add comment" size="small" type="submit" [disabled]="draft.text.trim().length === 0" />
+      </div>
+    </form>
+  }
+
+  @if (threads().length === 0) {
+    <p class="quiet empty">
+      No comments yet. Click the <i class="pi pi-plus"></i> under any message to add one.
+    </p>
+  }
+
+  <div class="thread-list">
+    @for (thread of threads(); track thread.root.annotation.id) {
+      <div
+        class="thread"
+        [class.focused]="ui.focusedAnnotationId() === thread.root.annotation.id"
+      >
+        <div class="comment root">
+          <div class="comment-head">
+            <span class="comment-author">{{ authorLabel(thread.root) }}</span>
+            <span class="comment-time mono">{{ thread.root.annotation.createdAt }}</span>
+          </div>
+          <p class="comment-text">{{ thread.root.annotation.text }}</p>
+          <div class="comment-foot">
+            @if (!thread.root.resolved) {
+              <span class="dangling" pTooltip="This anchor does not resolve to a journal entry in this run">
+                <i class="pi pi-exclamation-triangle"></i> dangling anchor
+              </span>
+            } @else {
+              <button type="button" class="link" (click)="jump(thread.root)">
+                <i class="pi pi-arrow-right"></i> jump
+              </button>
+            }
+            <button type="button" class="link" (click)="reply(thread.root)">
+              <i class="pi pi-reply"></i> reply
+            </button>
+          </div>
+        </div>
+
+        @for (reply of thread.replies; track reply.annotation.id) {
+          <div class="comment reply">
+            <div class="comment-head">
+              <span class="comment-author">{{ authorLabel(reply) }}</span>
+              <span class="comment-time mono">{{ reply.annotation.createdAt }}</span>
+            </div>
+            <p class="comment-text">{{ reply.annotation.text }}</p>
+            @if (reply.danglingReply) {
+              <span class="dangling"><i class="pi pi-exclamation-triangle"></i> reply target missing</span>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,104 @@
+<div class="transport">
+  <div class="transport-buttons">
+    <p-button
+      icon="pi pi-step-backward"
+      severity="secondary"
+      text
+      rounded
+      pTooltip="Previous step"
+      tooltipPosition="top"
+      [disabled]="engine.stepIndex() < 0"
+      (click)="engine.prev()"
+      ariaLabel="Previous step"
+    />
+    <p-button
+      [icon]="engine.isPlaying() ? 'pi pi-pause' : 'pi pi-play'"
+      rounded
+      class="play-button"
+      [pTooltip]="engine.isPlaying() ? 'Pause' : 'Play'"
+      tooltipPosition="top"
+      [disabled]="engine.stepCount() === 0"
+      (click)="engine.toggle()"
+      [ariaLabel]="engine.isPlaying() ? 'Pause' : 'Play'"
+    />
+    <p-button
+      icon="pi pi-step-forward"
+      severity="secondary"
+      text
+      rounded
+      pTooltip="Next step"
+      tooltipPosition="top"
+      [disabled]="engine.atEnd()"
+      (click)="engine.next()"
+      ariaLabel="Next step"
+    />
+    <p-button
+      icon="pi pi-replay"
+      severity="secondary"
+      text
+      rounded
+      pTooltip="Restart"
+      tooltipPosition="top"
+      (click)="engine.restart()"
+      ariaLabel="Restart"
+    />
+  </div>
+
+  <div
+    class="scrubber"
+    #track
+    role="slider"
+    tabindex="0"
+    aria-label="Timeline scrubber"
+    [attr.aria-valuemin]="0"
+    [attr.aria-valuemax]="engine.stepCount()"
+    [attr.aria-valuenow]="engine.stepIndex() + 1"
+    (pointerdown)="onTrackPointerDown($event)"
+    (pointermove)="onTrackPointerMove($event)"
+    (pointerup)="onTrackPointerUp($event)"
+    (keydown)="onTrackKeydown($event)"
+  >
+    <div class="scrubber-track">
+      @for (segment of chapterSegments(); track segment.chapter.partId) {
+        <span
+          class="chapter"
+          [class.even]="segment.even"
+          [style.left.%]="segment.left"
+          [style.width.%]="segment.width"
+          [pTooltip]="segment.chapter.title + ' · ' + segment.chapter.kind"
+          tooltipPosition="top"
+        ></span>
+      }
+      <span class="scrubber-fill" [style.width.%]="progressPercent()"></span>
+      @for (tick of markerTicks(); track tick.marker.id) {
+        <button
+          type="button"
+          class="marker-tick"
+          [class]="markerClass(tick.marker)"
+          [style.left.%]="tick.left"
+          [pTooltip]="tick.marker.title + ' — ' + tick.marker.detail"
+          tooltipPosition="top"
+          (click)="jumpToMarker(tick.marker, $event)"
+          [attr.aria-label]="'Jump to ' + tick.marker.title"
+        ></button>
+      }
+      <span class="scrubber-thumb" [style.left.%]="progressPercent()"></span>
+    </div>
+  </div>
+
+  <div class="transport-meta">
+    <span class="position mono">{{ positionLabel() }}</span>
+    <div class="speed" role="group" aria-label="Playback speed">
+      @for (option of speeds; track option) {
+        <button
+          type="button"
+          class="speed-stop mono"
+          [class.active]="engine.speed() === option"
+          (click)="setSpeed(option)"
+        >
+          {{ option }}×
+        </button>
+      }
+    </div>
+  </div>
+</div>

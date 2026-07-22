@@ -1,0 +1,91 @@
+:host {
+  display: block;
+  padding: 0.8rem 0.9rem 1rem;
+}
+
+.empty {
+  font-size: 0.78rem;
+  margin: 0.5rem 0;
+}
+
+.cast {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.cast-member {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid var(--cw-line);
+  border-radius: 0.7rem;
+  background: var(--cw-panel-soft);
+}
+
+.cast-avatar {
+  flex: 0 0 auto;
+  --p-avatar-width: 2.1rem;
+  --p-avatar-height: 2.1rem;
+  --p-avatar-background: rgba(110, 87, 204, 0.16);
+  --p-avatar-color: var(--cw-violet);
+  font-size: 0.64rem;
+}
+
+.cast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cast-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cast-name {
+  font-weight: 650;
+  font-size: 0.84rem;
+}
+.cast-id {
+  font-size: 0.64rem;
+  color: var(--cw-muted);
+}
+
+.cast-identity {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  align-items: baseline;
+
+  .plat {
+    color: var(--cw-muted-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.58rem;
+  }
+  .uid {
+    color: var(--cw-muted);
+  }
+  .handle {
+    color: var(--cw-blue);
+  }
+}
+
+.cast-provider {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--cw-mint);
+
+  .models {
+    color: var(--cw-muted-strong);
+    font-size: 0.64rem;
+  }
+}
