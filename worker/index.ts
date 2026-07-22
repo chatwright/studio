@@ -11,6 +11,22 @@ import { landingDocument } from './landing';
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
 
+const robotsDocument = `User-agent: *
+Allow: /
+
+Sitemap: https://chatwright.dev/sitemap.xml
+`;
+
+const sitemapDocument = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://chatwright.dev/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const incomingURL = new URL(request.url);
@@ -27,6 +43,24 @@ export default {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === '/robots.txt') {
+      return new Response(request.method === 'HEAD' ? null : robotsDocument, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === '/sitemap.xml') {
+      return new Response(request.method === 'HEAD' ? null : sitemapDocument, {
+        headers: {
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600'
         }
       });
     }

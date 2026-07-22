@@ -24,8 +24,8 @@ const shell = await shellResponse.text();
 
 const rootResponse = await fetchOK('/');
 const root = await rootResponse.text();
-if (!root.includes('Your bot has a user interface.') || !root.includes('/studio/emulator')) {
-  throw new Error('Root domain is not the Chatwright landing page with the live Studio preview');
+if (!root.includes('The platform is emulated.') || !root.includes('/studio/emulator')) {
+  throw new Error('Root domain is not the Chatwright landing page with the Studio preview');
 }
 
 if (!shell.includes('<base href="/studio/">')) {
