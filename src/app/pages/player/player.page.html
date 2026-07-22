@@ -1,0 +1,79 @@
+<section
+  class="page player-page"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <div class="page-heading">
+    <div>
+      <p class="page-kicker">Player · run bundle</p>
+      <h1>Replay a run, locally.</h1>
+      <p>
+        Drop a <code>*.chatwright.json</code> run bundle onto this page and it plays entirely in your
+        browser — transcript, AI reasoning, findings and comments. Nothing is uploaded; the bundle
+        never leaves your machine.
+      </p>
+    </div>
+    <div class="heading-actions">
+      @if (bundle()) {
+        <span class="file-name mono" pTooltip="Loaded bundle">
+          <i class="pi pi-file"></i> {{ fileName() }}
+        </span>
+        <p-button
+          label="Load another"
+          icon="pi pi-upload"
+          severity="secondary"
+          outlined
+          (click)="clear()"
+        />
+      }
+    </div>
+  </div>
+
+  @if (!bundle()) {
+    <div class="dropzone surface" [class.drag]="dragOver()">
+      <div class="dropzone-inner">
+        <span class="drop-icon"><i class="pi pi-cloud-upload"></i></span>
+        <h2>Drop your run bundle here</h2>
+        <p class="quiet">A single self-contained <code>*.chatwright.json</code> file.</p>
+
+        <div class="drop-actions">
+          <label class="picker">
+            <input type="file" accept=".json,application/json" (change)="onPick($event)" hidden />
+            <span class="p-button p-component picker-button">
+              <i class="pi pi-folder-open"></i> Choose file…
+            </span>
+          </label>
+          <p-button
+            label="Load sample"
+            icon="pi pi-sparkles"
+            severity="secondary"
+            [loading]="loadingSample()"
+            (click)="loadSample()"
+            pTooltip="Play a bundled demo run"
+            tooltipPosition="bottom"
+          />
+        </div>
+
+        @if (error()) {
+          <div class="drop-error"><i class="pi pi-times-circle"></i> {{ error() }}</div>
+        }
+
+        <ul class="drop-notes quiet">
+          <li><i class="pi pi-lock"></i> Fully offline — zero network round-trips for bundle content.</li>
+          <li><i class="pi pi-play"></i> Transport, chapters and markers to scrub the whole run.</li>
+          <li><i class="pi pi-sitemap"></i> Click any message to trace its lineage and AI reasoning.</li>
+        </ul>
+      </div>
+    </div>
+  } @else {
+    @if (error()) {
+      <div class="drop-error inline"><i class="pi pi-times-circle"></i> {{ error() }}</div>
+    }
+    <cw-player [bundle]="bundle()" [warnings]="warnings()" />
+  }
+
+  @if (dragOver()) {
+    <div class="drag-overlay"><span><i class="pi pi-download"></i> Release to play</span></div>
+  }
+</section>

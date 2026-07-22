@@ -21,6 +21,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/run/run.page').then((module) => module.RunPage)
   },
+  {
+    path: 'player',
+    loadComponent: () =>
+      import('./pages/player/player.page').then((module) => module.PlayerPage)
+  },
   { path: '', pathMatch: 'full', redirectTo: 'emulator' },
   { path: '**', redirectTo: 'workspace' }
 ];
