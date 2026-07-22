@@ -96,9 +96,10 @@ See the [PrimeNG configuration guide](https://primeng.dev/configuration).
 
 Chatwright Studio is open source under the [Apache License 2.0](LICENSE), alongside
 the Runtime, CLI, Platform Emulators and Playground. Everything required for
-local development works without a cloud account. The open-source CLI lives in
-[`chatwright/cli`](https://github.com/chatwright/cli), and product specifications
-live in [`chatwright/chatwright`](https://github.com/chatwright/chatwright).
+local development works without a cloud account. The open-source runtime, CLI
+and product specifications live together in
+[`chatwright/chatwright`](https://github.com/chatwright/chatwright) (Go module
+`github.com/chatwright/chatwright`, CLI via `cmd/chatwright`).
 
 Chatwright Cloud may remain a closed commercial service. Its optional value is
 managed execution, sync, retained reports, collaboration, organisations and AI
