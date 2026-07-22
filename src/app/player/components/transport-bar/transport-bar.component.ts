@@ -71,7 +71,11 @@ export class TransportBarComponent {
 
   onTrackPointerDown(event: PointerEvent): void {
     this.dragging = true;
-    (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
+    try {
+      this.track()?.nativeElement.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is best-effort; dragging still works without it.
+    }
     this.engine.pause();
     this.seekFromClientX(event.clientX);
   }
@@ -84,7 +88,11 @@ export class TransportBarComponent {
 
   onTrackPointerUp(event: PointerEvent): void {
     this.dragging = false;
-    (event.target as HTMLElement).releasePointerCapture?.(event.pointerId);
+    try {
+      this.track()?.nativeElement.releasePointerCapture(event.pointerId);
+    } catch {
+      // No active capture to release; ignore.
+    }
   }
 
   onTrackKeydown(event: KeyboardEvent): void {
