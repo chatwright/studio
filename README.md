@@ -1,13 +1,15 @@
 # Chatwright Studio
 
-Private source for the Chatwright Studio web experience. The current application
-is a connected zoneless Angular 22 + PrimeNG 22 prototype built with Angular
-Signals and static sample data.
+Open-source visual development environment for Chatwright, licensed under
+[Apache-2.0](LICENSE). The current application is a connected zoneless Angular
+22 + PrimeNG 22 prototype built with Angular Signals and static sample data.
 
 The long-term product connects to an authenticated Chatwright CLI server on the
 local machine. That local-first bridge lets a developer move from terminal output
-to the visual Studio without uploading private run data. Cloud persistence,
-sharing and collaboration remain explicit follow-on actions.
+to the visual Studio without uploading private run data. Supported local
+Playground, authoring, recording and inspection workflows continue working
+offline and without a Chatwright or Sneat account. Cloud persistence, hosted
+execution, sharing and managed intelligence remain explicit optional actions.
 
 ## Run
 
@@ -42,6 +44,10 @@ Pushes to `main` call the shared
 [`sneat-co/cicd` Cloudflare workflow](https://github.com/sneat-co/cicd/blob/main/.github/workflows/cf-deploy.yml).
 The repository needs `CLOUDFLARE_API_TOKEN` and `PRIMEUI_LICENSE` secrets plus a
 `CLOUDFLARE_ACCOUNT_ID` Actions variable.
+
+The hosted web build is a deployment of the same Apache-2.0 Studio. Proprietary
+commercial value belongs to the separate operated Chatwright Cloud service—not
+to an account gate or closed local Studio.
 
 ## Connected mock-ups
 
@@ -80,15 +86,21 @@ the bot under development remains real.
 - Responsive rules collapse the sidebars before shrinking the message canvas.
 
 The app bootstrap configures PrimeUI from `PRIMEUI_LICENSE` or the ignored
-`.env.local` file. The generated TypeScript config and the local licence both stay
-out of Git; builds without a key still compile but PrimeUI displays its licence
-notice.
+`.env.local` file. The generated TypeScript config and any local third-party
+licence key stay out of Git; builds without a key still compile but PrimeUI
+displays its licence notice. This third-party configuration does not change
+Chatwright Studio's Apache-2.0 licence.
 See the [PrimeNG configuration guide](https://primeng.dev/configuration).
 
-## Repository visibility
+## Licence and product boundary
 
-This repository is proprietary and private. The open-source runtime, CLI and
-messaging-platform API emulators live in
-[`chatwright/cli`](https://github.com/chatwright/cli) under Apache-2.0. Public
-product specifications remain in
-[`chatwright/chatwright`](https://github.com/chatwright/chatwright).
+Chatwright Studio is open source under the [Apache License 2.0](LICENSE), alongside
+the Runtime, CLI, Platform Emulators and Playground. Everything required for
+local development works without a cloud account. The open-source CLI lives in
+[`chatwright/cli`](https://github.com/chatwright/cli), and product specifications
+live in [`chatwright/chatwright`](https://github.com/chatwright/chatwright).
+
+Chatwright Cloud may remain a closed commercial service. Its optional value is
+managed execution, sync, retained reports, collaboration, organisations and AI
+orchestration at scale. Connecting or disconnecting Cloud must not make local
+Studio projects unusable.
