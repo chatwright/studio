@@ -32,6 +32,7 @@ export interface Recipe {
   /** Job ids this Recipe solves — cross-references Job.id below. */
   readonly jobIds: readonly string[];
   readonly status: string;
+  readonly watch?: string; // player URL of a real recorded run bundle
   readonly tags: readonly string[];
   readonly implementations: readonly RecipeImplementation[];
   /** Framework snippets under recipes/<id>/snippets/ — empty when none exist yet. */
@@ -97,6 +98,7 @@ export const recipes: readonly Recipe[] = [
   },
   {
     id: 'language-onboarding',
+    watch: '/studio/player?embed=1&autoplay=1&sample=greetbot-two-part.chatwright.json',
     title: 'Language onboarding',
     jobIds: ['onboard-users-in-their-language'],
     status: 'draft',
