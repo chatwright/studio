@@ -4,7 +4,13 @@
     "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    // Left off (was on) so the vendored @chatwright/runtime source (see
+    // scripts/vendor-runtime.mjs) compiles as-is: its handshake-envelope
+    // parsing narrows `Record<string, unknown>` values with plain dot
+    // access (protocol/iframe-host.ts, telegram/codec.ts), which this flag
+    // rejects. runtime-ts's own tsconfig.json does not set this flag either
+    // — the PR that introduced the vendoring reports this as a finding
+    // rather than editing the vendored copy (never fork/patch it).
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
@@ -14,7 +20,10 @@
     "moduleResolution": "bundler",
     "importHelpers": true,
     "target": "ES2022",
-    "module": "ES2022"
+    "module": "ES2022",
+    "paths": {
+      "@chatwright/runtime": ["./.vendor/runtime-ts/src/index.ts"]
+    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

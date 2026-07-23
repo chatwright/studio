@@ -47,6 +47,10 @@ function renderRecipeCard(recipe: Recipe): string {
         )}</div></div>`
       : '';
 
+  const runLiveMarkup = recipe.runLive
+    ? `<a class="button-mini button-mini-live" href="${recipe.runLive}">Run it live →</a>`
+    : '';
+
   return `<article class="recipe-card" id="recipe-${recipe.id}">
           <div class="recipe-card-head"><h3>${recipe.title}</h3><span class="status-badge status-${recipe.status}">${recipe.status}</span></div>
           <p class="recipe-jobs">Solves ${jobLinks}</p>
@@ -54,7 +58,7 @@ function renderRecipeCard(recipe: Recipe): string {
           <ul class="impl-list">${renderImplementations(recipe.implementations)}</ul>
           ${snippetsMarkup}
           ${recipe.watch
-            ? `<p class="card-actions"><a class="button-mini" href="${recipe.watch}">▶ Watch it run</a><span class="card-actions-note">a real recorded run, replayed in the player</span></p>`
+            ? `<p class="card-actions"><a class="button-mini" href="${recipe.watch}">▶ Watch it run</a>${runLiveMarkup}<span class="card-actions-note">a real recorded run, replayed in the player</span></p>`
             : `<p class="card-actions card-actions-note">▶ Live start lands with the browser Playground — recording wanted meanwhile</p>`}
           <a class="card-link" href="${recipe.githubUrl}">View “${recipe.title}” on GitHub →</a>
         </article>`;
@@ -140,6 +144,7 @@ export const recipesPageDocument = String.raw`<!doctype html>
       .chip-snippet { color:var(--blue); background:#eef4fd; border-color:#d3e3fa; }
       .card-actions { display:flex; align-items:center; gap:.6rem; margin:.9rem 0 0; }
       .button-mini { display:inline-block; padding:.42rem .85rem; border-radius:8px; background:var(--mint,#37b884); color:#06271d; font-weight:700; font-size:.8rem; text-decoration:none; }
+      .button-mini-live { background:#fff; color:var(--blue); border:1px solid #b7cdf2; }
       .card-actions-note { color:#718094; font-size:.76rem; }
       .chip-specfirst { color:var(--mint-ink); background:#effbf5; border-color:#bce9d8; }
       .impl-list { list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.5rem; }

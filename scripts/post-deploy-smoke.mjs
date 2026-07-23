@@ -55,6 +55,7 @@ await fetchOK(mainScript);
 await fetchOK('emulator');
 await fetchOK('scenario');
 await fetchOK('run?event=2&platform=telegram&view=rendered');
+await fetchOK('/studio/playground');
 await fetchOK('/prototype/emulator');
 
 console.log(`Chatwright Studio smoke passed at ${baseURL}`);

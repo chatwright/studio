@@ -8,3 +8,4 @@ src/app/primeui-license.local.ts
 .wrangler/
 specscore.local.yaml
 .claude/
+.vendor/
