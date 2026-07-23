@@ -158,6 +158,18 @@ export class PlayerEngine implements OnDestroy {
     this._pinnedChatId.set(this._pinnedChatId() === null ? this._activeChatId() : null);
   }
 
+  /** Pin a specific chat: unpin if it is already the pinned chat, otherwise
+   *  make it active and pin it (so clicking pin on B while A is pinned repins
+   *  to B rather than merely unpinning). */
+  pinChat(chatId: number): void {
+    if (this._pinnedChatId() === chatId) {
+      this._pinnedChatId.set(null);
+    } else {
+      this._activeChatId.set(chatId);
+      this._pinnedChatId.set(chatId);
+    }
+  }
+
   /** Follow the chat the current step happens in, unless the user pinned one. */
   private syncActiveChat(): void {
     if (this._pinnedChatId() !== null) {

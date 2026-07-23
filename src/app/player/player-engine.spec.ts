@@ -207,4 +207,19 @@ describe('PlayerEngine — multi-chat auto-follow and pin (round 2, item 2)', ()
     engine.seekTo(1);
     expect(engine.activeChatId()).toBe(200);
   });
+
+  it('pinChat repins to another chat instead of unpinning (round 3, item 3)', () => {
+    const engine = new PlayerEngine();
+    engine.load(twoChatBundle(), 0);
+
+    engine.pinChat(100); // pin A
+    expect(engine.pinnedChatId()).toBe(100);
+
+    engine.pinChat(200); // click pin on B while A is pinned → repin to B
+    expect(engine.pinnedChatId()).toBe(200);
+    expect(engine.activeChatId()).toBe(200);
+
+    engine.pinChat(200); // clicking the pinned chat's pin again releases it
+    expect(engine.pinnedChatId()).toBeNull();
+  });
 });

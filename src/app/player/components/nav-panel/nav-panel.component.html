@@ -49,8 +49,8 @@
                   role="button"
                   tabindex="0"
                   [class.on]="isPinned(chat.chatId)"
-                  (click)="$event.stopPropagation(); selectChat(chat.chatId); togglePin()"
-                  (keydown.enter)="$event.stopPropagation(); selectChat(chat.chatId); togglePin()"
+                  (click)="$event.stopPropagation(); pinChat(chat.chatId)"
+                  (keydown.enter)="$event.stopPropagation(); pinChat(chat.chatId)"
                   [pTooltip]="isPinned(chat.chatId) ? 'Unpin' : 'Pin this chat while stepping'"
                 >
                   <i [class]="isPinned(chat.chatId) ? 'pi pi-lock' : 'pi pi-lock-open'"></i>

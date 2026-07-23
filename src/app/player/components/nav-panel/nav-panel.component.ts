@@ -94,4 +94,8 @@ export class NavPanelComponent {
   togglePin(): void {
     this.engine.togglePin();
   }
+
+  pinChat(chatId: number): void {
+    this.engine.pinChat(chatId);
+  }
 }
