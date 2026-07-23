@@ -44,19 +44,36 @@
               <i class="pi pi-folder-open"></i> Choose file…
             </span>
           </label>
-          <p-button
-            label="Load sample"
-            icon="pi pi-sparkles"
-            severity="secondary"
-            [loading]="loadingSample()"
-            (click)="loadSample()"
-            pTooltip="Play a bundled demo run"
-            tooltipPosition="bottom"
-          />
         </div>
 
         @if (error()) {
           <div class="drop-error"><i class="pi pi-times-circle"></i> {{ error() }}</div>
+        }
+
+        @if (samples.length) {
+          <div class="samples">
+            <span class="samples-label">Or play a bundled sample</span>
+            <ul class="sample-list">
+              @for (sample of samples; track sample.file) {
+                <li>
+                  <button
+                    type="button"
+                    class="sample"
+                    [disabled]="loadingSampleFile() !== null"
+                    (click)="loadSample(sample)"
+                  >
+                    <span class="sample-icon">
+                      <i [class]="loadingSampleFile() === sample.file ? 'pi pi-spin pi-spinner' : 'pi pi-play'"></i>
+                    </span>
+                    <span class="sample-body">
+                      <span class="sample-title">{{ sample.title }}</span>
+                      <span class="sample-desc">{{ sample.description }}</span>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
         }
 
         <ul class="drop-notes quiet">

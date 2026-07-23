@@ -5,6 +5,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { Bundle } from '../../player/model/bundle.types';
 import { parseBundleText } from '../../player/model/parse-bundle';
 import { PlayerComponent } from '../../player/player.component';
+import { BUNDLED_SAMPLES, BundledSample } from '../../player/samples';
 
 /**
  * The /player route: the front door for no-upload local playback. A
@@ -26,12 +27,9 @@ export class PlayerPage {
   readonly error = signal<string | null>(null);
   readonly fileName = signal<string | null>(null);
   readonly dragOver = signal(false);
-  readonly loadingSample = signal(false);
+  readonly loadingSampleFile = signal<string | null>(null);
 
-  private readonly sampleUrl = new URL(
-    'samples/greetbot-language.chatwright.json',
-    document.baseURI
-  ).href;
+  readonly samples: BundledSample[] = BUNDLED_SAMPLES;
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -61,22 +59,23 @@ export class PlayerPage {
     input.value = '';
   }
 
-  async loadSample(): Promise<void> {
-    this.loadingSample.set(true);
+  async loadSample(sample: BundledSample): Promise<void> {
+    this.loadingSampleFile.set(sample.file);
     this.error.set(null);
     try {
-      const response = await fetch(this.sampleUrl);
+      const url = new URL(`samples/${sample.file}`, document.baseURI).href;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`sample not found (${response.status})`);
       }
       const text = await response.text();
-      this.applyText(text, 'greetbot-language.chatwright.json');
+      this.applyText(text, sample.file);
     } catch (error) {
       this.error.set(
-        `Could not load the sample bundle — ${error instanceof Error ? error.message : String(error)}`
+        `Could not load "${sample.title}" — ${error instanceof Error ? error.message : String(error)}`
       );
     } finally {
-      this.loadingSample.set(false);
+      this.loadingSampleFile.set(null);
     }
   }
 
