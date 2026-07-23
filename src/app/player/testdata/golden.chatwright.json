@@ -1,0 +1,368 @@
+{
+  "format": "https://chatwright.dev/formats/run-bundle/v1",
+  "metadata": {
+    "createdAt": "2026-07-22T12:00:00Z",
+    "author": {
+      "name": "Ada Reviewer",
+      "email": "ada@chatwright.dev"
+    }
+  },
+  "runs": [
+    {
+      "id": "run-1",
+      "platform": "telegram",
+      "endpointProfile": "platform-emulated",
+      "actors": [
+        {
+          "id": "explorer",
+          "type": "ai-agent",
+          "name": "Explorer",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 7,
+              "username": "explorer_bot",
+              "firstName": "Explorer"
+            }
+          },
+          "provider": {
+            "name": "anthropic",
+            "modelIds": [
+              "claude-haiku-4-5"
+            ]
+          }
+        },
+        {
+          "id": "bot",
+          "type": "bot",
+          "name": "Greetbot",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 1,
+              "firstName": "ChatwrightBot"
+            }
+          }
+        }
+      ],
+      "chats": [
+        {
+          "chatId": 42,
+          "entries": [
+            {
+              "direction": "user",
+              "kind": "message",
+              "messageId": 1,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Hi",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-22T12:00:00Z",
+              "fromId": 7
+            },
+            {
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 2,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Choose your language:",
+              "actions": [
+                [
+                  {
+                    "label": "English",
+                    "id": "act1",
+                    "url": ""
+                  }
+                ]
+              ],
+              "method": "",
+              "at": "2026-07-22T12:00:01Z",
+              "fromId": 1
+            },
+            {
+              "direction": "user",
+              "kind": "action",
+              "messageId": 0,
+              "refMessageId": 2,
+              "version": 0,
+              "text": "act1",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-22T12:00:02Z",
+              "fromId": 7
+            },
+            {
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 2,
+              "refMessageId": 0,
+              "version": 1,
+              "text": "Howdy stranger",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-22T12:00:03Z",
+              "fromId": 1
+            }
+          ]
+        }
+      ],
+      "parts": [
+        {
+          "id": "exploration",
+          "title": "Shopping-list exploration",
+          "kind": "ai-goal",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 42,
+                "firstEntry": 0,
+                "entryCount": 4
+              }
+            ]
+          },
+          "aiGoal": {
+            "goal": {
+              "id": "listus",
+              "title": "Exercise onboarding",
+              "description": "",
+              "tasks": [
+                {
+                  "id": "onboarding",
+                  "title": "Complete onboarding",
+                  "dependsOn": null,
+                  "successCriteria": "user completes language selection",
+                  "milestones": null
+                }
+              ],
+              "constraints": null,
+              "budgets": {
+                "maxSteps": 0,
+                "maxDurationNanoseconds": 0,
+                "maxRepeatedFailures": 0,
+                "maxCost": null
+              }
+            },
+            "actorId": "explorer",
+            "events": [
+              {
+                "index": 0,
+                "at": "2026-07-22T12:00:00Z",
+                "taskId": "onboarding",
+                "observationSequence": 1,
+                "proposal": {
+                  "kind": "send-text",
+                  "text": "Hi",
+                  "actionId": "",
+                  "observationSequence": 0,
+                  "rationale": "start the conversation"
+                },
+                "usage": {
+                  "model": "claude-haiku-4-5",
+                  "inputTokens": 5,
+                  "outputTokens": 2,
+                  "latencyNanoseconds": 0,
+                  "cost": 0.3
+                },
+                "validation": {
+                  "checked": false,
+                  "verdict": "",
+                  "reason": ""
+                },
+                "action": {
+                  "kind": "executed",
+                  "detail": ""
+                }
+              },
+              {
+                "index": 1,
+                "at": "2026-07-22T12:00:01Z",
+                "taskId": "onboarding",
+                "observationSequence": 2,
+                "proposal": {
+                  "kind": "task-done",
+                  "text": "",
+                  "actionId": "",
+                  "observationSequence": 0,
+                  "rationale": "onboarding confirmed"
+                },
+                "usage": {
+                  "model": "",
+                  "inputTokens": 0,
+                  "outputTokens": 0,
+                  "latencyNanoseconds": 0
+                },
+                "validation": {
+                  "checked": false,
+                  "verdict": "",
+                  "reason": ""
+                },
+                "action": {
+                  "kind": "task-completed",
+                  "detail": ""
+                }
+              }
+            ],
+            "observations": [
+              {
+                "sequence": 1,
+                "observation": {
+                  "sequence": 1,
+                  "previousSequence": 0,
+                  "chat": {
+                    "chatId": 42
+                  },
+                  "messages": [
+                    {
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "user",
+                      "text": "Hi",
+                      "actions": null
+                    }
+                  ],
+                  "changes": null
+                }
+              },
+              {
+                "sequence": 2,
+                "observation": {
+                  "sequence": 2,
+                  "previousSequence": 1,
+                  "chat": {
+                    "chatId": 42
+                  },
+                  "messages": [
+                    {
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "user",
+                      "text": "Hi",
+                      "actions": null
+                    },
+                    {
+                      "id": "msg2",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Choose your language:",
+                      "actions": [
+                        {
+                          "id": "act1",
+                          "label": "English",
+                          "seenAt": 2
+                        }
+                      ]
+                    }
+                  ],
+                  "changes": [
+                    {
+                      "kind": "new-message",
+                      "messageId": "msg2",
+                      "actor": "bot",
+                      "previousVersion": 0,
+                      "version": 0
+                    }
+                  ]
+                }
+              }
+            ],
+            "report": {
+              "schemaVersion": 1,
+              "goalId": "listus",
+              "goalTitle": "Exercise onboarding",
+              "stopReason": "goal-complete",
+              "steps": 2,
+              "cost": 0.3,
+              "elapsedNanoseconds": 0,
+              "tasks": [
+                {
+                  "taskId": "onboarding",
+                  "title": "Complete onboarding",
+                  "successCriteria": "user completes language selection",
+                  "status": "completed",
+                  "attempted": true,
+                  "failureCount": 0
+                }
+              ],
+              "findings": [],
+              "usage": {
+                "inputTokens": 5,
+                "outputTokens": 2,
+                "cost": 0.3,
+                "callCount": 2
+              }
+            },
+            "evidence": [
+              {
+                "name": "onboarding-language",
+                "attachmentPoint": "after-message",
+                "holder": "listusdb",
+                "query": "SELECT language FROM users WHERE id = @userId",
+                "params": {
+                  "userId": "u1"
+                },
+                "outcome": "passed",
+                "failureMessage": "",
+                "totalRows": 1,
+                "returnedRows": 1,
+                "truncated": false,
+                "preview": [
+                  {
+                    "language": "en"
+                  }
+                ],
+                "redactedFields": null,
+                "excludedFields": null
+              }
+            ]
+          }
+        }
+      ],
+      "bookmarks": [
+        {
+          "id": "language-picked",
+          "title": "Language picked",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 2
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "id": "note-1",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 3,
+            "messageId": 2,
+            "version": 1
+          },
+          "author": {
+            "name": "Ada Reviewer",
+            "email": "ada@chatwright.dev"
+          },
+          "createdAt": "2026-07-22T12:00:10Z",
+          "text": "See how instead of $4 bot returned 4$"
+        },
+        {
+          "id": "note-2",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 3,
+            "messageId": 2,
+            "version": 1
+          },
+          "author": {
+            "name": "Sam Maintainer",
+            "email": "sam@chatwright.dev"
+          },
+          "createdAt": "2026-07-22T12:00:20Z",
+          "text": "Good catch — filed as a display bug.",
+          "replyTo": "note-1"
+        }
+      ]
+    }
+  ]
+}

@@ -18,7 +18,7 @@ import {
 } from './derive';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const samplePath = resolve(here, '../../../../public/samples/greetbot-language.chatwright.json');
+const samplePath = resolve(here, '../testdata/golden.chatwright.json');
 
 function loadSample(): Bundle {
   const result = parseBundleText(readFileSync(samplePath, 'utf8'));
@@ -66,6 +66,46 @@ describe('parseBundle', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.warnings.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('rejects a legacy PascalCase (pre-normalisation) bundle with an actionable message', () => {
+    const legacy = {
+      format: 'https://chatwright.dev/formats/run-bundle/v1',
+      metadata: { createdAt: '' },
+      runs: [
+        {
+          id: 'r',
+          platform: 'telegram',
+          endpointProfile: 'platform-emulated',
+          actors: [],
+          chats: [
+            {
+              chatId: 1,
+              entries: [
+                {
+                  Direction: 'user',
+                  Kind: 'message',
+                  MessageID: 1,
+                  RefMessageID: 0,
+                  Version: 0,
+                  Text: 'Hi',
+                  Actions: null,
+                  Method: '',
+                  At: '2026-07-22T12:00:00Z',
+                  FromID: 7
+                }
+              ]
+            }
+          ],
+          parts: []
+        }
+      ]
+    };
+    const result = parseBundleText(JSON.stringify(legacy));
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('predates the current format');
     }
   });
 });

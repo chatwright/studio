@@ -9,7 +9,7 @@ import { BASE_TEMPO, MAX_GAP_MS, MIN_GAP_MS, frameDelayMs } from './tempo';
 import { actorStats, observedByParts } from './derive';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const samplePath = resolve(here, '../../../../public/samples/greetbot-language.chatwright.json');
+const samplePath = resolve(here, '../testdata/golden.chatwright.json');
 
 function firstRun(): BundleRun {
   const result = parseBundleText(readFileSync(samplePath, 'utf8'));

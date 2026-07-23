@@ -16,10 +16,10 @@ export interface BundledSample {
 
 export const BUNDLED_SAMPLES: BundledSample[] = [
   {
-    file: 'greetbot-language.chatwright.json',
-    title: 'Greetbot — language onboarding',
+    file: 'greetbot-two-part.chatwright.json',
+    title: 'Greetbot — two parts',
     description:
-      'A single AI-goal run: the actor greets, the bot offers a language keyboard, and the reply is edited in place.'
+      'Deterministic onboarding (the bot offers a language keyboard, the reply is edited in place), then an AI-goal acknowledgement.'
   },
   {
     file: 'greetbot-three-part.chatwright.json',

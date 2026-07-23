@@ -1,7 +1,7 @@
 {
   "format": "https://chatwright.dev/formats/run-bundle/v1",
   "metadata": {
-    "createdAt": "2026-07-23T06:03:08Z",
+    "createdAt": "2026-07-23T06:54:37Z",
     "chatwrightVersion": "v0.0.0",
     "author": {
       "name": "alex"
@@ -53,40 +53,40 @@
           "chatId": 101,
           "entries": [
             {
-              "Direction": "user",
-              "Kind": "message",
-              "MessageID": 1,
-              "RefMessageID": 0,
-              "Version": 0,
-              "Text": "/debt @bob 10",
-              "Actions": null,
-              "Method": "",
-              "At": "2026-07-23T07:03:08.645989+01:00",
-              "FromID": 7
+              "direction": "user",
+              "kind": "message",
+              "messageId": 1,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "/debt @bob 10",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.808033+01:00",
+              "fromId": 7
             },
             {
-              "Direction": "bot",
-              "Kind": "message",
-              "MessageID": 2,
-              "RefMessageID": 0,
-              "Version": 0,
-              "Text": "Recorded: you lent @bob 10. Waiting for their acknowledgement.",
-              "Actions": null,
-              "Method": "",
-              "At": "2026-07-23T07:03:08.648596+01:00",
-              "FromID": 1
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 2,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Recorded: you lent @bob 10. Waiting for their acknowledgement.",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810087+01:00",
+              "fromId": 1
             },
             {
-              "Direction": "bot",
-              "Kind": "message",
-              "MessageID": 3,
-              "RefMessageID": 0,
-              "Version": 0,
-              "Text": "@bob acknowledged the debt of 10.",
-              "Actions": null,
-              "Method": "",
-              "At": "2026-07-23T07:03:08.649225+01:00",
-              "FromID": 1
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 3,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "@bob acknowledged the debt of 10.",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810644+01:00",
+              "fromId": 1
             }
           ]
         },
@@ -94,36 +94,36 @@
           "chatId": 202,
           "entries": [
             {
-              "Direction": "bot",
-              "Kind": "message",
-              "MessageID": 1,
-              "RefMessageID": 0,
-              "Version": 0,
-              "Text": "Alice says you owe them 10. Please acknowledge.",
-              "Actions": [
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 1,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Alice says you owe them 10. Please acknowledge.",
+              "actions": [
                 [
                   {
-                    "Label": "Acknowledge",
-                    "ID": "ack:1",
-                    "URL": ""
+                    "label": "Acknowledge",
+                    "id": "ack:1",
+                    "url": ""
                   }
                 ]
               ],
-              "Method": "",
-              "At": "2026-07-23T07:03:08.648814+01:00",
-              "FromID": 1
+              "method": "",
+              "at": "2026-07-23T07:54:37.810281+01:00",
+              "fromId": 1
             },
             {
-              "Direction": "user",
-              "Kind": "action",
-              "MessageID": 0,
-              "RefMessageID": 1,
-              "Version": 0,
-              "Text": "ack:1",
-              "Actions": null,
-              "Method": "",
-              "At": "2026-07-23T07:03:08.648974+01:00",
-              "FromID": 8
+              "direction": "user",
+              "kind": "action",
+              "messageId": 0,
+              "refMessageId": 1,
+              "version": 0,
+              "text": "ack:1",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810417+01:00",
+              "fromId": 8
             }
           ]
         }
@@ -168,82 +168,82 @@
           },
           "aiGoal": {
             "goal": {
-              "ID": "acknowledge-debt",
-              "Title": "Acknowledge the debt Alice recorded",
-              "Description": "",
-              "Tasks": [
+              "id": "acknowledge-debt",
+              "title": "Acknowledge the debt Alice recorded",
+              "description": "",
+              "tasks": [
                 {
-                  "ID": "acknowledge",
-                  "Title": "Click Acknowledge on the debt notification",
-                  "DependsOn": null,
-                  "SuccessCriteria": "the debt notification with an \"Acknowledge\" action is visible; click it",
-                  "Milestones": null
+                  "id": "acknowledge",
+                  "title": "Click Acknowledge on the debt notification",
+                  "dependsOn": null,
+                  "successCriteria": "the debt notification with an \"Acknowledge\" action is visible; click it",
+                  "milestones": null
                 }
               ],
-              "Constraints": null,
-              "Budgets": {
-                "MaxSteps": 10,
-                "MaxDuration": 60000000000,
-                "MaxRepeatedFailures": 0,
-                "MaxCost": null
+              "constraints": null,
+              "budgets": {
+                "maxSteps": 10,
+                "maxDurationNanoseconds": 60000000000,
+                "maxRepeatedFailures": 0,
+                "maxCost": null
               }
             },
             "actorId": "bob",
             "events": [
               {
-                "Index": 0,
-                "At": "2026-07-23T07:03:08.648972+01:00",
-                "TaskID": "acknowledge",
-                "ObservationSequence": 1,
-                "Proposal": {
-                  "Kind": "click",
-                  "Text": "",
-                  "ActionID": "act-1-0-r0c0",
-                  "ObservationSequence": 1,
-                  "Rationale": "acknowledge the debt Alice recorded"
+                "index": 0,
+                "at": "2026-07-23T07:54:37.810416+01:00",
+                "taskId": "acknowledge",
+                "observationSequence": 1,
+                "proposal": {
+                  "kind": "click",
+                  "text": "",
+                  "actionId": "act-1-0-r0c0",
+                  "observationSequence": 1,
+                  "rationale": "acknowledge the debt Alice recorded"
                 },
-                "Usage": {
-                  "Model": "scripted-v1",
-                  "InputTokens": 6,
-                  "OutputTokens": 2,
-                  "Latency": 0
+                "usage": {
+                  "model": "scripted-v1",
+                  "inputTokens": 6,
+                  "outputTokens": 2,
+                  "latencyNanoseconds": 0
                 },
-                "Validation": {
-                  "Checked": true,
-                  "Verdict": "fresh",
-                  "Reason": "action is currently available"
+                "validation": {
+                  "checked": true,
+                  "verdict": "fresh",
+                  "reason": "action is currently available"
                 },
-                "Action": {
-                  "Kind": "executed-no-effect",
-                  "Detail": ""
+                "action": {
+                  "kind": "executed-no-effect",
+                  "detail": ""
                 }
               },
               {
-                "Index": 1,
-                "At": "2026-07-23T07:03:08.649331+01:00",
-                "TaskID": "acknowledge",
-                "ObservationSequence": 3,
-                "Proposal": {
-                  "Kind": "task-done",
-                  "Text": "",
-                  "ActionID": "",
-                  "ObservationSequence": 0,
-                  "Rationale": "clicked Acknowledge"
+                "index": 1,
+                "at": "2026-07-23T07:54:37.810768+01:00",
+                "taskId": "acknowledge",
+                "observationSequence": 3,
+                "proposal": {
+                  "kind": "task-done",
+                  "text": "",
+                  "actionId": "",
+                  "observationSequence": 0,
+                  "rationale": "clicked Acknowledge"
                 },
-                "Usage": {
-                  "Model": "scripted-v1",
-                  "InputTokens": 6,
-                  "OutputTokens": 2,
-                  "Latency": 0
+                "usage": {
+                  "model": "scripted-v1",
+                  "inputTokens": 6,
+                  "outputTokens": 2,
+                  "latencyNanoseconds": 0
                 },
-                "Validation": {
-                  "Checked": false,
-                  "Verdict": "",
-                  "Reason": ""
+                "validation": {
+                  "checked": false,
+                  "verdict": "",
+                  "reason": ""
                 },
-                "Action": {
-                  "Kind": "task-completed",
-                  "Detail": ""
+                "action": {
+                  "kind": "task-completed",
+                  "detail": ""
                 }
               }
             ],
@@ -251,82 +251,82 @@
               {
                 "sequence": 1,
                 "observation": {
-                  "Sequence": 1,
-                  "PreviousSequence": 0,
-                  "Chat": {
-                    "ChatID": 202
+                  "sequence": 1,
+                  "previousSequence": 0,
+                  "chat": {
+                    "chatId": 202
                   },
-                  "Messages": [
+                  "messages": [
                     {
-                      "ID": "msg1",
-                      "Version": 0,
-                      "Edited": false,
-                      "Actor": "bot",
-                      "Text": "Alice says you owe them 10. Please acknowledge.",
-                      "Actions": [
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
                         {
-                          "ID": "act-1-0-r0c0",
-                          "Label": "Acknowledge",
-                          "SeenAt": 1
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 1
                         }
                       ]
                     }
                   ],
-                  "Changes": null
+                  "changes": null
                 }
               },
               {
                 "sequence": 2,
                 "observation": {
-                  "Sequence": 2,
-                  "PreviousSequence": 1,
-                  "Chat": {
-                    "ChatID": 202
+                  "sequence": 2,
+                  "previousSequence": 1,
+                  "chat": {
+                    "chatId": 202
                   },
-                  "Messages": [
+                  "messages": [
                     {
-                      "ID": "msg1",
-                      "Version": 0,
-                      "Edited": false,
-                      "Actor": "bot",
-                      "Text": "Alice says you owe them 10. Please acknowledge.",
-                      "Actions": [
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
                         {
-                          "ID": "act-1-0-r0c0",
-                          "Label": "Acknowledge",
-                          "SeenAt": 2
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 2
                         }
                       ]
                     }
                   ],
-                  "Changes": null
+                  "changes": null
                 }
               },
               {
                 "sequence": 3,
                 "observation": {
-                  "Sequence": 3,
-                  "PreviousSequence": 2,
-                  "Chat": {
-                    "ChatID": 202
+                  "sequence": 3,
+                  "previousSequence": 2,
+                  "chat": {
+                    "chatId": 202
                   },
-                  "Messages": [
+                  "messages": [
                     {
-                      "ID": "msg1",
-                      "Version": 0,
-                      "Edited": false,
-                      "Actor": "bot",
-                      "Text": "Alice says you owe them 10. Please acknowledge.",
-                      "Actions": [
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
                         {
-                          "ID": "act-1-0-r0c0",
-                          "Label": "Acknowledge",
-                          "SeenAt": 3
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 3
                         }
                       ]
                     }
                   ],
-                  "Changes": null
+                  "changes": null
                 }
               }
             ],
@@ -336,7 +336,7 @@
               "goalTitle": "Acknowledge the debt Alice recorded",
               "stopReason": "goal-complete",
               "steps": 1,
-              "elapsedNanoseconds": 377417,
+              "elapsedNanoseconds": 367709,
               "tasks": [
                 {
                   "taskId": "acknowledge",
@@ -388,7 +388,7 @@
           "author": {
             "name": "alex"
           },
-          "createdAt": "2026-07-23T06:03:08Z",
+          "createdAt": "2026-07-23T06:54:37Z",
           "text": "This message exists only because the bot's single webhook response to Alice's /debt made a second, independent sendMessage call — into chat B, a chat_id the inbound update never carried."
         },
         {
@@ -401,7 +401,7 @@
           "author": {
             "name": "alex"
           },
-          "createdAt": "2026-07-23T06:04:08Z",
+          "createdAt": "2026-07-23T06:55:37Z",
           "text": "And this is the round trip closing: Bob's click (Part 2, driven as Bob in chat B) triggers a confirmation the bot sends back into chat A — a chat Part 2's own actor loop never itself observes.",
           "replyTo": "a1"
         }

@@ -8,7 +8,7 @@ import { Bundle, BundleRun, PlatformJournalEntry } from './model/bundle.types';
 import { PlayerEngine, SPEED_STOPS } from './player-engine';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const samplePath = resolve(here, '../../../public/samples/greetbot-language.chatwright.json');
+const samplePath = resolve(here, './testdata/golden.chatwright.json');
 
 function loadSample(): Bundle {
   const result = parseBundleText(readFileSync(samplePath, 'utf8'));
@@ -117,16 +117,16 @@ describe('PlayerEngine — signal-driven transport (no timers)', () => {
 
 function msg(chatId: number, id: number, from: number, dir: 'user' | 'bot', text: string, at: string): PlatformJournalEntry {
   return {
-    Direction: dir,
-    Kind: 'message',
-    MessageID: id,
-    RefMessageID: 0,
-    Version: 0,
-    Text: text,
-    Actions: null,
-    Method: '',
-    At: at,
-    FromID: from
+    direction: dir,
+    kind: 'message',
+    messageId: id,
+    refMessageId: 0,
+    version: 0,
+    text,
+    actions: null,
+    method: '',
+    at,
+    fromId: from
   };
 }
 
