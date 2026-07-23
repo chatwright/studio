@@ -7,6 +7,9 @@ interface Env {
 }
 
 import { landingDocument } from './landing';
+import { vanityImportResponse } from './vanity';
+import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
+import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
 
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
@@ -26,6 +29,16 @@ const sitemapDocument = `<?xml version="1.0" encoding="UTF-8"?>
   </url>
 </urlset>
 `;
+
+// The run-bundle format v1 documentation page and its machine-readable
+// schema. Re-serialising the imported schema module (rather than shipping a
+// second copy of the raw text) is safe here: encoding/json's Go writer and
+// JSON.stringify agree byte-for-byte on this file's key order, two-space
+// indent and escaping — see worker/formats/run-bundle/v1/README.md for the
+// canonical source and how this copy is kept in sync on format releases.
+const runBundleV1FormatPath = '/formats/run-bundle/v1';
+const runBundleV1SchemaPath = '/formats/run-bundle/v1/schema.json';
+const runBundleV1SchemaDocument = `${JSON.stringify(runBundleV1Schema, null, 2)}\n`;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -63,6 +76,29 @@ export default {
           'Cache-Control': 'public, max-age=3600'
         }
       });
+    }
+
+    if (incomingURL.pathname === runBundleV1FormatPath || incomingURL.pathname === `${runBundleV1FormatPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : runBundleV1PageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === runBundleV1SchemaPath) {
+      return new Response(request.method === 'HEAD' ? null : runBundleV1SchemaDocument, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    const vanityResponse = vanityImportResponse(incomingURL, request);
+    if (vanityResponse) {
+      return vanityResponse;
     }
 
     if (incomingURL.pathname === legacyMountPath || incomingURL.pathname.startsWith(`${legacyMountPath}/`)) {
