@@ -27,6 +27,14 @@ const root = await rootResponse.text();
 if (!root.includes('The platform is emulated.') || !root.includes('/studio/player')) {
   throw new Error('Root domain is not the Chatwright landing page with the player hero');
 }
+if (!root.includes('conversational UX') || !root.includes('/formats/chatwright-md/v1')) {
+  throw new Error('Root domain is not the repositioned knowledge-platform landing page');
+}
+
+await fetchOK('/formats/chatwright-md/v1');
+await fetchOK('/formats/chatwright-md/v1/schema.json');
+await fetchOK('/badge.svg');
+await fetchOK('/try/github/chatwright/recipes');
 
 if (!shell.includes('<base href="/studio/">')) {
   throw new Error('Deployed shell does not use the /studio/ Angular base href');
