@@ -111,3 +111,9 @@ Chatwright Cloud may remain a closed commercial service. Its optional value is
 managed execution, sync, retained reports, collaboration, organisations and AI
 orchestration at scale. Connecting or disconnecting Cloud must not make local
 Studio projects unusable.
+
+## Spec-first
+
+Chatwright is developed spec-first with [SpecScore](https://specscore.md/) —
+product specs live in the [standard repository](https://github.com/chatwright/chatwright);
+this repository's own specs live under [`spec/`](spec/README.md).
