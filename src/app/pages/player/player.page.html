@@ -1,34 +1,37 @@
 <section
   class="page player-page"
+  [class.embed]="embed()"
   (dragover)="onDragOver($event)"
   (dragleave)="onDragLeave($event)"
   (drop)="onDrop($event)"
 >
-  <div class="page-heading">
-    <div>
-      <p class="page-kicker">Player · run bundle</p>
-      <h1>Replay a run, locally.</h1>
-      <p>
-        Drop a <code>*.chatwright.json</code> run bundle onto this page and it plays entirely in your
-        browser — transcript, AI reasoning, findings and comments. Nothing is uploaded; the bundle
-        never leaves your machine.
-      </p>
+  @if (!embed()) {
+    <div class="page-heading">
+      <div>
+        <p class="page-kicker">Player · run bundle</p>
+        <h1>Replay a run, locally.</h1>
+        <p>
+          Drop a <code>*.chatwright.json</code> run bundle onto this page and it plays entirely in your
+          browser — transcript, AI reasoning, findings and comments. Nothing is uploaded; the bundle
+          never leaves your machine.
+        </p>
+      </div>
+      <div class="heading-actions">
+        @if (bundle()) {
+          <span class="file-name mono" pTooltip="Loaded bundle">
+            <i class="pi pi-file"></i> {{ fileName() }}
+          </span>
+          <p-button
+            label="Load another"
+            icon="pi pi-upload"
+            severity="secondary"
+            outlined
+            (click)="clear()"
+          />
+        }
+      </div>
     </div>
-    <div class="heading-actions">
-      @if (bundle()) {
-        <span class="file-name mono" pTooltip="Loaded bundle">
-          <i class="pi pi-file"></i> {{ fileName() }}
-        </span>
-        <p-button
-          label="Load another"
-          icon="pi pi-upload"
-          severity="secondary"
-          outlined
-          (click)="clear()"
-        />
-      }
-    </div>
-  </div>
+  }
 
   @if (!bundle()) {
     <div class="dropzone surface" [class.drag]="dragOver()">
@@ -84,10 +87,10 @@
       </div>
     </div>
   } @else {
-    @if (error()) {
+    @if (error() && !embed()) {
       <div class="drop-error inline"><i class="pi pi-times-circle"></i> {{ error() }}</div>
     }
-    <cw-player [bundle]="bundle()" [warnings]="warnings()" />
+    <cw-player [bundle]="bundle()" [warnings]="warnings()" [embed]="embed()" [autoplay]="autoplay()" />
   }
 
   @if (dragOver()) {
