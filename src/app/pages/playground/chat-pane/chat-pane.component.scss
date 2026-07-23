@@ -1,0 +1,533 @@
+:host {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chat-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+/* --- toolbar (Studio chrome — NOT inverted; only the chat surface below is) --- */
+.pane-toolbar {
+  min-height: 3.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--cw-line);
+}
+
+.compact .pane-toolbar {
+  min-height: 3rem;
+  padding: 0.5rem 0.65rem;
+  gap: 0.5rem;
+}
+
+.bot-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+
+  > div {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+  }
+  strong {
+    font-size: 0.78rem;
+  }
+  small {
+    color: var(--cw-muted);
+    font-size: 0.64rem;
+
+    a {
+      color: var(--cw-blue);
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.bot-avatar {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.6rem;
+  color: var(--cw-blue);
+  background: rgba(38, 120, 189, 0.13);
+}
+
+.whatsapp .bot-avatar {
+  color: #1f9d67;
+  background: rgba(37, 211, 102, 0.14);
+}
+
+.compact .bot-avatar {
+  width: 1.7rem;
+  height: 1.7rem;
+  font-size: 0.8rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.65rem;
+  border: 1px solid var(--cw-line);
+  border-radius: 999px;
+  color: var(--cw-muted-strong);
+  background: var(--cw-panel-soft);
+  font: 650 0.68rem/1 var(--cw-mono);
+  white-space: nowrap;
+  text-transform: capitalize;
+
+  .dot {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: var(--cw-amber);
+  }
+  &.handshaking .dot {
+    animation: pulse 1.4s infinite;
+    background: var(--cw-amber);
+  }
+  &.connected {
+    color: var(--cw-green);
+    border-color: rgba(22, 133, 82, 0.28);
+    background: rgba(22, 133, 82, 0.08);
+    .dot {
+      background: var(--cw-green);
+    }
+  }
+  &.error {
+    color: var(--cw-red);
+    border-color: rgba(198, 67, 94, 0.3);
+    background: rgba(198, 67, 94, 0.08);
+    .dot {
+      background: var(--cw-red);
+    }
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.pane-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.toolbar-note {
+  flex: 1 0 100%;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--cw-mint);
+  font-size: 0.72rem;
+}
+
+/* --- frame: chat column + collapsible bot-internals rail --- */
+.pane-frame {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 0fr;
+  transition: grid-template-columns 0.22s ease;
+  overflow: hidden;
+
+  &.internals-open {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+  }
+}
+
+.compact .pane-frame.internals-open {
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 16rem);
+}
+
+.chat-column {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+/*
+ * --- pane-surface: the inverted-chat theming seam ---
+ *
+ * A phone-like messenger reads wrong sitting flush with Studio's own theme,
+ * so the actual chat surface (bubbles + composer) is deliberately the
+ * INVERSE of the Studio shell's theme, keyed off DemoStore.telegramTheme()
+ * (itself the computed inverse of DemoStore.appTheme() — see the store's own
+ * doc comment). This mirrors the exact `--tg-*` seam the live emulator
+ * (emulator.page.scss's `.telegram-window`/`.whatsapp-window`) and the run
+ * inspector's rendered view (run.page.scss) already established — never a
+ * new theming mechanism, just this component's own use of it.
+ *
+ * The `--cw-*` remaps below are the trick that keeps every existing
+ * `.bubble`/`.action-btn`/etc. rule (already written in terms of `--cw-*`)
+ * correct with zero changes: they read the *locally overridden* value from
+ * this ancestor's own scope, without knowing it's a "pane" at all.
+ * `cw-chat-composer`'s own stylesheet already expects `--tg-*` directly —
+ * this is the first place in the app that actually supplies it, no changes
+ * needed there either.
+ */
+.pane-surface {
+  --cw-panel-soft: var(--tg-panel);
+  --cw-panel: var(--tg-panel-raised);
+  --cw-panel-raised: var(--tg-panel-raised);
+  --cw-line: var(--tg-line);
+  --cw-line-strong: var(--tg-line-strong);
+  --cw-text: var(--tg-text);
+  --cw-muted-strong: var(--tg-muted-strong);
+  --cw-muted: var(--tg-muted);
+  --cw-blue: var(--tg-accent);
+  --cw-mint: var(--tg-selected);
+  --cw-green: var(--tg-selected);
+  --cw-code-bg: color-mix(in srgb, var(--tg-line) 55%, transparent);
+  --cw-shadow: rgba(0, 0, 0, 0.28);
+  color: var(--tg-text);
+  background: var(--tg-canvas);
+}
+
+.telegram .pane-surface {
+  --tg-canvas: #0e1621;
+  --tg-panel: #17212b;
+  --tg-panel-raised: #182533;
+  --tg-text: #f1f5f9;
+  --tg-muted-strong: #a6b3c0;
+  --tg-muted: #7f91a2;
+  --tg-line: rgba(187, 207, 225, 0.12);
+  --tg-line-strong: rgba(187, 207, 225, 0.2);
+  --tg-accent: #64b5ef;
+  --tg-selected: #70c9a7;
+  background-image: radial-gradient(circle at 50% 20%, rgba(100, 181, 239, 0.06), transparent 20rem);
+}
+
+.telegram .pane-surface.pane-light {
+  --tg-canvas: #e7ebee;
+  --tg-panel: #ffffff;
+  --tg-panel-raised: #ffffff;
+  --tg-text: #182330;
+  --tg-muted-strong: #5f6f7f;
+  --tg-muted: #81909e;
+  --tg-line: rgba(38, 61, 82, 0.12);
+  --tg-line-strong: rgba(38, 61, 82, 0.2);
+  --tg-accent: #2481cc;
+  --tg-selected: #16865f;
+  background-image: radial-gradient(circle at 50% 20%, rgba(36, 129, 204, 0.05), transparent 20rem);
+}
+
+.whatsapp .pane-surface {
+  --tg-canvas: #0b141a;
+  --tg-panel: #202c33;
+  --tg-panel-raised: #202c33;
+  --tg-text: #e9edef;
+  --tg-muted-strong: #aebac1;
+  --tg-muted: #8696a0;
+  --tg-line: rgba(233, 237, 239, 0.12);
+  --tg-line-strong: rgba(233, 237, 239, 0.2);
+  --tg-accent: #25d366;
+  --tg-selected: #00a884;
+  background-image: radial-gradient(circle at 1px 1px, rgba(134, 150, 160, 0.08) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.whatsapp .pane-surface.pane-light {
+  --tg-canvas: #efeae2;
+  --tg-panel: #ffffff;
+  --tg-panel-raised: #ffffff;
+  --tg-text: #111b21;
+  --tg-muted-strong: #54656f;
+  --tg-muted: #667781;
+  --tg-line: rgba(17, 27, 33, 0.12);
+  --tg-line-strong: rgba(17, 27, 33, 0.2);
+  --tg-accent: #008069;
+  --tg-selected: #008069;
+  background-image: radial-gradient(circle at 1px 1px, rgba(84, 101, 111, 0.09) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.chat-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.compact .chat-scroll {
+  padding: 0.85rem 0.9rem;
+  gap: 0.65rem;
+}
+
+.empty-state {
+  margin: auto;
+  display: grid;
+  justify-items: center;
+  gap: 0.6rem;
+  text-align: center;
+  color: var(--cw-muted-strong);
+  max-width: 24rem;
+
+  p {
+    margin: 0;
+    font-size: 0.86rem;
+  }
+  .error-text {
+    color: var(--cw-red);
+  }
+  .quiet.small {
+    color: var(--cw-muted);
+    font-size: 0.7rem;
+  }
+}
+
+.start-button {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(38, 120, 189, 0.35);
+  border-radius: 0.7rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--cw-blue), var(--cw-violet));
+  font-weight: 650;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px var(--cw-shadow);
+  }
+}
+
+.method-note {
+  align-self: center;
+  font-size: 0.66rem;
+  color: var(--cw-muted-strong);
+  background: var(--cw-code-bg);
+  border: 1px dashed var(--cw-line-strong);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.65rem;
+}
+
+.row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  max-width: 100%;
+
+  &.from-user {
+    justify-content: flex-end;
+  }
+}
+
+.msg-avatar {
+  flex: 0 0 auto;
+  --p-avatar-width: 2rem;
+  --p-avatar-height: 2rem;
+  font-size: 0.62rem;
+
+  &.bot {
+    --p-avatar-background: color-mix(in srgb, var(--cw-blue) 18%, transparent);
+    --p-avatar-color: var(--cw-blue);
+  }
+  &.user {
+    --p-avatar-background: color-mix(in srgb, var(--cw-mint) 18%, transparent);
+    --p-avatar-color: var(--cw-mint);
+  }
+}
+
+.compact .msg-avatar {
+  --p-avatar-width: 1.6rem;
+  --p-avatar-height: 1.6rem;
+}
+
+.bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  max-width: min(28rem, 78%);
+  min-width: 0;
+
+  .from-user & {
+    align-items: flex-end;
+  }
+}
+
+.compact .bubble-wrap {
+  max-width: min(20rem, 86%);
+}
+
+.attribution {
+  padding: 0 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 650;
+  color: var(--cw-text);
+}
+
+.bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--cw-line);
+  border-radius: 1rem;
+  padding: 0.65rem 0.8rem;
+  background: var(--cw-panel-soft);
+  color: var(--cw-text);
+
+  .from-bot & {
+    border-bottom-left-radius: 0.35rem;
+  }
+  .from-user & {
+    background: linear-gradient(140deg, color-mix(in srgb, var(--cw-blue) 16%, var(--cw-panel-soft)), color-mix(in srgb, var(--cw-mint) 12%, var(--cw-panel-soft)));
+    border-bottom-right-radius: 0.35rem;
+  }
+}
+
+.bubble-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+  font-size: 0.86rem;
+}
+
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.58rem;
+  color: var(--cw-muted);
+
+  .edited {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: var(--cw-violet);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.action-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.action-btn {
+  flex: 1 1 auto;
+  text-align: center;
+  font: 600 0.74rem/1.2 inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--cw-line-strong);
+  color: var(--cw-blue);
+  background: var(--cw-panel);
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.1s ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--cw-blue) 10%, transparent);
+  }
+  &.pressed {
+    color: #fff;
+    background: var(--cw-blue);
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+}
+
+.composer-placeholder {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--cw-line);
+  color: var(--cw-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* --- bot internals rail (Studio chrome — NOT inverted) --- */
+.bot-panel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--cw-line);
+  background: var(--cw-panel-soft);
+  overflow: hidden;
+
+  header {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.8rem 0.9rem;
+    border-bottom: 1px solid var(--cw-line);
+
+    strong {
+      font-size: 0.74rem;
+    }
+    small {
+      color: var(--cw-muted);
+      font-size: 0.6rem;
+      line-height: 1.4;
+    }
+  }
+}
+
+.bot-frame-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+@media (max-width: 900px) {
+  .pane-frame {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+
+    &.internals-open {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  .chat-column {
+    height: max(420px, 60vh);
+  }
+  .bot-panel {
+    border-left: 0;
+    border-top: 1px solid var(--cw-line);
+    display: none;
+  }
+  .internals-open .bot-panel {
+    display: flex;
+    height: 22rem;
+  }
+}

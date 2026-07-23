@@ -3,175 +3,61 @@
     <div>
       <p class="page-kicker">Playground · live over the iframe bot protocol</p>
       <h1>Chat with a real bot, live.</h1>
-      <p>
-        This is greetbot running for real in a sandboxed iframe — every message, button and edit below is a live
-        <code>@chatwright/runtime</code> <code>Session</code> talking to it over
-        <code>postMessage</code>, not a recording.
-      </p>
-    </div>
-  </div>
-
-  <div class="playground-toolbar surface">
-    <div class="bot-identity">
-      <span class="bot-avatar"><i class="pi pi-sparkles"></i></span>
-      <div>
-        <strong>greetbot</strong>
-        <small>live over the iframe bot protocol · <a [href]="botRepoUrl" target="_blank" rel="noopener">source ↗</a></small>
-      </div>
-    </div>
-
-    <span
-      class="status-pill"
-      [class.connected]="status() === 'connected'"
-      [class.error]="status() === 'error'"
-      [class.handshaking]="status() === 'handshaking'"
-      role="status"
-    >
-      <span class="dot"></span>{{ statusLabel() }}
-    </span>
-
-    <div class="toolbar-actions">
-      <p-button
-        [label]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
-        icon="pi pi-code"
-        severity="secondary"
-        outlined
-        size="small"
-        (onClick)="showBotInternals.set(!showBotInternals())"
-      />
-      <p-button
-        label="Download recording"
-        icon="pi pi-download"
-        size="small"
-        [disabled]="!hasContent()"
-        pTooltip="session.toBundle() → a *.chatwright.json run bundle"
-        tooltipPosition="bottom"
-        (onClick)="downloadRecording()"
-      />
-      <p-button
-        label="Replay in player"
-        icon="pi pi-play-circle"
-        severity="secondary"
-        outlined
-        size="small"
-        [disabled]="!hasContent()"
-        pTooltip="Opens /player in a new tab — drop the downloaded file onto it"
-        tooltipPosition="bottom"
-        (onClick)="replayInPlayer()"
-      />
-    </div>
-
-    @if (noteMessage(); as note) {
-      <p class="toolbar-note"><i class="pi pi-check-circle"></i> {{ note }}</p>
-    }
-  </div>
-
-  <div class="playground-frame surface" [class.internals-open]="showBotInternals()">
-    <section class="chat-column">
-      <div #chatScroll class="chat-scroll">
-        @if (entries().length === 0) {
-          <div class="empty-state">
-            @switch (status()) {
-              @case ('handshaking') {
-                <p><i class="pi pi-spin pi-spinner"></i> Handshaking with greetbot over the iframe bot protocol…</p>
-              }
-              @case ('error') {
-                <p class="error-text"><i class="pi pi-times-circle"></i> {{ errorReason() }}</p>
-              }
-              @case ('connected') {
-                <p>Connected — greetbot is listening.</p>
-                <button type="button" class="start-button" (click)="startConversation()">
-                  ▶ Start the conversation
-                </button>
-                <p class="quiet small">Sends <code>/start</code> — or just type below.</p>
-              }
-            }
-          </div>
-        }
-
-        @for (item of timeline().items; track item.order) {
-          @if (item.kind === 'note') {
-            <div class="method-note mono">
-              <i class="pi pi-info-circle"></i> bot called <code>{{ item.method }}</code> — not emulated in this slice
-            </div>
-          } @else {
-            <div class="row" [class.from-bot]="item.direction === 'bot'" [class.from-user]="item.direction === 'user'">
-              @if (item.direction === 'bot') {
-                <p-avatar label="GB" shape="circle" class="msg-avatar bot" />
-              }
-
-              <div class="bubble-wrap">
-                <div class="attribution">
-                  <span class="author">{{ item.direction === 'bot' ? 'GreetBot' : 'Visitor' }}</span>
-                </div>
-
-                <div class="bubble">
-                  <span class="bubble-text">{{ item.text }}</span>
-
-                  @if (item.actions && item.actions.length) {
-                    <span class="actions">
-                      @for (row of item.actions; track $index) {
-                        <span class="action-row">
-                          @for (action of row; track action.id) {
-                            <button
-                              type="button"
-                              class="action-btn"
-                              [class.pressed]="isPressed(item.messageId, action.id)"
-                              [disabled]="status() !== 'connected'"
-                              (click)="onActionClick(item, action)"
-                            >
-                              {{ action.label }}
-                              @if (action.url) {
-                                <i class="pi pi-external-link"></i>
-                              }
-                            </button>
-                          }
-                        </span>
-                      }
-                    </span>
-                  }
-
-                  <span class="bubble-meta mono">
-                    @if (item.edited) {
-                      <span class="edited"><i class="pi pi-pencil"></i> v{{ item.version }}</span>
-                    }
-                    <span class="msg-id">#{{ item.messageId }}</span>
-                  </span>
-                </div>
-              </div>
-
-              @if (item.direction === 'user') {
-                <p-avatar label="VI" shape="circle" class="msg-avatar user" />
-              }
-            </div>
-          }
-        }
-      </div>
-
-      @if (status() === 'connected') {
-        <cw-chat-composer actor="Visitor" platform="telegram" (messageSent)="onSend($event)" />
+      @if (activeTab() === 'compare') {
+        <p>
+          Same conversation. Two platforms. Watch the UX differ. One composer below drives two independent
+          <code>@chatwright/runtime</code> <code>Session</code>s — greetbot on Telegram and greetbot on WhatsApp — each
+          live over <code>postMessage</code>, not a recording.
+        </p>
       } @else {
-        <div class="composer-placeholder">
-          {{ status() === 'error' ? 'Composer unavailable — the bot never connected.' : 'Composer opens once greetbot connects…' }}
-        </div>
+        <p>
+          This is greetbot running for real in a sandboxed iframe — every message, button and edit below is a live
+          <code>@chatwright/runtime</code> <code>Session</code> talking to it over
+          <code>postMessage</code>, not a recording.
+        </p>
       }
-    </section>
-
-    <aside class="bot-panel" aria-label="Bot internals">
-      <header>
-        <span class="eyebrow">Bot internals</span>
-        <strong>greetbot's own iframe page</strong>
-        <small>Its envelope log below shows every handshake/update/call/result on the wire.</small>
-      </header>
-      <div class="bot-frame-wrap">
-        <iframe
-          #botFrame
-          [src]="botIframeSrc"
-          sandbox="allow-scripts allow-same-origin"
-          title="greetbot (Telegram) — the live bot under test"
-          loading="eager"
-        ></iframe>
-      </div>
-    </aside>
+    </div>
   </div>
+
+  <div class="platform-tabs" role="tablist" aria-label="Playground platform">
+    <button type="button" role="tab" [class.active]="activeTab() === 'telegram'" [attr.aria-selected]="activeTab() === 'telegram'" (click)="setTab('telegram')">
+      <i class="pi pi-send" aria-hidden="true"></i> Telegram
+    </button>
+    <button type="button" role="tab" [class.active]="activeTab() === 'whatsapp'" [attr.aria-selected]="activeTab() === 'whatsapp'" (click)="setTab('whatsapp')">
+      <i class="pi pi-whatsapp" aria-hidden="true"></i> WhatsApp
+    </button>
+    <button type="button" role="tab" class="compare-tab" [class.active]="activeTab() === 'compare'" [attr.aria-selected]="activeTab() === 'compare'" (click)="setTab('compare')">
+      <i class="pi pi-bolt" aria-hidden="true"></i> Compare
+    </button>
+  </div>
+
+  @switch (activeTab()) {
+    @case ('telegram') {
+      <div class="playground-frame surface single">
+        <cw-chat-pane platform="telegram" />
+      </div>
+    }
+    @case ('whatsapp') {
+      <div class="playground-frame surface single">
+        <cw-chat-pane platform="whatsapp" />
+      </div>
+    }
+    @case ('compare') {
+      <div class="compare-frame surface">
+        <div class="compare-panes">
+          <cw-chat-pane #comparePaneTelegram platform="telegram" [showComposer]="false" [compact]="true" />
+          <div class="compare-divider" aria-hidden="true"></div>
+          <cw-chat-pane #comparePaneWhatsapp platform="whatsapp" [showComposer]="false" [compact]="true" />
+        </div>
+
+        <div class="compare-composer-surface" [class.pane-light]="store.telegramTheme() === 'light'">
+          @if (compareBothConnected()) {
+            <cw-chat-composer actor="Visitor" platform="compare" (messageSent)="onCompareSend($event)" />
+          } @else {
+            <div class="composer-placeholder">{{ compareStatusNote() }}</div>
+          }
+        </div>
+      </div>
+    }
+  }
 </section>

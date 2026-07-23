@@ -1,0 +1,177 @@
+<div class="chat-pane" [class.compact]="compact()" [class.telegram]="platform() === 'telegram'" [class.whatsapp]="platform() === 'whatsapp'">
+  <div class="pane-toolbar">
+    <div class="bot-identity">
+      <span class="bot-avatar"><i [class]="botMeta().icon"></i></span>
+      <div>
+        <strong>{{ botMeta().label }}</strong>
+        @if (!compact()) {
+          <small>greetbot · live over the iframe bot protocol · <a [href]="botRepoUrl" target="_blank" rel="noopener">source ↗</a></small>
+        }
+      </div>
+    </div>
+
+    <span
+      class="status-pill"
+      [class.connected]="status() === 'connected'"
+      [class.error]="status() === 'error'"
+      [class.handshaking]="status() === 'handshaking'"
+      role="status"
+    >
+      <span class="dot"></span>{{ compact() ? status() : statusLabel() }}
+    </span>
+
+    <div class="pane-actions">
+      <p-button
+        icon="pi pi-code"
+        severity="secondary"
+        outlined
+        size="small"
+        [label]="compact() ? undefined : (showBotInternals() ? 'Hide internals' : 'Show internals')"
+        [attr.aria-label]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
+        [pTooltip]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
+        tooltipPosition="bottom"
+        (onClick)="showBotInternals.set(!showBotInternals())"
+      />
+      <p-button
+        icon="pi pi-download"
+        size="small"
+        [label]="compact() ? undefined : 'Download'"
+        [disabled]="!hasContent()"
+        [attr.aria-label]="'Download ' + botMeta().label + ' recording'"
+        pTooltip="session.toBundle() → a *.chatwright.json run bundle"
+        tooltipPosition="bottom"
+        (onClick)="downloadRecording()"
+      />
+      @if (!compact()) {
+        <p-button
+          label="Replay"
+          icon="pi pi-play-circle"
+          severity="secondary"
+          outlined
+          size="small"
+          [disabled]="!hasContent()"
+          pTooltip="Opens /player in a new tab — drop the downloaded file onto it"
+          tooltipPosition="bottom"
+          (onClick)="replayInPlayer()"
+        />
+      }
+    </div>
+
+    @if (noteMessage(); as note) {
+      <p class="toolbar-note"><i class="pi pi-check-circle"></i> {{ note }}</p>
+    }
+  </div>
+
+  <div class="pane-frame" [class.internals-open]="showBotInternals()">
+    <section class="chat-column pane-surface" [class.pane-light]="store.telegramTheme() === 'light'">
+      <div #chatScroll class="chat-scroll">
+        @if (entries().length === 0) {
+          <div class="empty-state">
+            @switch (status()) {
+              @case ('handshaking') {
+                <p><i class="pi pi-spin pi-spinner"></i> Handshaking with {{ botMeta().label }}'s greetbot…</p>
+              }
+              @case ('error') {
+                <p class="error-text"><i class="pi pi-times-circle"></i> {{ errorReason() }}</p>
+              }
+              @case ('connected') {
+                <p>Connected — greetbot is listening.</p>
+                @if (showComposer()) {
+                  <button type="button" class="start-button" (click)="startConversation()">▶ Start the conversation</button>
+                  <p class="quiet small">Sends <code>/start</code> — or just type below.</p>
+                } @else {
+                  <p class="quiet small">Waiting on the shared composer below.</p>
+                }
+              }
+            }
+          </div>
+        }
+
+        @for (item of timeline().items; track item.order) {
+          @if (item.kind === 'note') {
+            <div class="method-note mono">
+              <i class="pi pi-info-circle"></i> bot called <code>{{ item.method }}</code> — not emulated in this slice
+            </div>
+          } @else {
+            <div class="row" [class.from-bot]="item.direction === 'bot'" [class.from-user]="item.direction === 'user'">
+              @if (item.direction === 'bot') {
+                <p-avatar label="GB" shape="circle" class="msg-avatar bot" />
+              }
+
+              <div class="bubble-wrap">
+                <div class="attribution">
+                  <span class="author">{{ item.direction === 'bot' ? 'GreetBot' : 'Visitor' }}</span>
+                </div>
+
+                <div class="bubble">
+                  <span class="bubble-text">{{ item.text }}</span>
+
+                  @if (item.actions && item.actions.length) {
+                    <span class="actions">
+                      @for (row of item.actions; track $index) {
+                        <span class="action-row">
+                          @for (action of row; track action.id) {
+                            <button
+                              type="button"
+                              class="action-btn"
+                              [class.pressed]="isPressed(item.messageId, action.id)"
+                              [disabled]="status() !== 'connected'"
+                              (click)="onActionClick(item, action)"
+                            >
+                              {{ action.label }}
+                              @if (action.url) {
+                                <i class="pi pi-external-link"></i>
+                              }
+                            </button>
+                          }
+                        </span>
+                      }
+                    </span>
+                  }
+
+                  <span class="bubble-meta mono">
+                    @if (item.edited) {
+                      <span class="edited"><i class="pi pi-pencil"></i> v{{ item.version }}</span>
+                    }
+                    <span class="msg-id">#{{ item.messageId }}</span>
+                  </span>
+                </div>
+              </div>
+
+              @if (item.direction === 'user') {
+                <p-avatar label="VI" shape="circle" class="msg-avatar user" />
+              }
+            </div>
+          }
+        }
+      </div>
+
+      @if (showComposer()) {
+        @if (status() === 'connected') {
+          <cw-chat-composer actor="Visitor" [platform]="platform()" (messageSent)="submitText($event)" />
+        } @else {
+          <div class="composer-placeholder">
+            {{ status() === 'error' ? 'Composer unavailable — the bot never connected.' : 'Composer opens once greetbot connects…' }}
+          </div>
+        }
+      }
+    </section>
+
+    <aside class="bot-panel" aria-label="Bot internals">
+      <header>
+        <span class="eyebrow">Bot internals</span>
+        <strong>greetbot's own iframe page</strong>
+        <small>Its envelope log below shows every handshake/update/call/result on the wire.</small>
+      </header>
+      <div class="bot-frame-wrap">
+        <iframe
+          #botFrame
+          [src]="botIframeSrc()"
+          sandbox="allow-scripts allow-same-origin"
+          [title]="botMeta().label + ' greetbot — the live bot under test'"
+          loading="eager"
+        ></iframe>
+      </div>
+    </aside>
+  </div>
+</div>

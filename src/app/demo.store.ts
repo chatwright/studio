@@ -27,7 +27,23 @@ export class DemoStore {
   readonly workspace = 'greetbot';
   readonly scenario = 'language-choice';
   readonly runID = 'run-1842';
-  readonly appTheme = signal<'light' | 'dark'>('light');
+  /**
+   * The Studio shell's own light/dark theme — manually toggled from the top
+   * bar (`AppComponent`'s `theme-toggle`); that toggle is the source of
+   * truth for the rest of the app's session, this is only its *initial*
+   * value. Falls back to the OS/browser's `prefers-color-scheme` when
+   * available (SSR/non-browser environments have no `matchMedia`, hence the
+   * guard) rather than hardcoding light — the same "declare, don't assume"
+   * spirit the runtime's fidelity rules follow, applied to a UI default.
+   */
+  readonly appTheme = signal<'light' | 'dark'>(initialAppTheme());
+  /**
+   * Every live chat surface (the Playground's panes, the live emulator, the
+   * run inspector's rendered view) renders the INVERSE of the Studio
+   * shell's theme — a phone-like messenger reads wrong sitting flush with
+   * dev-tool chrome in the same theme. See chat-pane.component.scss's own
+   * doc comment for where this is consumed.
+   */
   readonly telegramTheme = computed<'light' | 'dark'>(() =>
     this.appTheme() === 'light' ? 'dark' : 'light'
   );
@@ -387,4 +403,12 @@ export class DemoStore {
     this.editCount.set(0);
     this.lastEdited.set(null);
   }
+}
+
+/** `matchMedia` fallback for `DemoStore.appTheme`'s initial value — see that field's doc comment. */
+function initialAppTheme(): 'light' | 'dark' {
+  if (typeof matchMedia !== 'function') {
+    return 'light';
+  }
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }

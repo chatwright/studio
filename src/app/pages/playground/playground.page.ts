@@ -1,237 +1,97 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  OnDestroy,
-  computed,
-  effect,
-  inject,
-  signal,
-  viewChild
-} from '@angular/core';
-import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
-import { AvatarModule } from 'primeng/avatar';
-import { ButtonModule } from 'primeng/button';
-import { TooltipModule } from 'primeng/tooltip';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 
-import { IframeHost, Session, type JournalEntry, type TelegramUser } from '@chatwright/runtime';
-
+import { DemoStore } from '../../demo.store';
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
-import { JournalActionLike, PlaygroundBubble, reduceJournalEntries } from './bubble-reducer';
+import { ChatPaneComponent } from './chat-pane/chat-pane.component';
 
-type ConnectionStatus = 'handshaking' | 'connected' | 'error';
-
-/** The bot under test — see formats/bot-protocol/v1/README.md for the handshake this drives. */
-const BOT_ORIGIN = 'https://chatwright.github.io';
-const BOT_IFRAME_SRC = 'https://chatwright.github.io/greetbot/telegram/';
-const BOT_REPO_URL = 'https://github.com/chatwright/greetbot';
-
-/** How long to wait for the bot's `hello` before honestly reporting a stalled handshake. */
-const HANDSHAKE_POLL_MS = 150;
-const HANDSHAKE_TIMEOUT_MS = 12_000;
-
-/** The one fixed visitor identity this slice drives — see I-66 for a multi-bot/multi-actor registry. */
-const VISITOR: TelegramUser = { id: 42, firstName: 'Visitor' };
-/** Telegram private-chat convention: a 1:1 chat's id is the human participant's user id. */
-const CHAT_ID = VISITOR.id;
+export type PlaygroundTab = 'telegram' | 'whatsapp' | 'compare';
 
 /**
  * `/studio/playground` — a live, in-browser conversation with a real bot
  * (today: greetbot) over the Chatwright iframe bot protocol. Unlike
  * `/player` (replays a *finished* run-bundle file) and `/emulator` (a
- * static, scripted mock), this page drives an actual
- * `@chatwright/runtime` `Session` + `IframeHost` against the bot's real
- * iframe page: every bubble on screen is a live fold
- * (`reduceJournalEntries`, see ./bubble-reducer.ts) over that session's
- * journal, appended to as `Journal.subscribe()` delivers entries — nothing
- * here is pre-recorded or faked. "Download recording" / "Replay in
- * player" hand the resulting run-bundle (`session.toBundle()`) to the same
- * `*.chatwright.json` format `/player` already reads.
+ * static, scripted mock), this page drives actual `@chatwright/runtime`
+ * `Session` + `IframeHost` instances against the bot's real iframe page —
+ * every bubble on screen is a live fold over that session's journal, not
+ * pre-recorded or faked. All of that machinery now lives in
+ * `./chat-pane/chat-pane.component.ts` (`ChatPaneComponent`), one live
+ * platform pane; this page is the thin shell around it: a platform tab
+ * strip (Telegram | WhatsApp | ⚡ Compare) plus, in Compare mode, the one
+ * shared composer that fans a submitted message out to both panes' own
+ * sessions at once.
  *
  * @remarks
+ * **Why one composer, two sessions, not one session, two platforms:** the
+ * runtime's `Session` is deliberately single-codec (see
+ * `@chatwright/runtime`'s `Session` doc comment) — a `PlatformCodec` is the
+ * only thing allowed to know a platform's wire shape, and mixing two into
+ * one session would blur that seam. Compare mode instead runs two
+ * completely independent `ChatPaneComponent`s (two `Session`s, two
+ * `IframeHost`s, two greetbot iframes) side by side, and this page's own
+ * `onCompareSend` is the only thing that ties them together: it calls
+ * `submitText()` on both, which is exactly what a human doing the same
+ * two-tab comparison by hand would do, just synchronized.
+ *
  * Deliberately out of scope for this slice (see I-66 in
- * chatwright/chatwright spec/research/knowledge-platform.md): more than
- * one bot per session, a bot registry/picker, scenario execution beyond
- * direct submitText/submitClick, and a live-append path into the /player
- * engine (today /player only plays finished bundles — this page's own
- * transcript rendering is a separate, simpler live fold, not a reuse of
- * the player's settled-fold engine).
+ * chatwright/chatwright spec/research/knowledge-platform.md): more than one
+ * bot per platform, a bot registry/picker, scenario execution beyond direct
+ * submitText/submitClick, a live-append path into the /player engine, and —
+ * noted explicitly rather than silently dropped — a single *combined*
+ * comparison run-bundle. Compare mode's "Download recording" stays
+ * per-pane (two independent bundles, one per `Session`); the run-bundle v1
+ * format already has a `runs[]` array built for exactly this (one bundle,
+ * multiple runs/platforms) — assembling one from two live panes is a
+ * natural follow-up, not attempted here.
  */
 @Component({
   selector: 'cw-playground-page',
-  imports: [AvatarModule, ButtonModule, TooltipModule, ChatComposerComponent],
+  imports: [ChatComposerComponent, ChatPaneComponent],
   templateUrl: './playground.page.html',
   styleUrl: './playground.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PlaygroundPage implements AfterViewInit, OnDestroy {
-  private readonly sanitizer = inject(DomSanitizer);
+export class PlaygroundPage {
+  readonly store = inject(DemoStore);
 
-  readonly botIframeSrc: SafeResourceUrl = this.sanitizer.bypassSecurityTrustResourceUrl(BOT_IFRAME_SRC);
-  readonly botRepoUrl = BOT_REPO_URL;
-  readonly botOrigin = BOT_ORIGIN;
+  readonly activeTab = signal<PlaygroundTab>('telegram');
 
-  private readonly botFrame = viewChild<ElementRef<HTMLIFrameElement>>('botFrame');
-  private readonly chatScroll = viewChild<ElementRef<HTMLElement>>('chatScroll');
+  // Single-platform tabs mount one self-contained pane (own composer,
+  // showComposer defaults true) — this page needs no handle on it at all.
+  //
+  // Compare mode mounts two panes with showComposer=false and drives both
+  // from the shared composer below via these two refs. Angular's viewChild
+  // resolves the currently-rendered template reference regardless of which
+  // `@switch`/`@if` branch put it there — only one branch is ever active at
+  // a time, so there is never an ambiguity between them.
+  private readonly comparePaneTelegram = viewChild<ChatPaneComponent>('comparePaneTelegram');
+  private readonly comparePaneWhatsapp = viewChild<ChatPaneComponent>('comparePaneWhatsapp');
 
-  readonly status = signal<ConnectionStatus>('handshaking');
-  readonly errorReason = signal<string | null>(null);
-  readonly showBotInternals = signal(false);
-  readonly noteMessage = signal<string | null>(null);
+  readonly compareBothConnected = computed(
+    () => this.comparePaneTelegram()?.status() === 'connected' && this.comparePaneWhatsapp()?.status() === 'connected'
+  );
 
-  readonly entries = signal<JournalEntry[]>([]);
-  readonly timeline = computed(() => reduceJournalEntries(this.entries()));
-  readonly hasContent = computed(() => this.entries().length > 0);
-
-  readonly statusLabel = computed(() => {
-    switch (this.status()) {
-      case 'handshaking':
-        return 'handshaking…';
-      case 'connected':
-        return 'connected';
-      case 'error':
-        return `error — ${this.errorReason() ?? 'unknown reason'}`;
+  readonly compareStatusNote = computed(() => {
+    const telegramStatus = this.comparePaneTelegram()?.status() ?? 'handshaking';
+    const whatsappStatus = this.comparePaneWhatsapp()?.status() ?? 'handshaking';
+    if (telegramStatus === 'error' || whatsappStatus === 'error') {
+      return 'Composer unavailable — a bot never connected.';
     }
+    if (telegramStatus === 'connected' && whatsappStatus !== 'connected') {
+      return 'Telegram connected — waiting on WhatsApp…';
+    }
+    if (whatsappStatus === 'connected' && telegramStatus !== 'connected') {
+      return 'WhatsApp connected — waiting on Telegram…';
+    }
+    return 'Composer opens once both bots connect…';
   });
 
-  private readonly session = new Session({
-    runId: 'playground',
-    human: { id: 'visitor', type: 'human', name: 'Visitor' },
-    bot: { id: 'greetbot', type: 'bot', name: 'GreetBot' }
-  });
-
-  private host: IframeHost | undefined;
-  private handshakeTimer: ReturnType<typeof setInterval> | undefined;
-
-  constructor() {
-    // Auto-follow the transcript as new entries land — same idiom as the
-    // player transcript and the live emulator's message canvas.
-    effect(() => {
-      this.entries();
-      const region = this.chatScroll()?.nativeElement;
-      if (!region) {
-        return;
-      }
-      requestAnimationFrame(() => region.scrollTo({ top: region.scrollHeight, behavior: 'smooth' }));
-    });
+  setTab(tab: PlaygroundTab): void {
+    this.activeTab.set(tab);
   }
 
-  ngAfterViewInit(): void {
-    this.connect();
+  /** The shared composer's one send fans out to both panes' independent sessions — see this class's doc comment. */
+  onCompareSend(text: string): void {
+    this.comparePaneTelegram()?.submitText(text);
+    this.comparePaneWhatsapp()?.submitText(text);
   }
-
-  ngOnDestroy(): void {
-    if (this.handshakeTimer !== undefined) {
-      clearInterval(this.handshakeTimer);
-    }
-    this.host?.close();
-  }
-
-  /** The `/start` affordance: the visitor acts, this never auto-sends. */
-  startConversation(): void {
-    this.session.submitText(CHAT_ID, VISITOR, '/start');
-  }
-
-  onSend(text: string): void {
-    this.session.submitText(CHAT_ID, VISITOR, text);
-  }
-
-  onActionClick(item: PlaygroundBubble, action: JournalActionLike): void {
-    if (this.status() !== 'connected') {
-      return;
-    }
-    this.session.submitClick(CHAT_ID, VISITOR, action.id, item.messageId);
-  }
-
-  isPressed(messageId: number, actionId: string): boolean {
-    return this.timeline().pressedActionIds.get(messageId)?.has(actionId) ?? false;
-  }
-
-  /** `session.toBundle()` → Blob → download; returns the file name for the caller's own note. */
-  downloadRecording(): string {
-    const bundle = this.session.toBundle();
-    const json = JSON.stringify(bundle, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const fileName = bundleFileName();
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-    this.noteMessage.set(`Downloaded ${fileName}.`);
-    return fileName;
-  }
-
-  /**
-   * Opens /player in a new tab and tells the visitor to drop the just-
-   * downloaded file onto it — no upload plumbing in this slice (that file
-   * never touches a network request; /player's own drag-and-drop reads it
-   * straight off disk, exactly as it does for any other run bundle).
-   */
-  replayInPlayer(): void {
-    const fileName = this.downloadRecording();
-    this.noteMessage.set(`Downloaded ${fileName} — opening the Player. Drop that file onto it to replay this session.`);
-    const playerUrl = new URL('player', document.baseURI).href;
-    window.open(playerUrl, '_blank', 'noopener');
-  }
-
-  private connect(): void {
-    const iframe = this.botFrame()?.nativeElement;
-    const contentWindow = iframe?.contentWindow;
-    if (!iframe || !contentWindow) {
-      this.fail('Could not access the greetbot iframe window.');
-      return;
-    }
-
-    const host = new IframeHost(
-      { expectedOrigin: BOT_ORIGIN, platform: 'telegram' },
-      { kind: 'window', hostWindow: window, botWindow: contentWindow }
-    );
-    this.host = host;
-    this.session.registerBot(host);
-
-    // Created eagerly (rather than lazily on first submit) so subscribe()
-    // catches every entry the bot itself produces from the moment it connects.
-    const journal = this.session.journal(CHAT_ID);
-    journal.subscribe((entry) => this.entries.update((list) => [...list, entry]));
-
-    iframe.addEventListener('error', () => this.fail('The greetbot iframe failed to load.'));
-
-    const deadline = Date.now() + HANDSHAKE_TIMEOUT_MS;
-    this.handshakeTimer = setInterval(() => {
-      if (host.connected) {
-        this.stopHandshakePoll();
-        this.status.set('connected');
-        return;
-      }
-      if (Date.now() > deadline) {
-        this.stopHandshakePoll();
-        this.fail(
-          `No handshake from ${BOT_ORIGIN} within ${Math.round(HANDSHAKE_TIMEOUT_MS / 1000)}s — the bot may not ` +
-            'have loaded, or its declared origin does not match expectedOrigin.'
-        );
-      }
-    }, HANDSHAKE_POLL_MS);
-  }
-
-  private stopHandshakePoll(): void {
-    if (this.handshakeTimer !== undefined) {
-      clearInterval(this.handshakeTimer);
-      this.handshakeTimer = undefined;
-    }
-  }
-
-  private fail(reason: string): void {
-    this.status.set('error');
-    this.errorReason.set(reason);
-  }
-}
-
-function bundleFileName(): string {
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `session-${stamp}.chatwright.json`;
 }
