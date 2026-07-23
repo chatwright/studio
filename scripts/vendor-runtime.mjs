@@ -30,7 +30,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** chatwright/runtime-ts@main as of this vendoring — bump deliberately, never auto-resolved. */
-const RUNTIME_TS_PINNED_SHA = '00bfb3666e81892ca8bf1429f4a2d032e6ff91e0';
+const RUNTIME_TS_PINNED_SHA = 'c6b65f2';
 const RUNTIME_TS_REPO_URL = 'https://github.com/chatwright/runtime-ts.git';
 
 /** Fixed developer-machine path — not repo-relative, see the module doc comment above. */

@@ -98,6 +98,29 @@ describe('reduceJournalEntries', () => {
     expect(timeline.items).toEqual([{ kind: 'note', order: 0, method: 'deleteMessage', at: '2026-07-23T10:00:00.000Z' }]);
   });
 
+  it('folds a WhatsApp-shaped exchange (version always 0, no actions) into separate bubbles, never edited in place', () => {
+    // Mirrors WhatsAppCodec: no reply_markup, no editMessageText — every bot
+    // turn is a brand-new messageId at version 0, unlike Telegram's
+    // edit-in-place greeting. This is the demo's core "watch the UX differ"
+    // claim, pinned at the pure-fold level (see WhatsAppCodec's own doc
+    // comment for why version is always 0).
+    const timeline = reduceJournalEntries([
+      entry({ direction: 'bot', messageId: 1, version: 0, text: 'Choose your language: 1) English 2) Español', method: 'sendMessage' }),
+      entry({ direction: 'user', messageId: 2, version: 0, text: '1' }),
+      entry({ direction: 'bot', messageId: 3, version: 0, text: 'Howdy stranger', method: 'sendMessage' })
+    ]);
+
+    expect(timeline.items).toHaveLength(3);
+    for (const item of timeline.items) {
+      expect(item.kind === 'bubble' ? item.edited : false).toBe(false);
+    }
+    expect(timeline.items.map((item) => (item.kind === 'bubble' ? item.actions : undefined))).toEqual([
+      undefined,
+      undefined,
+      undefined
+    ]);
+  });
+
   it('folds a full greetbot-like exchange in the same shape session.test.ts exercises', () => {
     const timeline = reduceJournalEntries([
       entry({ direction: 'user', messageId: 1, text: '/start' }),

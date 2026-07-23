@@ -6,6 +6,8 @@
 .composer input:focus { border-color: color-mix(in srgb, var(--brand-color) 38%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-color) 6%, transparent); }
 .composer.telegram { --brand-color: #2aabee; --brand-hover: #55bbed; --brand-ink: #06131a; }
 .composer.whatsapp { --brand-color: #25d366; --brand-hover: #51dd84; --brand-ink: #06150d; }
+/* Compare mode's shared composer fans out to both platforms — a neutral (Chatwright violet) brand, not either bot's own color. */
+.composer.compare { --brand-color: #a88cff; --brand-hover: #bfa9ff; --brand-ink: #140f26; }
 .composer-action { width: 2.25rem; height: 2.25rem; border: 0; border-radius: 0.62rem; color: var(--brand-color); background: color-mix(in srgb, var(--brand-color) 9%, transparent); cursor: pointer; }
 .composer-action:hover { background: color-mix(in srgb, var(--brand-color) 16%, transparent); }
 .composer-hint { grid-column: 2; color: var(--cw-muted); font-size: 0.5rem; }

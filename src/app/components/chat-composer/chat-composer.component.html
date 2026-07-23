@@ -1,4 +1,9 @@
-<footer class="composer" [class.telegram]="platform() === 'telegram'" [class.whatsapp]="platform() === 'whatsapp'">
+<footer
+  class="composer"
+  [class.telegram]="platform() === 'telegram'"
+  [class.whatsapp]="platform() === 'whatsapp'"
+  [class.compare]="platform() === 'compare'"
+>
   <button type="button" class="composer-action" aria-label="Attach a test event"><i class="pi pi-paperclip"></i></button>
   <input
     #composerInput

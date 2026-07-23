@@ -6,399 +6,147 @@
   width: min(1500px, 100%);
 }
 
-/* --- toolbar --- */
-.playground-toolbar {
-  min-height: 3.8rem;
-  display: flex;
-  flex-wrap: wrap;
+/* --- platform tabs: Telegram | WhatsApp | ⚡ Compare --- */
+.platform-tabs {
+  display: inline-flex;
   align-items: center;
-  gap: 0.9rem;
-  padding: 0.7rem 0.9rem;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid var(--cw-line);
+  border-radius: 0.9rem;
+  background: var(--cw-panel-soft);
+  width: max-content;
 }
 
-.bot-identity {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-width: 0;
-
-  > div {
-    display: grid;
-    gap: 0.12rem;
-    min-width: 0;
-  }
-  strong {
-    font-size: 0.78rem;
-  }
-  small {
-    color: var(--cw-muted);
-    font-size: 0.64rem;
-
-    a {
-      color: var(--cw-blue);
-      text-decoration: none;
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-}
-
-.bot-avatar {
-  flex: 0 0 auto;
-  width: 2rem;
-  height: 2rem;
-  display: grid;
-  place-items: center;
-  border-radius: 0.6rem;
-  color: var(--cw-blue);
-  background: rgba(38, 120, 189, 0.13);
-}
-
-.status-pill {
+.platform-tabs button {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.32rem 0.65rem;
-  border: 1px solid var(--cw-line);
-  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 0.65rem;
   color: var(--cw-muted-strong);
-  background: var(--cw-panel-soft);
-  font: 650 0.68rem/1 var(--cw-mono);
-  white-space: nowrap;
-
-  .dot {
-    width: 0.42rem;
-    height: 0.42rem;
-    border-radius: 50%;
-    background: var(--cw-amber);
-  }
-  &.handshaking .dot {
-    animation: pulse 1.4s infinite;
-    background: var(--cw-amber);
-  }
-  &.connected {
-    color: var(--cw-green);
-    border-color: rgba(22, 133, 82, 0.28);
-    background: rgba(22, 133, 82, 0.08);
-    .dot {
-      background: var(--cw-green);
-    }
-  }
-  &.error {
-    color: var(--cw-red);
-    border-color: rgba(198, 67, 94, 0.3);
-    background: rgba(198, 67, 94, 0.08);
-    .dot {
-      background: var(--cw-red);
-    }
-  }
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
-}
-
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin-left: auto;
-}
-
-.toolbar-note {
-  flex: 1 0 100%;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--cw-mint);
-  font-size: 0.72rem;
-}
-
-/* --- frame: chat column + collapsible bot-internals rail --- */
-.playground-frame {
-  height: max(560px, calc(100vh - 20rem));
-  min-height: 480px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 0fr;
-  transition: grid-template-columns 0.22s ease;
-  overflow: hidden;
-
-  &.internals-open {
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-  }
-}
-
-.chat-column {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: 1fr auto;
-}
-
-.chat-scroll {
-  min-height: 0;
-  overflow-y: auto;
-  padding: 1.1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.empty-state {
-  margin: auto;
-  display: grid;
-  justify-items: center;
-  gap: 0.6rem;
-  text-align: center;
-  color: var(--cw-muted-strong);
-  max-width: 24rem;
-
-  p {
-    margin: 0;
-    font-size: 0.86rem;
-  }
-  .error-text {
-    color: var(--cw-red);
-  }
-  .quiet.small {
-    color: var(--cw-muted);
-    font-size: 0.7rem;
-  }
-}
-
-.start-button {
-  padding: 0.6rem 1.1rem;
-  border: 1px solid rgba(38, 120, 189, 0.35);
-  border-radius: 0.7rem;
-  color: #fff;
-  background: linear-gradient(135deg, var(--cw-blue), var(--cw-violet));
-  font-weight: 650;
-  font-size: 0.86rem;
+  background: transparent;
+  font: 650 0.76rem/1 var(--cw-sans);
   cursor: pointer;
-  transition: transform 0.14s ease, box-shadow 0.14s ease;
+  transition: color 0.14s ease, background 0.14s ease;
+
+  i {
+    font-size: 0.76rem;
+  }
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 26px var(--cw-shadow);
+    color: var(--cw-text);
+    background: var(--cw-hover);
   }
-}
 
-.method-note {
-  align-self: center;
-  font-size: 0.66rem;
-  color: var(--cw-muted-strong);
-  background: var(--cw-code-bg);
-  border: 1px dashed var(--cw-line-strong);
-  border-radius: 0.5rem;
-  padding: 0.3rem 0.65rem;
-}
-
-.row {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.55rem;
-  max-width: 100%;
-
-  &.from-user {
-    justify-content: flex-end;
-  }
-}
-
-.msg-avatar {
-  flex: 0 0 auto;
-  --p-avatar-width: 2rem;
-  --p-avatar-height: 2rem;
-  font-size: 0.62rem;
-
-  &.bot {
-    --p-avatar-background: rgba(38, 120, 189, 0.16);
-    --p-avatar-color: var(--cw-blue);
-  }
-  &.user {
-    --p-avatar-background: rgba(8, 126, 104, 0.16);
-    --p-avatar-color: var(--cw-mint);
-  }
-}
-
-.bubble-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-  max-width: min(28rem, 78%);
-  min-width: 0;
-
-  .from-user & {
-    align-items: flex-end;
-  }
-}
-
-.attribution {
-  padding: 0 0.2rem;
-  font-size: 0.66rem;
-  font-weight: 650;
-  color: var(--cw-text);
-}
-
-.bubble {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid var(--cw-line);
-  border-radius: 1rem;
-  padding: 0.65rem 0.8rem;
-  background: var(--cw-panel-soft);
-  color: var(--cw-text);
-
-  .from-bot & {
-    border-bottom-left-radius: 0.35rem;
-  }
-  .from-user & {
-    background: linear-gradient(140deg, rgba(38, 120, 189, 0.14), rgba(110, 87, 204, 0.1));
-    border-bottom-right-radius: 0.35rem;
-  }
-}
-
-.bubble-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.45;
-  font-size: 0.86rem;
-}
-
-.bubble-meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.58rem;
-  color: var(--cw-muted);
-
-  .edited {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    color: var(--cw-violet);
-  }
-}
-
-.actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.action-row {
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-.action-btn {
-  flex: 1 1 auto;
-  text-align: center;
-  font: 600 0.74rem/1.2 inherit;
-  padding: 0.4rem 0.6rem;
-  border-radius: 0.55rem;
-  border: 1px solid var(--cw-line-strong);
-  color: var(--cw-blue);
-  background: var(--cw-panel);
-  cursor: pointer;
-  transition: background 0.12s ease, transform 0.1s ease;
-
-  &:hover:not(:disabled) {
-    background: rgba(38, 120, 189, 0.1);
-  }
-  &.pressed {
+  &.active {
     color: #fff;
-    background: var(--cw-blue);
+    background: linear-gradient(135deg, var(--cw-blue), var(--cw-violet));
+    box-shadow: 0 8px 20px var(--cw-shadow);
   }
-  &:disabled {
-    opacity: 0.55;
-    cursor: default;
+
+  &.compare-tab.active {
+    background: linear-gradient(135deg, var(--cw-violet), var(--cw-mint));
+  }
+}
+
+/* --- single-platform tab: one full-size pane --- */
+.playground-frame.single {
+  height: max(560px, calc(100vh - 20rem));
+  min-height: 480px;
+  display: flex;
+  overflow: hidden;
+
+  cw-chat-pane {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* --- Compare mode: two compact panes + one shared composer --- */
+.compare-frame {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.compare-panes {
+  height: max(500px, calc(100vh - 24rem));
+  min-height: 420px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  overflow: hidden;
+
+  cw-chat-pane {
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+.compare-divider {
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--cw-line-strong), transparent);
+}
+
+/*
+ * The shared composer sits between two panes, belonging to neither — its
+ * own small "pane-surface", following the exact inversion rule every chat
+ * pane uses (see chat-pane.component.scss's doc comment): site light →
+ * this bar renders dark, site dark → it renders light. A neutral
+ * violet-leaning palette, not either bot's brand color, since one composer
+ * here is deliberately not "Telegram's" or "WhatsApp's".
+ */
+.compare-composer-surface {
+  --tg-panel: #171423;
+  --tg-text: #f1edff;
+  --tg-line: rgba(216, 204, 255, 0.14);
+  --tg-muted: #a79bd1;
+  border-top: 1px solid var(--cw-line);
+
+  &.pane-light {
+    --tg-panel: #ffffff;
+    --tg-text: #1c1730;
+    --tg-line: rgba(60, 40, 110, 0.14);
+    --tg-muted: #6f6591;
   }
 }
 
 .composer-placeholder {
   padding: 0.85rem 1rem;
-  border-top: 1px solid var(--cw-line);
   color: var(--cw-muted);
   font-size: 0.78rem;
   text-align: center;
 }
 
-/* --- bot internals rail --- */
-.bot-panel {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border-left: 1px solid var(--cw-line);
-  background: var(--cw-panel-soft);
-  overflow: hidden;
-
-  header {
-    flex: 0 0 auto;
-    display: grid;
-    gap: 0.15rem;
-    padding: 0.8rem 0.9rem;
-    border-bottom: 1px solid var(--cw-line);
-
-    strong {
-      font-size: 0.74rem;
-    }
-    small {
-      color: var(--cw-muted);
-      font-size: 0.6rem;
-      line-height: 1.4;
-    }
-  }
-}
-
-.bot-frame-wrap {
-  flex: 1;
-  min-height: 0;
-}
-
-iframe {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
-}
-
 @media (max-width: 900px) {
-  .playground-frame {
+  .playground-frame.single {
     height: auto;
-    grid-template-columns: minmax(0, 1fr);
+  }
+  .compare-panes {
+    height: auto;
+    grid-template-columns: 1fr;
     grid-template-rows: auto auto;
-
-    &.internals-open {
-      grid-template-columns: minmax(0, 1fr);
-    }
   }
-  .chat-column {
-    height: max(420px, 60vh);
+  .compare-divider {
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cw-line-strong), transparent);
   }
-  .bot-panel {
-    border-left: 0;
-    border-top: 1px solid var(--cw-line);
-    display: none;
-  }
-  .internals-open .bot-panel {
-    display: flex;
-    height: 22rem;
+  .compare-panes cw-chat-pane {
+    height: max(360px, 50vh);
   }
 }
 
 @media (max-width: 720px) {
-  .playground-toolbar {
-    align-items: flex-start;
-  }
-  .toolbar-actions {
-    margin-left: 0;
+  .platform-tabs {
     width: 100%;
+    justify-content: space-between;
+  }
+  .platform-tabs button {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.4rem;
   }
 }

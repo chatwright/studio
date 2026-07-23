@@ -10,7 +10,12 @@ import {
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 
-export type ChatComposerPlatform = 'telegram' | 'whatsapp';
+/**
+ * `'compare'` is Compare mode's own brand for the one shared composer that
+ * drives both platform panes at once — deliberately neither platform's own
+ * color (it fans out to both), see chat-composer.component.scss.
+ */
+export type ChatComposerPlatform = 'telegram' | 'whatsapp' | 'compare';
 
 @Component({
   selector: 'cw-chat-composer',
