@@ -53,6 +53,12 @@ export class PlayerEngine implements OnDestroy {
   readonly speed = signal<Speed>(1);
   readonly reducedMotion = signal(false);
 
+  /** Set when play() is called against an empty timeline (no bundle loaded
+   *  yet, or a run with zero steps) — consumed by selectRun() below, which
+   *  starts playback for real the moment a non-empty timeline arrives,
+   *  instead of play() silently no-op'ing forever. */
+  private pendingPlay = false;
+
   /** Chat currently shown in the transcript (multi-chat runs are real). */
   private readonly _activeChatId = signal<number | null>(null);
   /** When set, auto-follow is suspended and the transcript holds this chat. */
@@ -143,6 +149,11 @@ export class PlayerEngine implements OnDestroy {
     this.stepIndex.set(-1);
     this._pinnedChatId.set(null);
     this._activeChatId.set(run?.chats?.[0]?.chatId ?? null);
+    // Re-anchor a play() that arrived before this timeline did.
+    if (this.pendingPlay && this._timeline().length > 0) {
+      this.pendingPlay = false;
+      this.play();
+    }
   }
 
   /* ------------------------------------------------------------- chats */
@@ -233,8 +244,14 @@ export class PlayerEngine implements OnDestroy {
 
   play(): void {
     if (this.stepCount() === 0) {
+      // Defer instead of dropping the request: selectRun() starts playback
+      // for real as soon as a non-empty timeline arrives. isPlaying stays
+      // false meanwhile, so the transport bar shows Play (not a misleading
+      // Pause) while there's genuinely nothing playing yet.
+      this.pendingPlay = true;
       return;
     }
+    this.pendingPlay = false;
     if (this.atEnd()) {
       this.stepIndex.set(-1);
     }
@@ -243,6 +260,7 @@ export class PlayerEngine implements OnDestroy {
   }
 
   pause(): void {
+    this.pendingPlay = false;
     this.isPlaying.set(false);
     this.clearTimers();
     this.clearTransient();

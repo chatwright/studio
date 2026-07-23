@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseBundleText } from './model/parse-bundle';
 import { Bundle, BundleRun, PlatformJournalEntry } from './model/bundle.types';
@@ -110,6 +110,80 @@ describe('PlayerEngine — signal-driven transport (no timers)', () => {
 
   it('exposes the rebased 5-stop speed scale', () => {
     expect([...SPEED_STOPS]).toEqual([0.2, 0.5, 1, 2, 4]);
+  });
+});
+
+/**
+ * Regression coverage for the landing-hero embed-autoplay freeze
+ * (chatwright.dev/studio/player?embed=1&autoplay=1&sample=...): production
+ * reproduction showed the transport stuck at "0/N" with a Pause icon
+ * (isPlaying=true) forever, and manual pause/play unable to recover it.
+ * Root cause traced to PlayerComponent's bundle-load effect re-running with
+ * the *same* bundle reference under zoneless change detection, re-invoking
+ * `engine.load()` (which unconditionally resets stepIndex to -1) every time
+ * — a component-level fix (dedup on bundle identity, not testable here; this
+ * repo runs the engine without Angular's TestBed/DOM, see vitest.config.ts).
+ *
+ * `play()` deferring and re-anchoring is this file's engine-level half of
+ * the fix: a defensive backstop so play() called before a timeline exists
+ * (the scenario the bug first looked like) can never strand the transport
+ * either, regardless of what called it or when.
+ */
+describe('PlayerEngine — deferred play() re-anchors once a timeline arrives (regression: embed autoplay race)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('play() before any bundle is loaded defers instead of no-op-ing, then starts for real once load() provides a timeline', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+    // Reduced motion so advanceTo() never reaches for requestAnimationFrame
+    // (this suite runs the engine in plain Node — see vitest.config.ts);
+    // orthogonal to the deferred-play behaviour under test.
+    engine.setReducedMotion(true);
+
+    // Nothing loaded yet — play() must not silently do nothing forever, but
+    // it must also not claim to be playing when there is genuinely nothing
+    // to play (that mismatch is exactly what read as "frozen" in production).
+    engine.play();
+    expect(engine.isPlaying()).toBe(false);
+    expect(engine.stepCount()).toBe(0);
+
+    // The bundle "arrives" — e.g. an async sample fetch resolving after the
+    // autoplay request, or the effect race that triggered the production
+    // bug. The deferred play() re-anchors against the real timeline.
+    engine.load(loadSample(), 0);
+    expect(engine.isPlaying()).toBe(true);
+    expect(engine.stepCount()).toBeGreaterThan(0);
+
+    // And it actually advances — the original bug's defining symptom was a
+    // step counter frozen at its pre-roll value forever.
+    vi.advanceTimersByTime(15_000);
+    expect(engine.stepIndex()).toBeGreaterThan(-1);
+  });
+
+  it('pause() cancels a deferred play() so a later load() does not autoplay unexpectedly', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+
+    engine.play();
+    expect(engine.isPlaying()).toBe(false); // deferred
+
+    engine.pause();
+    engine.load(loadSample(), 0);
+    expect(engine.isPlaying()).toBe(false); // the deferred intent was cancelled
+  });
+
+  it('play() while already playing a loaded run behaves exactly as before (no regression on the common path)', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+    engine.setReducedMotion(true);
+    engine.load(loadSample(), 0);
+
+    engine.play();
+    expect(engine.isPlaying()).toBe(true);
+    vi.advanceTimersByTime(15_000);
+    expect(engine.stepIndex()).toBeGreaterThan(-1);
   });
 });
 
