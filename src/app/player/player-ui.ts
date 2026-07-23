@@ -3,8 +3,9 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { BundleAnchor, BundleAnnotation, BundleRun } from './model/bundle.types';
 import {
   MessageLineage,
-  loopEventForBotMessage,
-  messageLineage
+  ObservedByRow,
+  messageLineage,
+  observedByParts
 } from './engine/derive';
 import { PlayerEngine } from './player-engine';
 
@@ -25,8 +26,17 @@ export interface AnnotationDraft {
   text: string;
 }
 
+/** Which tab the right panel shows. */
+export type RightTab = 'scenario' | 'annotations' | 'cast';
+
+/** A part+event the Scenario tab should expand, scroll to and highlight. */
+export interface ScenarioFocus {
+  partIndex: number;
+  eventIndex: number;
+}
+
 /**
- * Player UI state shared across the transcript, inspector, mind panel and
+ * Player UI state shared across the transcript, inspector, right-panel tabs and
  * annotation authoring — kept out of the engine (which owns playback) and out
  * of any one component (so the whole player stays embeddable). Provided at the
  * PlayerComponent level, so every embed gets its own instance.
@@ -37,13 +47,17 @@ export class PlayerUiState {
 
   readonly inspector = signal<InspectorTarget | null>(null);
   readonly draft = signal<AnnotationDraft | null>(null);
-  readonly castOpen = signal(true);
-  readonly mindOpen = signal(true);
-  readonly focusedAnnotationId = signal<string | null>(null);
 
-  focusAnnotation(id: string | null): void {
-    this.focusedAnnotationId.set(id);
-  }
+  /** Left navigation panel and right tabbed panel collapse state. */
+  readonly navOpen = signal(true);
+  readonly rightOpen = signal(true);
+  readonly rightTab = signal<RightTab>('scenario');
+
+  readonly focusedAnnotationId = signal<string | null>(null);
+  /** When set, the Annotations tab shows only comments on this message key. */
+  readonly annotationFilterKey = signal<string | null>(null);
+  /** When set, the Scenario tab expands + highlights this loop event. */
+  readonly scenarioFocus = signal<ScenarioFocus | null>(null);
 
   readonly lineage = computed<MessageLineage | null>(() => {
     const target = this.inspector();
@@ -54,16 +68,54 @@ export class PlayerUiState {
     return messageLineage(run, target.chatId, target.messageId);
   });
 
-  /** If the inspected message is a bot message inside an ai-goal part, the
-   *  loop event that observed it (for the transcript↔reasoning jump). */
-  readonly inspectorLoopLink = computed(() => {
+  /** Every ai-goal part whose retained observations include the inspected
+   *  message, with what the actor proposed next — the "Observed by" section. */
+  readonly observedBy = computed<ObservedByRow[]>(() => {
     const target = this.inspector();
     const run = this.engine.run();
     if (!target || !run) {
-      return null;
+      return [];
     }
-    return loopEventForBotMessage(run, target.chatId, target.messageId);
+    return observedByParts(run, target.chatId, target.messageId);
   });
+
+  /* --------------------------------------------------- panel controls */
+
+  toggleNav(): void {
+    this.navOpen.update((v) => !v);
+  }
+
+  toggleRight(): void {
+    this.rightOpen.update((v) => !v);
+  }
+
+  showTab(tab: RightTab): void {
+    this.rightTab.set(tab);
+    this.rightOpen.set(true);
+  }
+
+  focusAnnotation(id: string | null): void {
+    this.focusedAnnotationId.set(id);
+  }
+
+  /** Reveal a message's annotations in the Annotations tab (item 4). */
+  showAnnotationsFor(messageKey: string, focusId?: string): void {
+    this.annotationFilterKey.set(messageKey);
+    this.focusedAnnotationId.set(focusId ?? null);
+    this.showTab('annotations');
+  }
+
+  clearAnnotationFilter(): void {
+    this.annotationFilterKey.set(null);
+  }
+
+  /** Reveal a loop event in the Scenario tab (item 5 "Observed by" landing). */
+  showScenarioEvent(partIndex: number, eventIndex: number): void {
+    this.scenarioFocus.set({ partIndex, eventIndex });
+    this.showTab('scenario');
+  }
+
+  /* ---------------------------------------------------------- inspector */
 
   inspectMessage(chatId: number, messageId: number, actionId?: string): void {
     this.inspector.set({ chatId, messageId, actionId });
@@ -71,14 +123,6 @@ export class PlayerUiState {
 
   closeInspector(): void {
     this.inspector.set(null);
-  }
-
-  toggleCast(): void {
-    this.castOpen.update((v) => !v);
-  }
-
-  toggleMind(): void {
-    this.mindOpen.update((v) => !v);
   }
 
   /* --------------------------------------------------- annotations */
@@ -91,6 +135,7 @@ export class PlayerUiState {
       authorEmail: '',
       text: ''
     });
+    this.showTab('annotations');
   }
 
   updateDraft(patch: Partial<AnnotationDraft>): void {

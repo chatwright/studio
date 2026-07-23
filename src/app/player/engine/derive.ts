@@ -196,6 +196,172 @@ export function loopEventForBotMessage(
   return null;
 }
 
+/** One row of the inspector's "Observed by" section. */
+export interface ObservedByRow {
+  partIndex: number;
+  partTitle: string;
+  actorId: string;
+  actorName: string;
+  eventIndex: number;
+  /** What the actor proposed at the moment it observed the message. */
+  proposedNext: string;
+  at: string;
+}
+
+/** Human summary of a proposal ("Send: …", "Click: …", "Mark task done", …). */
+export function summariseProposal(proposal: {
+  Kind: string;
+  Text: string;
+  ActionID: string;
+}): string {
+  switch (proposal.Kind) {
+    case 'send-text':
+      return `Send "${proposal.Text}"`;
+    case 'click':
+      return `Click ${proposal.ActionID}`;
+    case 'task-done':
+      return 'Mark task done';
+    case 'give-up':
+      return 'Give up';
+    default:
+      return proposal.Kind;
+  }
+}
+
+/**
+ * Every ai-goal part whose retained observations include this message, with the
+ * loop event that saw it and what the actor proposed next. One row per part
+ * (there can be several); empty when no AI part observed the message — the
+ * inspector then omits the section entirely.
+ */
+export function observedByParts(
+  run: BundleRun,
+  chatId: number,
+  messageId: number
+): ObservedByRow[] {
+  const rows: ObservedByRow[] = [];
+  const parts = run.parts ?? [];
+
+  parts.forEach((part, partIndex) => {
+    if (part.kind !== 'ai-goal' || !part.aiGoal) {
+      return;
+    }
+    const observations = part.aiGoal.observations ?? [];
+    let seenAtSequence = Number.POSITIVE_INFINITY;
+    for (const retained of observations) {
+      const obs = retained.observation;
+      if (obs.Chat?.ChatID !== chatId) {
+        continue;
+      }
+      if ((obs.Messages ?? []).some((m) => idMatches(m.ID, messageId))) {
+        seenAtSequence = Math.min(seenAtSequence, obs.Sequence);
+      }
+    }
+    if (!Number.isFinite(seenAtSequence)) {
+      return;
+    }
+    const events = part.aiGoal.events ?? [];
+    let eventIndex = events.findIndex((e) => e.ObservationSequence >= seenAtSequence);
+    if (eventIndex < 0 && events.length > 0) {
+      eventIndex = events.length - 1;
+    }
+    if (eventIndex < 0) {
+      return;
+    }
+    const actorId = part.aiGoal.actorId;
+    const actor = (run.actors ?? []).find((a) => a.id === actorId) ?? null;
+    rows.push({
+      partIndex,
+      partTitle: part.aiGoal.goal?.Title || part.title || part.id,
+      actorId,
+      actorName: actor?.name ?? actorId,
+      eventIndex,
+      proposedNext: summariseProposal(events[eventIndex].Proposal),
+      at: events[eventIndex].At
+    });
+  });
+
+  return rows;
+}
+
+/* ------------------------------------------------------------ actor stats */
+
+export interface ActorStats {
+  messagesSent: number;
+  clicks: number;
+  editsReceived: number;
+  isAI: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  calls: number;
+  models: string[];
+}
+
+/**
+ * Per-actor statistics computed from the whole bundle: messages sent, clicks /
+ * callbacks, edits received (edits landing in a chat the actor takes part in,
+ * authored by someone else), and — for AI actors — token usage, call count and
+ * models drawn from the loop events of parts they ran.
+ */
+export function actorStats(run: BundleRun, actor: BundleActor): ActorStats {
+  const userIds = new Set(
+    Object.values(actor.platformIdentities ?? {}).map((identity) => identity.userId)
+  );
+  const isAI = actor.type === 'ai-agent' || actor.type === 'replay';
+
+  let messagesSent = 0;
+  let clicks = 0;
+  let editsReceived = 0;
+
+  for (const chat of run.chats ?? []) {
+    const entries = chat.entries ?? [];
+    const participates = entries.some((e) => userIds.has(e.FromID));
+    for (const entry of entries) {
+      const mine = userIds.has(entry.FromID);
+      if (entry.Kind === 'message' && entry.Version === 0 && mine) {
+        messagesSent++;
+      } else if (entry.Kind === 'action' && mine) {
+        clicks++;
+      } else if (entry.Kind === 'message' && entry.Version > 0 && participates && !mine) {
+        editsReceived++;
+      }
+    }
+  }
+
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let calls = 0;
+  const models = new Set<string>();
+
+  for (const part of run.parts ?? []) {
+    if (part.kind !== 'ai-goal' || part.aiGoal?.actorId !== actor.id) {
+      continue;
+    }
+    for (const event of part.aiGoal.events ?? []) {
+      inputTokens += event.Usage.InputTokens || 0;
+      outputTokens += event.Usage.OutputTokens || 0;
+      calls++;
+      if (event.Usage.Model) {
+        models.add(event.Usage.Model);
+      }
+    }
+  }
+  for (const model of actor.provider?.modelIds ?? []) {
+    models.add(model);
+  }
+
+  return {
+    messagesSent,
+    clicks,
+    editsReceived,
+    isAI,
+    inputTokens,
+    outputTokens,
+    calls,
+    models: [...models].sort()
+  };
+}
+
 /**
  * Observation message ids are opaque platform strings (e.g. "msg2"); journal
  * message ids are integers (e.g. 2). Match loosely by trailing digits so the
