@@ -1,3 +1,8 @@
+@if (embed()) {
+  <div class="embed-shell" [class.app-light]="store.appTheme() === 'light'" [class.app-dark]="store.appTheme() === 'dark'">
+    <router-outlet />
+  </div>
+} @else {
 <div
   class="studio-shell"
   [class.app-light]="store.appTheme() === 'light'"
@@ -103,3 +108,4 @@
     </nav>
   </div>
 </div>
+}

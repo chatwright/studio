@@ -3,6 +3,18 @@
   min-height: 100vh;
 }
 
+/* Chromeless shell for ?embed=1 (landing-hero player iframe): no sidebar, no
+   topbar, no mobile nav — just the routed page, filling the iframe. Default
+   (unscoped) --cw-* custom properties already give this the light theme, so
+   it matches the landing page without needing the .studio-shell wrapper. */
+.embed-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0.6rem;
+  background: var(--cw-canvas);
+  color: var(--cw-text);
+}
+
 .studio-shell {
   min-height: 100vh;
   display: grid;
