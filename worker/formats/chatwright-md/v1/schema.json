@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chatwright.dev/formats/chatwright-md/v1/schema.json",
+  "title": "CHATWRIGHT.md front matter (v1)",
+  "description": "Machine-readable contract for the YAML front matter of a CHATWRIGHT.md repository manifest. Unknown keys are ignored by consumers for forward compatibility.",
+  "type": "object",
+  "required": ["format", "id", "name", "version", "authors", "platforms", "bots"],
+  "properties": {
+    "format": {
+      "const": "https://chatwright.dev/formats/chatwright-md/v1"
+    },
+    "id": {
+      "type": "string",
+      "description": "Globally unique manifest identity, kebab-case. The identity is this id, never the repository name.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 64
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "version": {
+      "type": "string",
+      "description": "Must match a git tag of the repository (with or without a leading v).",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["github"],
+        "properties": {
+          "github": { "type": "string", "description": "GitHub login anchoring contributor identity." },
+          "name": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "description": "Platform id, e.g. telegram, whatsapp." }
+    },
+    "bots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "platform", "transport", "url"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique within this manifest." },
+          "platform": { "type": "string" },
+          "transport": { "enum": ["iframe", "http"] },
+          "url": { "type": "string", "format": "uri", "description": "iframe src for transport=iframe; HTTPS endpoint for transport=http." },
+          "capabilities": {
+            "type": "array",
+            "items": { "type": "string", "description": "Capability key (dotted path), e.g. messaging.buttons.inline." }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "implements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["recipe", "platform"],
+        "properties": {
+          "recipe": { "type": "string", "description": "Recipe id in the central index." },
+          "platform": { "type": "string" },
+          "tier": { "enum": ["official", "alternative", "community"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "items": { "type": "string", "description": "Job id in the central index." }
+    },
+    "demos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["bot", "title"],
+        "properties": {
+          "bot": { "type": "string", "description": "A bot id declared above." },
+          "title": { "type": "string" },
+          "scenario": { "type": "string", "description": "Repository-relative path to a scenario or recorded run bundle." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

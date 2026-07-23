@@ -10,6 +10,10 @@ import { landingDocument } from './landing';
 import { vanityImportResponse } from './vanity';
 import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
+import { chatwrightMdV1PageDocument } from './formats/chatwright-md/v1/page';
+import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
+import { badgeSvgDocument } from './badge';
+import { tryGithubResponse } from './try-github';
 
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
@@ -39,6 +43,16 @@ const sitemapDocument = `<?xml version="1.0" encoding="UTF-8"?>
 const runBundleV1FormatPath = '/formats/run-bundle/v1';
 const runBundleV1SchemaPath = '/formats/run-bundle/v1/schema.json';
 const runBundleV1SchemaDocument = `${JSON.stringify(runBundleV1Schema, null, 2)}\n`;
+
+// The CHATWRIGHT.md manifest format v1 documentation page and its
+// machine-readable schema — same re-serialisation pattern as run-bundle
+// above; see worker/formats/chatwright-md/v1/README.md for the canonical
+// source and how this copy is kept in sync on format releases.
+const chatwrightMdV1FormatPath = '/formats/chatwright-md/v1';
+const chatwrightMdV1SchemaPath = '/formats/chatwright-md/v1/schema.json';
+const chatwrightMdV1SchemaDocument = `${JSON.stringify(chatwrightMdV1Schema, null, 2)}\n`;
+
+const badgeSvgPath = '/badge.svg';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -117,6 +131,38 @@ export default {
           'Cache-Control': 'public, max-age=300'
         }
       });
+    }
+
+    if (incomingURL.pathname === chatwrightMdV1FormatPath || incomingURL.pathname === `${chatwrightMdV1FormatPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : chatwrightMdV1PageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === chatwrightMdV1SchemaPath) {
+      return new Response(request.method === 'HEAD' ? null : chatwrightMdV1SchemaDocument, {
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === badgeSvgPath) {
+      return new Response(request.method === 'HEAD' ? null : badgeSvgDocument, {
+        headers: {
+          'Content-Type': 'image/svg+xml; charset=utf-8',
+          'Cache-Control': 'public, max-age=86400'
+        }
+      });
+    }
+
+    const tryGithub = tryGithubResponse(incomingURL, request);
+    if (tryGithub) {
+      return tryGithub;
     }
 
     const vanityResponse = vanityImportResponse(incomingURL, request);
