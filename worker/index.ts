@@ -10,6 +10,8 @@ import { landingDocument } from './landing';
 import { vanityImportResponse } from './vanity';
 import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
+import installShDocument from './install/install.sh';
+import installPs1Document from './install/install.ps1';
 
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
@@ -74,6 +76,28 @@ export default {
         headers: {
           'Content-Type': 'application/xml; charset=utf-8',
           'Cache-Control': 'public, max-age=3600'
+        }
+      });
+    }
+
+    // Canonical CLI install scripts (chatwright/chatwright
+    // spec/plans/code-split-restructuring.md, Task 4):
+    //   curl -fsSL https://chatwright.dev/install.sh | sh
+    //   irm https://chatwright.dev/install.ps1 | iex
+    if (incomingURL.pathname === '/install.sh') {
+      return new Response(request.method === 'HEAD' ? null : installShDocument, {
+        headers: {
+          'Content-Type': 'text/x-shellscript; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === '/install.ps1') {
+      return new Response(request.method === 'HEAD' ? null : installPs1Document, {
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
         }
       });
     }

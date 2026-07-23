@@ -3,6 +3,9 @@
   "name": "chatwright-dev",
   "main": "worker/index.ts",
   "compatibility_date": "2026-07-21",
+  // Install scripts (worker/install/*) are bundled as plain text so the
+  // worker serves them byte-for-byte — no TS template-literal escaping.
+  "rules": [{ "type": "Text", "globs": ["**/*.sh", "**/*.ps1"], "fallthrough": true }],
   "workers_dev": false,
   "routes": [
     {
