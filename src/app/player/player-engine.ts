@@ -11,14 +11,13 @@ import {
   threadAnnotations
 } from './engine/derive';
 import { SettledState, settledStateAt } from './engine/settled';
+import { BASE_TEMPO, frameDelayMs } from './engine/tempo';
 import { Chapter, Step, buildTimeline, chaptersOf } from './engine/timeline';
 
-/** Preset speed stops (0.5× / 1× / 2× / 4×). */
-export const SPEED_STOPS = [0.5, 1, 2, 4] as const;
+/** Preset speed stops (0.2× / 0.5× / 1× / 2× / 4×). Rebased in round 2 so 1×
+ *  is a calmer, at-least-2×-slower pace — see engine/tempo.ts. */
+export const SPEED_STOPS = [0.2, 0.5, 1, 2, 4] as const;
 export type Speed = (typeof SPEED_STOPS)[number];
-
-const MIN_FRAME_MS = 380;
-const MAX_FRAME_MS = 2600;
 
 /** Live, transient composer-typing state for the compose-and-send primitive. */
 export interface ComposerTyping {
@@ -54,6 +53,13 @@ export class PlayerEngine implements OnDestroy {
   readonly speed = signal<Speed>(1);
   readonly reducedMotion = signal(false);
 
+  /** Chat currently shown in the transcript (multi-chat runs are real). */
+  private readonly _activeChatId = signal<number | null>(null);
+  /** When set, auto-follow is suspended and the transcript holds this chat. */
+  private readonly _pinnedChatId = signal<number | null>(null);
+  readonly activeChatId = this._activeChatId.asReadonly();
+  readonly pinnedChatId = this._pinnedChatId.asReadonly();
+
   /** The step index whose entrance animation is currently playing (or null). */
   readonly animatingIndex = signal<number | null>(null);
   /** Live composer typing for a compose-and-send primitive (or null). */
@@ -77,6 +83,12 @@ export class PlayerEngine implements OnDestroy {
   readonly stepCount = computed(() => this._timeline().length);
   readonly lastIndex = computed(() => this._timeline().length - 1);
   readonly atEnd = computed(() => this.stepIndex() >= this.lastIndex());
+
+  /** Every chat id in the current run, in the order the run lists them. */
+  readonly chatIds = computed<number[]>(() => (this.run()?.chats ?? []).map((c) => c.chatId));
+
+  /** The chat the current step happens in (independent of any pin). */
+  readonly currentChatId = computed<number | null>(() => this.chatIdForIndex(this.stepIndex()));
 
   readonly currentStep = computed<Step | null>(() => {
     const i = this.stepIndex();
@@ -129,6 +141,56 @@ export class PlayerEngine implements OnDestroy {
     const run = bundle?.runs?.[runIndex] ?? null;
     this._timeline.set(buildTimeline(run));
     this.stepIndex.set(-1);
+    this._pinnedChatId.set(null);
+    this._activeChatId.set(run?.chats?.[0]?.chatId ?? null);
+  }
+
+  /* ------------------------------------------------------------- chats */
+
+  /** Manually show a chat. Does not pin — auto-follow may switch away on the
+   *  next step unless the user also pins. */
+  setActiveChat(chatId: number): void {
+    this._activeChatId.set(chatId);
+  }
+
+  /** Pin the current chat (hold it while stepping) or release the pin. */
+  togglePin(): void {
+    this._pinnedChatId.set(this._pinnedChatId() === null ? this._activeChatId() : null);
+  }
+
+  /** Follow the chat the current step happens in, unless the user pinned one. */
+  private syncActiveChat(): void {
+    if (this._pinnedChatId() !== null) {
+      return;
+    }
+    const chatId = this.chatIdForIndex(this.stepIndex());
+    if (chatId !== null) {
+      this._activeChatId.set(chatId);
+    }
+  }
+
+  /** The chat a step belongs to: a journal step's own chat, or, for an AI beat,
+   *  the chat its observation was looking at. */
+  private chatIdForStep(step: Step): number | null {
+    if (step.kind === 'journal') {
+      return step.chatId;
+    }
+    const part = this.run()?.parts?.[step.partIndex];
+    const observations = part?.aiGoal?.observations ?? [];
+    const match = observations.find((o) => o.sequence === step.observationSequence);
+    return match?.observation.Chat?.ChatID ?? null;
+  }
+
+  /** Walk back from `index` to the nearest step that resolves to a chat. */
+  private chatIdForIndex(index: number): number | null {
+    const timeline = this._timeline();
+    for (let i = Math.min(index, timeline.length - 1); i >= 0; i--) {
+      const chatId = this.chatIdForStep(timeline[i]);
+      if (chatId !== null) {
+        return chatId;
+      }
+    }
+    return this.chatIds()[0] ?? null;
   }
 
   /** Replace the current run in place (e.g. after adding an annotation). */
@@ -208,6 +270,7 @@ export class PlayerEngine implements OnDestroy {
     const clamped = Math.max(-1, Math.min(index, this.lastIndex()));
     this.clearTransient();
     this.stepIndex.set(clamped);
+    this.syncActiveChat();
   }
 
   jumpToMarker(marker: Marker): void {
@@ -255,6 +318,7 @@ export class PlayerEngine implements OnDestroy {
 
   private advanceTo(index: number): void {
     this.stepIndex.set(index);
+    this.syncActiveChat();
     if (this.reducedMotion()) {
       this.clearTransient();
       return;
@@ -268,17 +332,15 @@ export class PlayerEngine implements OnDestroy {
     }
   }
 
-  /** Virtual-clock gap to the next step (ms), compressed by speed. */
+  /** Virtual-clock gap to the next step (ms), rebased and compressed by speed. */
   private frameDelay(index: number): number {
     const timeline = this._timeline();
     if (index <= 0) {
-      return MIN_FRAME_MS / this.speed();
+      return frameDelayMs(0, this.speed());
     }
     const prev = timeline[index - 1]?.atMs ?? 0;
     const curr = timeline[index]?.atMs ?? prev;
-    const gap = Math.abs(curr - prev);
-    const clamped = Math.min(MAX_FRAME_MS, Math.max(MIN_FRAME_MS, gap || MIN_FRAME_MS));
-    return clamped / this.speed();
+    return frameDelayMs(Math.abs(curr - prev), this.speed());
   }
 
   private runComposerTyping(
@@ -293,7 +355,8 @@ export class PlayerEngine implements OnDestroy {
     if (!text) {
       return;
     }
-    const budget = Math.min(this.frameDelay(index) * 0.66, (text.length * 32) / this.speed());
+    const perChar = (36 * BASE_TEMPO) / this.speed();
+    const budget = Math.min(this.frameDelay(index) * 0.82, Math.max(320, text.length * perChar));
     const start = performance.now();
     this.composerTyping.set({ chatId: step.chatId, actor, text, chars: 0 });
 
