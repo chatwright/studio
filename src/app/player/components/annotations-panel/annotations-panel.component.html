@@ -13,6 +13,13 @@
     />
   </header>
 
+  @if (ui.annotationFilterKey()) {
+    <div class="filter-banner">
+      <span><i class="pi pi-filter"></i> Comments on one message</span>
+      <button type="button" class="link" (click)="clearFilter()">show all</button>
+    </div>
+  }
+
   @if (draft(); as draft) {
     <form class="draft" (submit)="$event.preventDefault(); submit()">
       <span class="draft-title">

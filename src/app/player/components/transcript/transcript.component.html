@@ -110,7 +110,7 @@
                         type="button"
                         class="pin"
                         [class.focused]="ui.focusedAnnotationId() === thread.root.annotation.id"
-                        (click)="onPinClick(thread, $event)"
+                        (click)="onPinClick(message, thread, $event)"
                         [pTooltip]="thread.root.annotation.text"
                         tooltipPosition="bottom"
                       >

@@ -98,11 +98,22 @@
 /* --- three-column stage --- */
 .player-grid {
   display: grid;
-  grid-template-columns: 232px minmax(0, 1fr) 340px;
+  grid-template-columns: 236px minmax(0, 1fr) 350px;
   gap: 0.85rem;
   align-items: stretch;
   min-height: 0;
-  height: min(74vh, 780px);
+  height: min(76vh, 820px);
+  transition: grid-template-columns 0.2s ease;
+
+  &.nav-collapsed {
+    grid-template-columns: 54px minmax(0, 1fr) 350px;
+  }
+  &.right-collapsed {
+    grid-template-columns: 236px minmax(0, 1fr) 54px;
+  }
+  &.nav-collapsed.right-collapsed {
+    grid-template-columns: 54px minmax(0, 1fr) 54px;
+  }
 }
 
 .col {
@@ -166,15 +177,68 @@
   flex: 0 0 auto;
 }
 
-.sub {
-  border-bottom: 1px solid var(--cw-line);
+/* --- right panel tabs --- */
+.tabs-head {
+  padding: 0.5rem 0.6rem 0.5rem 0.8rem;
+}
+.tabs {
+  display: inline-flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  background: var(--cw-panel-soft);
+  border: 1px solid var(--cw-line);
+  border-radius: 0.6rem;
+}
+.tab {
+  border: none;
+  background: transparent;
+  color: var(--cw-muted-strong);
+  font-size: 0.7rem;
+  font-weight: 650;
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 
-  &:last-child {
-    border-bottom: none;
+  &:hover {
+    color: var(--cw-text);
+  }
+  &.active {
+    background: var(--cw-panel);
+    color: var(--cw-blue);
+    box-shadow: 0 1px 4px var(--cw-shadow);
   }
 }
-.sub-head {
-  padding: 0.6rem 0.9rem 0;
+.tab-badge {
+  font-size: 0.56rem;
+  background: rgba(110, 87, 204, 0.16);
+  color: var(--cw-violet);
+  border-radius: 0.35rem;
+  padding: 0.02rem 0.28rem;
+}
+.rail-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0;
+
+  button {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--cw-line);
+    background: var(--cw-panel-soft);
+    color: var(--cw-muted-strong);
+    border-radius: 0.5rem;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--cw-blue);
+      border-color: var(--cw-blue);
+    }
+  }
 }
 
 /* --- provenance drawer --- */
@@ -218,28 +282,29 @@
 
 /* --- responsive: collapse side columns before shrinking the canvas --- */
 @media (max-width: 1080px) {
-  .player-grid {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    height: auto;
-  }
-  .col-left {
-    display: none;
-  }
-  .col-center {
-    height: min(70vh, 680px);
+  .player-grid,
+  .player-grid.nav-collapsed,
+  .player-grid.right-collapsed {
+    grid-template-columns: 54px minmax(0, 1fr) 330px;
+    height: min(72vh, 720px);
   }
 }
 
 @media (max-width: 820px) {
-  .player-grid {
+  .player-grid,
+  .player-grid.nav-collapsed,
+  .player-grid.right-collapsed,
+  .player-grid.nav-collapsed.right-collapsed {
     grid-template-columns: minmax(0, 1fr);
+    height: auto;
   }
+  .col-left,
   .col-right {
     height: auto;
-    max-height: 60vh;
+    max-height: 46vh;
   }
   .col-center {
-    height: 62vh;
+    height: 60vh;
   }
 }
 
@@ -247,5 +312,8 @@
   .inspector-drawer,
   .inspector-scrim {
     animation: none;
+  }
+  .player-grid {
+    transition: none;
   }
 }

@@ -14,20 +14,6 @@
     </div>
 
     <div class="top-actions">
-      @if (runs().length > 1) {
-        <div class="run-switch" role="group" aria-label="Select run">
-          @for (run of runs(); track run.id; let i = $index) {
-            <button
-              type="button"
-              class="run-chip mono"
-              [class.active]="engine.runIndex() === i"
-              (click)="selectRun(i)"
-            >
-              {{ run.id }}
-            </button>
-          }
-        </div>
-      }
       <p-button
         [icon]="engine.reducedMotion() ? 'pi pi-bolt' : 'pi pi-sparkles'"
         [label]="engine.reducedMotion() ? 'Motion off' : 'Motion on'"
@@ -50,19 +36,17 @@
     </div>
   }
 
-  <div class="player-grid">
-    <aside class="col col-left surface" [class.collapsed]="!ui.castOpen()">
+  <div class="player-grid" [class.nav-collapsed]="!ui.navOpen()" [class.right-collapsed]="!ui.rightOpen()">
+    <aside class="col col-left surface">
       <header class="col-head">
-        <h3>Cast</h3>
-        <button type="button" class="collapse-btn" (click)="ui.toggleCast()" aria-label="Toggle cast panel">
-          <i [class]="ui.castOpen() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"></i>
+        @if (ui.navOpen()) { <h3>Navigation</h3> }
+        <button type="button" class="collapse-btn" (click)="ui.toggleNav()" aria-label="Toggle navigation">
+          <i [class]="ui.navOpen() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"></i>
         </button>
       </header>
-      @if (ui.castOpen()) {
-        <div class="col-scroll">
-          <cw-cast-panel />
-        </div>
-      }
+      <div class="col-scroll">
+        <cw-nav-panel />
+      </div>
     </aside>
 
     <section class="col col-center">
@@ -74,23 +58,35 @@
       </div>
     </section>
 
-    <aside class="col col-right surface" [class.collapsed]="!ui.mindOpen()">
-      <header class="col-head">
-        <h3>AI mind &amp; notes</h3>
-        <button type="button" class="collapse-btn" (click)="ui.toggleMind()" aria-label="Toggle mind panel">
-          <i [class]="ui.mindOpen() ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"></i>
+    <aside class="col col-right surface">
+      <header class="col-head tabs-head">
+        @if (ui.rightOpen()) {
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'scenario'" [attr.aria-selected]="ui.rightTab() === 'scenario'" (click)="ui.showTab('scenario')">Scenario</button>
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'annotations'" [attr.aria-selected]="ui.rightTab() === 'annotations'" (click)="ui.showTab('annotations')">
+              Annotations
+              @if (engine.annotationPins().length) { <span class="tab-badge mono">{{ engine.annotationPins().length }}</span> }
+            </button>
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'cast'" [attr.aria-selected]="ui.rightTab() === 'cast'" (click)="ui.showTab('cast')">Cast</button>
+          </div>
+        }
+        <button type="button" class="collapse-btn" (click)="ui.toggleRight()" aria-label="Toggle right panel">
+          <i [class]="ui.rightOpen() ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"></i>
         </button>
       </header>
-      @if (ui.mindOpen()) {
+      @if (ui.rightOpen()) {
         <div class="col-scroll">
-          <section class="sub">
-            <div class="sub-head"><span class="eyebrow">AI mind</span></div>
-            <cw-mind-panel />
-          </section>
-          <section class="sub">
-            <div class="sub-head"><span class="eyebrow">Annotations</span></div>
-            <cw-annotations-panel />
-          </section>
+          @switch (ui.rightTab()) {
+            @case ('scenario') { <cw-scenario-panel /> }
+            @case ('annotations') { <cw-annotations-panel /> }
+            @case ('cast') { <cw-cast-panel /> }
+          }
+        </div>
+      } @else {
+        <div class="rail-tabs">
+          <button type="button" (click)="ui.showTab('scenario')" pTooltip="Scenario" tooltipPosition="left"><i class="pi pi-sitemap"></i></button>
+          <button type="button" (click)="ui.showTab('annotations')" pTooltip="Annotations" tooltipPosition="left"><i class="pi pi-comments"></i></button>
+          <button type="button" (click)="ui.showTab('cast')" pTooltip="Cast" tooltipPosition="left"><i class="pi pi-users"></i></button>
         </div>
       }
     </aside>

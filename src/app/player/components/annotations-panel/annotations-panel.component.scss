@@ -21,6 +21,25 @@
   }
 }
 
+.filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--cw-blue);
+  background: rgba(38, 120, 189, 0.08);
+  border: 1px solid rgba(38, 120, 189, 0.22);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+}
+
 .draft {
   display: flex;
   flex-direction: column;

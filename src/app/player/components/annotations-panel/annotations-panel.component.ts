@@ -4,7 +4,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { AnnotationPin } from '../../engine/derive';
+import { AnnotationPin, AnnotationThread, resolveAnchorMessageKey } from '../../engine/derive';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
 
@@ -25,10 +25,26 @@ export class AnnotationsPanelComponent {
   readonly engine = inject(PlayerEngine);
   readonly ui = inject(PlayerUiState);
 
-  readonly threads = this.engine.annotationThreads;
   readonly draft = this.ui.draft;
 
   readonly totalCount = computed(() => this.engine.annotationPins().length);
+
+  /** Threads shown, filtered to one message when a filter is active (item 4). */
+  readonly threads = computed<AnnotationThread[]>(() => {
+    const all = this.engine.annotationThreads();
+    const filterKey = this.ui.annotationFilterKey();
+    const run = this.engine.run();
+    if (!filterKey || !run) {
+      return all;
+    }
+    return all.filter(
+      (thread) => resolveAnchorMessageKey(run, thread.root.annotation.anchor) === filterKey
+    );
+  });
+
+  clearFilter(): void {
+    this.ui.clearAnnotationFilter();
+  }
 
   jump(pin: AnnotationPin): void {
     this.ui.focusAnnotation(pin.annotation.id);

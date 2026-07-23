@@ -16,7 +16,8 @@ import { PlayerEngine } from './player-engine';
 import { PlayerUiState } from './player-ui';
 import { TransportBarComponent } from './components/transport-bar/transport-bar.component';
 import { TranscriptComponent } from './components/transcript/transcript.component';
-import { MindPanelComponent } from './components/mind-panel/mind-panel.component';
+import { NavPanelComponent } from './components/nav-panel/nav-panel.component';
+import { ScenarioPanelComponent } from './components/scenario-panel/scenario-panel.component';
 import { CastPanelComponent } from './components/cast-panel/cast-panel.component';
 import { AnnotationsPanelComponent } from './components/annotations-panel/annotations-panel.component';
 import { ProvenanceInspectorComponent } from './components/provenance-inspector/provenance-inspector.component';
@@ -35,7 +36,8 @@ import { ProvenanceInspectorComponent } from './components/provenance-inspector/
     TooltipModule,
     TransportBarComponent,
     TranscriptComponent,
-    MindPanelComponent,
+    NavPanelComponent,
+    ScenarioPanelComponent,
     CastPanelComponent,
     AnnotationsPanelComponent,
     ProvenanceInspectorComponent
@@ -52,7 +54,6 @@ export class PlayerComponent {
   readonly engine = inject(PlayerEngine);
   readonly ui = inject(PlayerUiState);
 
-  readonly runs = computed(() => this.engine.bundle()?.runs ?? []);
   readonly metadata = computed(() => this.engine.bundle()?.metadata ?? null);
 
   readonly createdAtLabel = computed(() => {
@@ -90,11 +91,6 @@ export class PlayerComponent {
       this.engine.setReducedMotion(query.matches);
       query.addEventListener('change', (event) => this.engine.setReducedMotion(event.matches));
     }
-  }
-
-  selectRun(index: number): void {
-    this.engine.selectRun(index);
-    this.ui.closeInspector();
   }
 
   toggleReducedMotion(): void {

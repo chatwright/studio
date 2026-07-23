@@ -55,20 +55,51 @@
       <p class="quiet">No lineage available for this message.</p>
     }
 
-    @if (loopLink()) {
-      <section class="section reasoning">
-        <span class="section-label">AI reasoning</span>
-        <p class="reasoning-copy">
-          This message was observed by the actor loop. Jump to the moment it was seen and what the
-          actor proposed next.
-        </p>
-        <p-button
-          label="Jump to reasoning"
-          icon="pi pi-sitemap"
-          size="small"
-          (click)="jumpToReasoning()"
-        />
+    @if (observedBy().length) {
+      <section class="section observed">
+        <span class="section-label">Observed by</span>
+        @for (row of observedBy(); track row.partIndex) {
+          <button type="button" class="observe-row" (click)="jumpToObservation(row)">
+            <div class="observe-head">
+              <p-tag value="AI goal" icon="pi pi-microchip-ai" severity="info" />
+              <span class="observe-part">{{ row.partTitle }}</span>
+            </div>
+            <div class="observe-meta">
+              <span class="observe-actor"><i class="pi pi-user"></i> {{ row.actorName }}</span>
+              <span class="observe-next">proposed: {{ row.proposedNext }}</span>
+            </div>
+            <span class="observe-cta mono"><i class="pi pi-arrow-right"></i> open loop event #{{ row.eventIndex }}</span>
+          </button>
+        }
       </section>
     }
+
+    <section class="section annotations">
+      <div class="ann-head">
+        <span class="section-label">Annotations</span>
+        <button type="button" class="link" (click)="addComment()"><i class="pi pi-plus"></i> add</button>
+      </div>
+      @if (messageThreads().length === 0) {
+        <p class="quiet small">No comments on this message.</p>
+      } @else {
+        @for (thread of messageThreads(); track thread.root.annotation.id) {
+          <div class="ann-thread">
+            <div class="ann-comment">
+              <span class="ann-author">{{ authorLabel(thread) }}</span>
+              <p class="ann-text">{{ thread.root.annotation.text }}</p>
+            </div>
+            @for (reply of thread.replies; track reply.annotation.id) {
+              <div class="ann-comment reply">
+                <span class="ann-author">{{ reply.annotation.author?.name || reply.annotation.author?.email || 'Anonymous' }}</span>
+                <p class="ann-text">{{ reply.annotation.text }}</p>
+              </div>
+            }
+          </div>
+        }
+        <button type="button" class="link" (click)="showAllAnnotations()">
+          <i class="pi pi-external-link"></i> open in Annotations tab
+        </button>
+      }
+    </section>
   </div>
 }

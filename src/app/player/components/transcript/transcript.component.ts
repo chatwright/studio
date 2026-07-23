@@ -38,7 +38,17 @@ export class TranscriptComponent {
   readonly ui = inject(PlayerUiState);
   private readonly scrollRegion = viewChild<ElementRef<HTMLElement>>('scrollRegion');
 
-  readonly chats = computed(() => this.engine.settled().chats);
+  /** Only the active chat is shown (multi-chat runs switch chats via the nav /
+   *  auto-follow). Falls back to the first settled chat. */
+  readonly chats = computed(() => {
+    const all = this.engine.settled().chats;
+    const activeId = this.engine.activeChatId();
+    const active = all.find((c) => c.chatId === activeId);
+    if (active) {
+      return [active];
+    }
+    return all.length ? [all[0]] : [];
+  });
 
   /** Message keys that open a new part (chapter), mapped to the chapter title.
    *  Drives the subtle part-chapter boundary treatment in the transcript. */
@@ -187,9 +197,9 @@ export class TranscriptComponent {
     });
   }
 
-  onPinClick(thread: AnnotationThread, domEvent: Event): void {
+  onPinClick(message: SettledMessage, thread: AnnotationThread, domEvent: Event): void {
     domEvent.stopPropagation();
-    this.ui.focusAnnotation(thread.root.annotation.id);
-    this.engine.seekTo(thread.root.stepIndex);
+    // Reveal this message's comments in the Annotations tab, filtered to it.
+    this.ui.showAnnotationsFor(message.key, thread.root.annotation.id);
   }
 }
