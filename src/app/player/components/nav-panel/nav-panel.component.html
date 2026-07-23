@@ -1,0 +1,88 @@
+@if (ui.navOpen()) {
+  <div class="nav">
+    @if (runs().length > 1) {
+      <section class="nav-section">
+        <span class="nav-label">Runs</span>
+        <ul class="run-list">
+          @for (run of runs(); track run.id) {
+            <li>
+              <button
+                type="button"
+                class="run-row"
+                [class.active]="engine.runIndex() === run.index"
+                (click)="selectRun(run.index)"
+              >
+                <span class="run-title mono">{{ run.id }}</span>
+                <span class="run-sub">{{ run.platform }} · {{ run.chatCount }} chat(s)</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <section class="nav-section">
+      <div class="nav-section-head">
+        <span class="nav-label">Chats</span>
+        @if (engine.pinnedChatId() !== null) {
+          <button type="button" class="pin-clear" (click)="togglePin()" pTooltip="Release pinned chat">
+            <i class="pi pi-lock"></i> pinned
+          </button>
+        }
+      </div>
+      <ul class="chat-list">
+        @for (chat of chatSummaries(); track chat.chatId) {
+          <li>
+            <button
+              type="button"
+              class="chat-row"
+              [class.active]="isActiveChat(chat.chatId)"
+              (click)="selectChat(chat.chatId)"
+            >
+              <span class="chat-top">
+                <span class="chat-title">{{ chat.title }}</span>
+                @if (isLiveChat(chat.chatId)) {
+                  <span class="live-dot" pTooltip="Current step is here"></span>
+                }
+                <span
+                  class="pin-toggle"
+                  role="button"
+                  tabindex="0"
+                  [class.on]="isPinned(chat.chatId)"
+                  (click)="$event.stopPropagation(); pinChat(chat.chatId)"
+                  (keydown.enter)="$event.stopPropagation(); pinChat(chat.chatId)"
+                  [pTooltip]="isPinned(chat.chatId) ? 'Unpin' : 'Pin this chat while stepping'"
+                >
+                  <i [class]="isPinned(chat.chatId) ? 'pi pi-lock' : 'pi pi-lock-open'"></i>
+                </span>
+              </span>
+              @if (chat.participants.length) {
+                <span class="chat-parts">{{ chat.participants.join(' · ') }}</span>
+              }
+              <span class="chat-preview">{{ chat.preview }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+} @else {
+  <div class="rail">
+    <span class="rail-title mono">{{ activeRunTitle() }}</span>
+    <div class="rail-chats">
+      @for (chat of chatSummaries(); track chat.chatId) {
+        <button
+          type="button"
+          class="rail-chat"
+          [class.active]="isActiveChat(chat.chatId)"
+          (click)="selectChat(chat.chatId)"
+          [pTooltip]="chat.title"
+          tooltipPosition="right"
+        >
+          {{ chat.chatId }}
+          @if (isLiveChat(chat.chatId)) { <span class="live-dot small"></span> }
+        </button>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,111 @@
+@if (target(); as target) {
+  <div class="inspector">
+    <header class="inspector-head">
+      <div>
+        <span class="eyebrow">Provenance</span>
+        <h3 class="mono">chat {{ target.chatId }} · message #{{ target.messageId }}</h3>
+      </div>
+      <p-button icon="pi pi-times" text rounded severity="secondary" (click)="close()" ariaLabel="Close inspector" />
+    </header>
+
+    @if (lineage(); as lineage) {
+      <section class="section">
+        <span class="section-label">Version lineage</span>
+        <ol class="versions">
+          @for (version of lineage.versions; track version.entryIndex) {
+            <li class="version" [class.is-edit]="version.edit">
+              <span class="v-badge mono">v{{ version.version }}</span>
+              <div class="v-body">
+                <span class="v-role mono">{{ version.edit ? 'editMessageText' : 'original send' }}</span>
+                <span class="v-text">{{ version.text }}</span>
+                @if (version.actions && version.actions.length) {
+                  <span class="v-actions mono">{{ version.actions.length }} action row(s)</span>
+                }
+                <span class="v-at mono">{{ version.at }}</span>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+
+      @if (lineage.presses.length) {
+        <section class="section">
+          <span class="section-label">Callbacks fired</span>
+          @for (press of lineage.presses; track press.entryIndex) {
+            <div class="press" [class.focused]="focusedPress()?.entryIndex === press.entryIndex">
+              <div class="press-head">
+                <p-tag [value]="press.actionLabel" severity="info" />
+                <span class="mono press-id">{{ press.actionId }}</span>
+              </div>
+              @if (press.response) {
+                <div class="press-response">
+                  <i class="pi pi-arrow-right"></i>
+                  <span>bot replied</span>
+                  <span class="resp-text">{{ press.response.text }}</span>
+                  <span class="mono resp-meta">#{{ press.response.messageId }} v{{ press.response.version }}</span>
+                </div>
+              } @else {
+                <div class="press-response quiet"><i class="pi pi-minus"></i> no captured response</div>
+              }
+            </div>
+          }
+        </section>
+      }
+    } @else {
+      <p class="quiet">No lineage available for this message.</p>
+    }
+
+    @if (observedBy().length) {
+      <section class="section observed">
+        <span class="section-label">Observed by</span>
+        @for (row of observedBy(); track row.partIndex) {
+          <button type="button" class="observe-row" (click)="jumpToObservation(row)">
+            <div class="observe-head">
+              <p-tag value="AI goal" icon="pi pi-microchip-ai" severity="info" />
+              <span class="observe-part">{{ row.partTitle }}</span>
+            </div>
+            <div class="observe-meta">
+              <span class="observe-actor"><i class="pi pi-user"></i> {{ row.actorName }}</span>
+              <span class="observe-next">proposed: {{ row.proposedNext }}</span>
+            </div>
+            <span class="observe-cta mono"><i class="pi pi-arrow-right"></i> open loop event #{{ row.eventIndex }}</span>
+          </button>
+        }
+      </section>
+    }
+
+    <section class="section annotations">
+      <div class="ann-head">
+        <span class="section-label">Annotations</span>
+        <button type="button" class="link" (click)="addComment()"><i class="pi pi-plus"></i> add</button>
+      </div>
+      @if (messageThreads().length === 0) {
+        <p class="quiet small">No comments on this message.</p>
+      } @else {
+        @for (thread of messageThreads(); track thread.root.annotation.id) {
+          <div class="ann-thread">
+            <div class="ann-comment">
+              <span class="ann-author">{{ authorLabel(thread) }}</span>
+              <p class="ann-text">{{ thread.root.annotation.text }}</p>
+            </div>
+            @for (reply of thread.replies; track reply.annotation.id) {
+              <div class="ann-comment reply">
+                <span class="ann-author">{{ reply.annotation.author?.name || reply.annotation.author?.email || 'Anonymous' }}</span>
+                <p class="ann-text">{{ reply.annotation.text }}</p>
+              </div>
+            }
+          </div>
+        }
+        <button type="button" class="link" (click)="showAllAnnotations()">
+          <i class="pi pi-external-link"></i> open in Annotations tab
+        </button>
+      }
+    </section>
+
+    @if (rawEntries().length) {
+      <section class="section raw">
+        <cw-raw-json [value]="rawEntries()" label="Raw source (JSON)" />
+      </section>
+    }
+  </div>
+}

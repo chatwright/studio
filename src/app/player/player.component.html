@@ -1,0 +1,102 @@
+<div class="player" [class.inspector-open]="ui.inspector()">
+  <header class="player-top surface">
+    <div class="run-meta">
+      <div class="run-line">
+        <p-tag [value]="engine.run()?.platform ?? '—'" icon="pi pi-send" severity="info" />
+        <p-tag [value]="engine.run()?.endpointProfile ?? '—'" icon="pi pi-shield" severity="secondary" />
+        <span class="run-id mono">{{ engine.run()?.id }}</span>
+      </div>
+      <div class="provenance quiet mono">
+        @if (createdAtLabel()) { <span><i class="pi pi-calendar"></i> {{ createdAtLabel() }}</span> }
+        @if (metadata()?.chatwrightVersion) { <span><i class="pi pi-tag"></i> {{ metadata()?.chatwrightVersion }}</span> }
+        @if (authorLabel()) { <span><i class="pi pi-user"></i> {{ authorLabel() }}</span> }
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <p-button
+        [icon]="engine.reducedMotion() ? 'pi pi-bolt' : 'pi pi-sparkles'"
+        [label]="engine.reducedMotion() ? 'Motion off' : 'Motion on'"
+        size="small"
+        severity="secondary"
+        [outlined]="!engine.reducedMotion()"
+        [text]="engine.reducedMotion()"
+        (click)="toggleReducedMotion()"
+        pTooltip="Toggle animation (also respects your OS reduced-motion setting)"
+        tooltipPosition="bottom"
+      />
+    </div>
+  </header>
+
+  @if (warnings().length) {
+    <div class="warnings">
+      @for (warning of warnings(); track warning) {
+        <div class="warning"><i class="pi pi-info-circle"></i> {{ warning }}</div>
+      }
+    </div>
+  }
+
+  <div class="player-grid" [class.nav-collapsed]="!ui.navOpen()" [class.right-collapsed]="!ui.rightOpen()">
+    <aside class="col col-left surface">
+      <header class="col-head">
+        @if (ui.navOpen()) { <h3>Navigation</h3> }
+        <button type="button" class="collapse-btn" (click)="ui.toggleNav()" aria-label="Toggle navigation">
+          <i [class]="ui.navOpen() ? 'pi pi-chevron-left' : 'pi pi-chevron-right'"></i>
+        </button>
+      </header>
+      <div class="col-scroll">
+        <cw-nav-panel />
+      </div>
+    </aside>
+
+    <section class="col col-center">
+      <div class="stage surface">
+        <cw-transcript />
+      </div>
+      <div class="transport surface">
+        <cw-transport-bar />
+      </div>
+    </section>
+
+    <aside class="col col-right surface">
+      <header class="col-head tabs-head">
+        @if (ui.rightOpen()) {
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'scenario'" [attr.aria-selected]="ui.rightTab() === 'scenario'" (click)="ui.showTab('scenario')">Scenario</button>
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'annotations'" [attr.aria-selected]="ui.rightTab() === 'annotations'" (click)="ui.showTab('annotations')">
+              Annotations
+              @if (engine.annotationPins().length) { <span class="tab-badge mono">{{ engine.annotationPins().length }}</span> }
+            </button>
+            <button type="button" role="tab" class="tab" [class.active]="ui.rightTab() === 'cast'" [attr.aria-selected]="ui.rightTab() === 'cast'" (click)="ui.showTab('cast')">Cast</button>
+          </div>
+        }
+        <button type="button" class="collapse-btn" (click)="ui.toggleRight()" aria-label="Toggle right panel">
+          <i [class]="ui.rightOpen() ? 'pi pi-chevron-right' : 'pi pi-chevron-left'"></i>
+        </button>
+      </header>
+      @if (ui.rightOpen()) {
+        <div class="col-scroll">
+          @switch (ui.rightTab()) {
+            @case ('scenario') { <cw-scenario-panel /> }
+            @case ('annotations') { <cw-annotations-panel /> }
+            @case ('cast') { <cw-cast-panel /> }
+          }
+        </div>
+      } @else {
+        <div class="rail-tabs">
+          <button type="button" (click)="ui.showTab('scenario')" pTooltip="Scenario" tooltipPosition="left"><i class="pi pi-sitemap"></i></button>
+          <button type="button" (click)="ui.showTab('annotations')" pTooltip="Annotations" tooltipPosition="left"><i class="pi pi-comments"></i></button>
+          <button type="button" (click)="ui.showTab('cast')" pTooltip="Cast" tooltipPosition="left"><i class="pi pi-users"></i></button>
+        </div>
+      }
+    </aside>
+  </div>
+
+  <!-- Provenance inspector: a right-edge drawer over the stage. -->
+  @if (ui.inspector()) {
+    <div class="inspector-scrim" (click)="ui.closeInspector()"></div>
+    <div class="inspector-drawer surface">
+      <cw-provenance-inspector />
+    </div>
+  }
+</div>

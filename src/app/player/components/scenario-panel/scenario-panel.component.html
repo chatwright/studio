@@ -1,0 +1,193 @@
+@if (cards().length === 0) {
+  <p class="empty quiet">This run has no parts.</p>
+}
+
+<div class="cards">
+  @for (card of cards(); track card.part.id) {
+    <article class="part-card" [class.active]="isPartActive(card.index)" [id]="'scn-part-' + card.index">
+      <header class="part-head">
+        <div class="part-title-row">
+          <h4>{{ card.title }}</h4>
+          @if (card.isAi) {
+            <p-tag value="AI goal" icon="pi pi-microchip-ai" severity="info" />
+          } @else {
+            <p-tag [value]="card.part.kind" severity="secondary" />
+          }
+        </div>
+        @if (isPartActive(card.index)) { <span class="playing-badge mono">● playing</span> }
+      </header>
+
+      @if (card.isAi) {
+        @let ai = card.part.aiGoal!;
+
+        <!-- Goal section -->
+        <section class="acc">
+          <button type="button" class="acc-head" (click)="toggle(card.index, 'goal')">
+            <i [class]="isOpen(card.index, 'goal') ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+            <span>Goal</span>
+          </button>
+          @if (isOpen(card.index, 'goal')) {
+            <div class="acc-body">
+              @if (ai.goal.description) { <p class="goal-desc">{{ ai.goal.description }}</p> }
+              @if (ai.goal.tasks?.length) {
+                <ul class="tasks">
+                  @for (task of ai.goal.tasks; track task.id) {
+                    <li>
+                      <span class="task-title">{{ task.title || task.id }}</span>
+                      @if (task.successCriteria) { <span class="task-crit">{{ task.successCriteria }}</span> }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="quiet small">No tasks declared.</p>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Loop section -->
+        <section class="acc">
+          <button type="button" class="acc-head" (click)="toggle(card.index, 'loop')">
+            <i [class]="isOpen(card.index, 'loop') ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+            <span>Loop</span>
+            <span class="acc-count mono">{{ ai.events?.length ?? 0 }}</span>
+          </button>
+          @if (isOpen(card.index, 'loop')) {
+            <div class="acc-body events">
+              @for (event of ai.events ?? []; track event.index; let i = $index) {
+                <div
+                  class="event"
+                  [id]="'scn-event-' + card.index + '-' + i"
+                  [class.active]="isEventActive(card.index, i)"
+                  [class.focused]="isEventFocused(card.index, i)"
+                >
+                  <div class="event-head">
+                    <span class="step-badge mono">#{{ event.index }}</span>
+                    <span class="task mono">{{ event.taskId }}</span>
+                  </div>
+                  <div class="beat-row">
+                    <span class="beat-label">Observed</span>
+                    <span class="beat-value mono">seq {{ event.observationSequence }}</span>
+                  </div>
+                  <div class="beat-row">
+                    <span class="beat-label">Proposed</span>
+                    <span class="beat-value"><p-tag [value]="proposalLabel(event)" [severity]="proposalSeverity(event)" /></span>
+                  </div>
+                  @if (event.proposal.rationale) { <p class="rationale">"{{ event.proposal.rationale }}"</p> }
+                  @if (event.validation.checked) {
+                    <div class="beat-row">
+                      <span class="beat-label">Validated</span>
+                      <span class="beat-value">
+                        <p-tag [value]="event.validation.verdict || 'unchecked'" [severity]="verdictSeverity(event.validation.verdict)" />
+                        @if (event.validation.reason) { <span class="reason">{{ event.validation.reason }}</span> }
+                      </span>
+                    </div>
+                  }
+                  <div class="beat-row">
+                    <span class="beat-label">Acted</span>
+                    <span class="beat-value">
+                      <p-tag [value]="event.action.kind" [severity]="outcomeSeverity(event.action.kind)" />
+                      @if (event.action.detail) { <span class="reason">{{ event.action.detail }}</span> }
+                    </span>
+                  </div>
+                  @if (event.usage.model) {
+                    <footer class="usage mono">
+                      <span pTooltip="Model">{{ event.usage.model }}</span>
+                      <span pTooltip="Input / output tokens">{{ event.usage.inputTokens }}▸{{ event.usage.outputTokens }} tok</span>
+                      <span pTooltip="Latency">{{ latencyMs(event.usage.latencyNanoseconds) }} ms</span>
+                      @if (event.usage.cost !== undefined) { <span pTooltip="Cost">${{ event.usage.cost }}</span> }
+                    </footer>
+                  }
+                  <cw-raw-json [value]="event" label="Raw LoopEvent (JSON)" />
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <!-- Report section -->
+        @if (ai.report) {
+          <section class="acc">
+            <button type="button" class="acc-head" (click)="toggle(card.index, 'report')">
+              <i [class]="isOpen(card.index, 'report') ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+              <span>Report</span>
+            </button>
+            @if (isOpen(card.index, 'report')) {
+              <div class="acc-body">
+                <div class="report-grid mono">
+                  <span>stop</span><strong>{{ ai.report.stopReason }}</strong>
+                  <span>steps</span><strong>{{ ai.report.steps }}</strong>
+                  <span>tokens</span><strong>{{ ai.report.usage.inputTokens }}▸{{ ai.report.usage.outputTokens }}</strong>
+                  <span>calls</span><strong>{{ ai.report.usage.callCount }}</strong>
+                  @if (ai.report.cost !== undefined) { <span>cost</span><strong>${{ ai.report.cost }}</strong> }
+                </div>
+                @if (ai.report.tasks?.length) {
+                  <ul class="task-outcomes">
+                    @for (task of ai.report.tasks; track task.taskId) {
+                      <li>
+                        <p-tag [value]="task.status" [severity]="task.status === 'completed' ? 'success' : 'warn'" />
+                        <span>{{ task.title || task.taskId }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+                @if (ai.report.findings?.length) {
+                  <div class="findings">
+                    @for (finding of ai.report.findings; track $index) {
+                      <div class="finding" [class]="'sev-' + findingSeverity(finding.kind)">
+                        <span class="finding-kind mono">{{ finding.kind }}</span>
+                        <span class="finding-summary">{{ finding.summary }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Evidence section -->
+        @if (ai.evidence?.length) {
+          <section class="acc">
+            <button type="button" class="acc-head" (click)="toggle(card.index, 'evidence')">
+              <i [class]="isOpen(card.index, 'evidence') ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+              <span>Data-state evidence</span>
+              <span class="acc-count mono">{{ ai.evidence.length }}</span>
+            </button>
+            @if (isOpen(card.index, 'evidence')) {
+              <div class="acc-body">
+                @for (item of ai.evidence; track $index) {
+                  <div class="evidence" [class.passed]="item.outcome === 'passed'">
+                    <div class="evidence-head">
+                      <strong>{{ item.name }}</strong>
+                      <p-tag [value]="item.outcome" [severity]="item.outcome === 'passed' ? 'success' : 'danger'" />
+                    </div>
+                    <code class="evidence-query">{{ item.query }}</code>
+                    <span class="evidence-meta mono">{{ item.holder }} · {{ item.returnedRows }}/{{ item.totalRows }} rows</span>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+      } @else {
+        <!-- deterministic / unknown-kind part: transcript-only -->
+        <section class="acc">
+          <button type="button" class="acc-head" (click)="toggle(card.index, 'overview')">
+            <i [class]="isOpen(card.index, 'overview') ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+            <span>Overview</span>
+          </button>
+          @if (isOpen(card.index, 'overview')) {
+            <div class="acc-body">
+              <p class="quiet small">
+                <strong>{{ card.part.kind }}</strong> part — a transcript-only chapter with
+                {{ card.entryCount }} journal entr{{ card.entryCount === 1 ? 'y' : 'ies' }}. No AI mind
+                to trace.
+              </p>
+            </div>
+          }
+        </section>
+      }
+    </article>
+  }
+</div>

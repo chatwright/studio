@@ -1,0 +1,58 @@
+@if (actors().length === 0) {
+  <p class="empty quiet">No actors in this run.</p>
+}
+<ul class="cast">
+  @for (actor of actors(); track actor.id) {
+    @let s = stats(actor);
+    <li class="cast-member" [class.open]="isExpanded(actor)">
+      <button type="button" class="cast-summary" (click)="toggle(actor)" [attr.aria-expanded]="isExpanded(actor)">
+        <p-avatar [label]="initials(actor)" shape="circle" class="cast-avatar" />
+        <div class="cast-body">
+          <div class="cast-title">
+            <span class="cast-name">{{ actor.name ?? actor.id }}</span>
+            <p-tag [value]="actor.type" [severity]="typeSeverity(actor.type)" />
+          </div>
+          <div class="cast-quick mono">
+            <span pTooltip="Messages sent"><i class="pi pi-comment"></i> {{ s.messagesSent }}</span>
+            <span pTooltip="Clicks / callbacks"><i class="pi pi-bolt"></i> {{ s.clicks }}</span>
+            <span pTooltip="Edits received"><i class="pi pi-pencil"></i> {{ s.editsReceived }}</span>
+            @if (s.isAI) { <span pTooltip="Model calls"><i class="pi pi-microchip-ai"></i> {{ s.calls }}</span> }
+          </div>
+        </div>
+        <i class="chev" [class]="isExpanded(actor) ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"></i>
+      </button>
+
+      @if (isExpanded(actor)) {
+        <div class="cast-detail">
+          <div class="cast-id mono">id: {{ actor.id }}</div>
+
+          @for (identity of identities(actor); track identity.platform) {
+            <div class="cast-identity mono">
+              <span class="plat">{{ identity.platform }}</span>
+              <span class="uid">#{{ identity.userId }}</span>
+              @if (identity.handle) { <span class="handle">{{ identity.handle }}</span> }
+            </div>
+          }
+
+          <div class="stat-grid mono">
+            <span>messages sent</span><strong>{{ s.messagesSent }}</strong>
+            <span>clicks / callbacks</span><strong>{{ s.clicks }}</strong>
+            <span>edits received</span><strong>{{ s.editsReceived }}</strong>
+            @if (s.isAI) {
+              <span>model calls</span><strong>{{ s.calls }}</strong>
+              <span>tokens in ▸ out</span><strong>{{ s.inputTokens }} ▸ {{ s.outputTokens }}</strong>
+            }
+          </div>
+
+          @if (s.models.length) {
+            <div class="cast-provider">
+              <i class="pi pi-microchip-ai"></i>
+              @if (actor.provider?.name) { <span>{{ actor.provider.name }}</span> }
+              <span class="models mono">{{ s.models.join(', ') }}</span>
+            </div>
+          }
+        </div>
+      }
+    </li>
+  }
+</ul>

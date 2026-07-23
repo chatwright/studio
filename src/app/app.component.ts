@@ -61,6 +61,13 @@ export class AppComponent {
       icon: 'pi pi-wave-pulse',
       route: '/run',
       eyebrow: 'Transcript & trace'
+    },
+    {
+      label: 'Player',
+      shortLabel: 'Play',
+      icon: 'pi pi-play-circle',
+      route: '/player',
+      eyebrow: 'Replay run bundles'
     }
   ];
 

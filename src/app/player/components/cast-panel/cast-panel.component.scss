@@ -1,0 +1,151 @@
+:host {
+  display: block;
+  padding: 0.8rem 0.9rem 1rem;
+}
+
+.empty {
+  font-size: 0.78rem;
+  margin: 0.5rem 0;
+}
+
+.cast {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cast-member {
+  border: 1px solid var(--cw-line);
+  border-radius: 0.7rem;
+  background: var(--cw-panel-soft);
+  overflow: hidden;
+
+  &.open {
+    border-color: var(--cw-line-strong);
+  }
+}
+
+.cast-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--cw-hover);
+  }
+}
+
+.cast-avatar {
+  flex: 0 0 auto;
+  --p-avatar-width: 2.1rem;
+  --p-avatar-height: 2.1rem;
+  --p-avatar-background: rgba(110, 87, 204, 0.16);
+  --p-avatar-color: var(--cw-violet);
+  font-size: 0.64rem;
+}
+
+.cast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+.cast-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.cast-name {
+  font-weight: 650;
+  font-size: 0.84rem;
+}
+.cast-quick {
+  display: flex;
+  gap: 0.7rem;
+  font-size: 0.64rem;
+  color: var(--cw-muted-strong);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+.chev {
+  color: var(--cw-muted);
+  font-size: 0.7rem;
+}
+
+.cast-detail {
+  padding: 0.1rem 0.7rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-top: 1px solid var(--cw-line);
+}
+.cast-id {
+  font-size: 0.64rem;
+  color: var(--cw-muted);
+  padding-top: 0.4rem;
+}
+.cast-identity {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.66rem;
+  align-items: baseline;
+
+  .plat {
+    color: var(--cw-muted-strong);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.58rem;
+  }
+  .uid {
+    color: var(--cw-muted);
+  }
+  .handle {
+    color: var(--cw-blue);
+  }
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem 0.7rem;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-line);
+  border-radius: 0.55rem;
+
+  span {
+    color: var(--cw-muted);
+  }
+  strong {
+    color: var(--cw-text);
+    text-align: right;
+  }
+}
+
+.cast-provider {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--cw-mint);
+
+  .models {
+    color: var(--cw-muted-strong);
+    font-size: 0.64rem;
+  }
+}

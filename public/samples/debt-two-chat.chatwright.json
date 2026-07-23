@@ -1,0 +1,411 @@
+{
+  "format": "https://chatwright.dev/formats/run-bundle/v1",
+  "metadata": {
+    "createdAt": "2026-07-23T06:54:37Z",
+    "chatwrightVersion": "v0.0.0",
+    "author": {
+      "name": "alex"
+    }
+  },
+  "runs": [
+    {
+      "id": "run-1",
+      "platform": "telegram",
+      "endpointProfile": "platform-emulated",
+      "actors": [
+        {
+          "id": "alice",
+          "type": "scripted",
+          "name": "Alice",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 7,
+              "firstName": "Alice"
+            }
+          }
+        },
+        {
+          "id": "bob",
+          "type": "scripted",
+          "name": "Bob",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 8,
+              "username": "bob",
+              "firstName": "Bob"
+            }
+          }
+        },
+        {
+          "id": "debtbot",
+          "type": "bot",
+          "name": "DebtBot",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 1,
+              "firstName": "DebtBot"
+            }
+          }
+        }
+      ],
+      "chats": [
+        {
+          "chatId": 101,
+          "entries": [
+            {
+              "direction": "user",
+              "kind": "message",
+              "messageId": 1,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "/debt @bob 10",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.808033+01:00",
+              "fromId": 7
+            },
+            {
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 2,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Recorded: you lent @bob 10. Waiting for their acknowledgement.",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810087+01:00",
+              "fromId": 1
+            },
+            {
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 3,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "@bob acknowledged the debt of 10.",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810644+01:00",
+              "fromId": 1
+            }
+          ]
+        },
+        {
+          "chatId": 202,
+          "entries": [
+            {
+              "direction": "bot",
+              "kind": "message",
+              "messageId": 1,
+              "refMessageId": 0,
+              "version": 0,
+              "text": "Alice says you owe them 10. Please acknowledge.",
+              "actions": [
+                [
+                  {
+                    "label": "Acknowledge",
+                    "id": "ack:1",
+                    "url": ""
+                  }
+                ]
+              ],
+              "method": "",
+              "at": "2026-07-23T07:54:37.810281+01:00",
+              "fromId": 1
+            },
+            {
+              "direction": "user",
+              "kind": "action",
+              "messageId": 0,
+              "refMessageId": 1,
+              "version": 0,
+              "text": "ack:1",
+              "actions": null,
+              "method": "",
+              "at": "2026-07-23T07:54:37.810417+01:00",
+              "fromId": 8
+            }
+          ]
+        }
+      ],
+      "parts": [
+        {
+          "id": "record",
+          "title": "Alice records a debt",
+          "kind": "deterministic",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 101,
+                "firstEntry": 0,
+                "entryCount": 2
+              },
+              {
+                "chatId": 202,
+                "firstEntry": 0,
+                "entryCount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "acknowledge",
+          "title": "Bob acknowledges the debt",
+          "kind": "ai-goal",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 101,
+                "firstEntry": 2,
+                "entryCount": 1
+              },
+              {
+                "chatId": 202,
+                "firstEntry": 1,
+                "entryCount": 1
+              }
+            ]
+          },
+          "aiGoal": {
+            "goal": {
+              "id": "acknowledge-debt",
+              "title": "Acknowledge the debt Alice recorded",
+              "description": "",
+              "tasks": [
+                {
+                  "id": "acknowledge",
+                  "title": "Click Acknowledge on the debt notification",
+                  "dependsOn": null,
+                  "successCriteria": "the debt notification with an \"Acknowledge\" action is visible; click it",
+                  "milestones": null
+                }
+              ],
+              "constraints": null,
+              "budgets": {
+                "maxSteps": 10,
+                "maxDurationNanoseconds": 60000000000,
+                "maxRepeatedFailures": 0,
+                "maxCost": null
+              }
+            },
+            "actorId": "bob",
+            "events": [
+              {
+                "index": 0,
+                "at": "2026-07-23T07:54:37.810416+01:00",
+                "taskId": "acknowledge",
+                "observationSequence": 1,
+                "proposal": {
+                  "kind": "click",
+                  "text": "",
+                  "actionId": "act-1-0-r0c0",
+                  "observationSequence": 1,
+                  "rationale": "acknowledge the debt Alice recorded"
+                },
+                "usage": {
+                  "model": "scripted-v1",
+                  "inputTokens": 6,
+                  "outputTokens": 2,
+                  "latencyNanoseconds": 0
+                },
+                "validation": {
+                  "checked": true,
+                  "verdict": "fresh",
+                  "reason": "action is currently available"
+                },
+                "action": {
+                  "kind": "executed-no-effect",
+                  "detail": ""
+                }
+              },
+              {
+                "index": 1,
+                "at": "2026-07-23T07:54:37.810768+01:00",
+                "taskId": "acknowledge",
+                "observationSequence": 3,
+                "proposal": {
+                  "kind": "task-done",
+                  "text": "",
+                  "actionId": "",
+                  "observationSequence": 0,
+                  "rationale": "clicked Acknowledge"
+                },
+                "usage": {
+                  "model": "scripted-v1",
+                  "inputTokens": 6,
+                  "outputTokens": 2,
+                  "latencyNanoseconds": 0
+                },
+                "validation": {
+                  "checked": false,
+                  "verdict": "",
+                  "reason": ""
+                },
+                "action": {
+                  "kind": "task-completed",
+                  "detail": ""
+                }
+              }
+            ],
+            "observations": [
+              {
+                "sequence": 1,
+                "observation": {
+                  "sequence": 1,
+                  "previousSequence": 0,
+                  "chat": {
+                    "chatId": 202
+                  },
+                  "messages": [
+                    {
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
+                        {
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "changes": null
+                }
+              },
+              {
+                "sequence": 2,
+                "observation": {
+                  "sequence": 2,
+                  "previousSequence": 1,
+                  "chat": {
+                    "chatId": 202
+                  },
+                  "messages": [
+                    {
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
+                        {
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 2
+                        }
+                      ]
+                    }
+                  ],
+                  "changes": null
+                }
+              },
+              {
+                "sequence": 3,
+                "observation": {
+                  "sequence": 3,
+                  "previousSequence": 2,
+                  "chat": {
+                    "chatId": 202
+                  },
+                  "messages": [
+                    {
+                      "id": "msg1",
+                      "version": 0,
+                      "edited": false,
+                      "actor": "bot",
+                      "text": "Alice says you owe them 10. Please acknowledge.",
+                      "actions": [
+                        {
+                          "id": "act-1-0-r0c0",
+                          "label": "Acknowledge",
+                          "seenAt": 3
+                        }
+                      ]
+                    }
+                  ],
+                  "changes": null
+                }
+              }
+            ],
+            "report": {
+              "schemaVersion": 1,
+              "goalId": "acknowledge-debt",
+              "goalTitle": "Acknowledge the debt Alice recorded",
+              "stopReason": "goal-complete",
+              "steps": 1,
+              "elapsedNanoseconds": 367709,
+              "tasks": [
+                {
+                  "taskId": "acknowledge",
+                  "title": "Click Acknowledge on the debt notification",
+                  "successCriteria": "the debt notification with an \"Acknowledge\" action is visible; click it",
+                  "status": "completed",
+                  "attempted": true,
+                  "failureCount": 0
+                }
+              ],
+              "findings": [],
+              "usage": {
+                "inputTokens": 12,
+                "outputTokens": 4,
+                "callCount": 2
+              }
+            }
+          }
+        }
+      ],
+      "bookmarks": [
+        {
+          "id": "debt-notified",
+          "title": "Bob is notified of the debt (chat B)",
+          "anchor": {
+            "chatId": 202,
+            "entryIndex": 0,
+            "messageId": 1
+          }
+        },
+        {
+          "id": "debt-confirmed",
+          "title": "Alice is told Bob acknowledged (chat A)",
+          "anchor": {
+            "chatId": 101,
+            "entryIndex": 2,
+            "messageId": 3
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "id": "a1",
+          "anchor": {
+            "chatId": 202,
+            "entryIndex": 0,
+            "messageId": 1
+          },
+          "author": {
+            "name": "alex"
+          },
+          "createdAt": "2026-07-23T06:54:37Z",
+          "text": "This message exists only because the bot's single webhook response to Alice's /debt made a second, independent sendMessage call — into chat B, a chat_id the inbound update never carried."
+        },
+        {
+          "id": "a2",
+          "anchor": {
+            "chatId": 101,
+            "entryIndex": 2,
+            "messageId": 3
+          },
+          "author": {
+            "name": "alex"
+          },
+          "createdAt": "2026-07-23T06:55:37Z",
+          "text": "And this is the round trip closing: Bob's click (Part 2, driven as Bob in chat B) triggers a confirmation the bot sends back into chat A — a chat Part 2's own actor loop never itself observes.",
+          "replyTo": "a1"
+        }
+      ]
+    }
+  ]
+}
