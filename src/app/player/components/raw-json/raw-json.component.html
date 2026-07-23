@@ -1,0 +1,16 @@
+<div class="raw-json">
+  <button type="button" class="raw-head" (click)="toggle()" [attr.aria-expanded]="open()">
+    <i [class]="open() ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+    <span>{{ label() }}</span>
+    <i class="pi pi-code hint"></i>
+  </button>
+  @if (open()) {
+    <div class="raw-body">
+      <button type="button" class="copy-btn" (click)="copy()" [attr.aria-label]="'Copy JSON'">
+        <i [class]="copied() ? 'pi pi-check' : 'pi pi-copy'"></i>
+        {{ copied() ? 'Copied' : 'Copy' }}
+      </button>
+      <pre class="raw-pre mono" tabindex="0">{{ json() }}</pre>
+    </div>
+  }
+</div>

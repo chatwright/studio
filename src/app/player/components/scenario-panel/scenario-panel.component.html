@@ -98,6 +98,7 @@
                       @if (event.Usage.cost !== undefined) { <span pTooltip="Cost">${{ event.Usage.cost }}</span> }
                     </footer>
                   }
+                  <cw-raw-json [value]="event" label="Raw LoopEvent (JSON)" />
                 </div>
               }
             </div>

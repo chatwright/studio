@@ -14,6 +14,7 @@ import { ActorLoopEvent, BundlePart } from '../../model/bundle.types';
 import { findingSeverity } from '../../engine/derive';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
+import { RawJsonComponent } from '../raw-json/raw-json.component';
 
 interface PartCard {
   index: number;
@@ -32,7 +33,7 @@ interface PartCard {
  */
 @Component({
   selector: 'cw-scenario-panel',
-  imports: [TagModule, TooltipModule],
+  imports: [TagModule, TooltipModule, RawJsonComponent],
   templateUrl: './scenario-panel.component.html',
   styleUrl: './scenario-panel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

@@ -5,8 +5,10 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { messageKey } from '../../engine/animation';
 import { AnnotationThread, ObservedByRow, resolveAnchorMessageKey } from '../../engine/derive';
+import { PlatformJournalEntry } from '../../model/bundle.types';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
+import { RawJsonComponent } from '../raw-json/raw-json.component';
 
 /**
  * Click-to-provenance inspector: the message↔lineage↔AI-reasoning link as a
@@ -19,7 +21,7 @@ import { PlayerUiState } from '../../player-ui';
  */
 @Component({
   selector: 'cw-provenance-inspector',
-  imports: [ButtonModule, TagModule, TooltipModule],
+  imports: [ButtonModule, TagModule, TooltipModule, RawJsonComponent],
   templateUrl: './provenance-inspector.component.html',
   styleUrl: './provenance-inspector.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -31,6 +33,22 @@ export class ProvenanceInspectorComponent {
   readonly target = this.ui.inspector;
   readonly lineage = this.ui.lineage;
   readonly observedBy = this.ui.observedBy;
+
+  /** The raw journal entries backing the inspected message — every version
+   *  plus any action targeting it — verbatim from the loaded bundle. */
+  readonly rawEntries = computed<PlatformJournalEntry[]>(() => {
+    const target = this.ui.inspector();
+    const run = this.engine.run();
+    if (!target || !run) {
+      return [];
+    }
+    const entries = run.chats?.find((c) => c.chatId === target.chatId)?.entries ?? [];
+    return entries.filter(
+      (e) =>
+        e.MessageID === target.messageId ||
+        (e.Kind === 'action' && e.RefMessageID === target.messageId)
+    );
+  });
 
   /** The action press the inspector opened from, if any. */
   readonly focusedPress = computed(() => {

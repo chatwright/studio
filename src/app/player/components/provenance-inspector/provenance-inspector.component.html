@@ -101,5 +101,11 @@
         </button>
       }
     </section>
+
+    @if (rawEntries().length) {
+      <section class="section raw">
+        <cw-raw-json [value]="rawEntries()" label="Raw source (JSON)" />
+      </section>
+    }
   </div>
 }
