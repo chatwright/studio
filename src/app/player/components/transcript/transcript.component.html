@@ -75,7 +75,7 @@
                     >
                       @for (rowActions of message.actions; track $index) {
                         <span class="action-row">
-                          @for (action of rowActions; track action.ID) {
+                          @for (action of rowActions; track action.id) {
                             <span
                               class="action-btn"
                               role="button"
@@ -83,11 +83,11 @@
                               [class.pressed]="isActionPressed(message, action)"
                               (click)="onActionClick(message, action, $event)"
                               (keydown.enter)="onActionClick(message, action, $event)"
-                              [pTooltip]="'callback: ' + action.ID"
+                              [pTooltip]="'callback: ' + action.id"
                               tooltipPosition="top"
                             >
-                              {{ action.Label }}
-                              @if (action.URL) { <i class="pi pi-external-link"></i> }
+                              {{ action.label }}
+                              @if (action.url) { <i class="pi pi-external-link"></i> }
                             </span>
                           }
                         </span>

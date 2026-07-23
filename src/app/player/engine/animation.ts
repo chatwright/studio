@@ -66,30 +66,30 @@ export function animationForJournalEntry(
   entry: PlatformJournalEntry,
   chapterBoundary: boolean
 ): AnimationSpec {
-  switch (entry.Kind) {
+  switch (entry.kind) {
     case 'message': {
-      if (entry.Version > 0) {
+      if (entry.version > 0) {
         return {
           primitive: 'edit-morph',
-          targetKey: messageKey(chatId, entry.MessageID),
+          targetKey: messageKey(chatId, entry.messageId),
           baseDurationMs: 620,
           chapterBoundary
         };
       }
-      if (entry.Direction === 'user') {
+      if (entry.direction === 'user') {
         return {
           primitive: 'compose-and-send',
-          targetKey: messageKey(chatId, entry.MessageID),
-          baseDurationMs: Math.min(2400, 420 + entry.Text.length * TYPING_MS_PER_CHAR),
-          typedText: entry.Text,
+          targetKey: messageKey(chatId, entry.messageId),
+          baseDurationMs: Math.min(2400, 420 + entry.text.length * TYPING_MS_PER_CHAR),
+          typedText: entry.text,
           chapterBoundary
         };
       }
       // Bot message: typing indicator, then land. Keyboard slides with it.
-      const hasActions = !!entry.Actions && entry.Actions.length > 0;
+      const hasActions = !!entry.actions && entry.actions.length > 0;
       return {
         primitive: hasActions ? 'reply-keyboard-in' : 'bot-typing',
-        targetKey: messageKey(chatId, entry.MessageID),
+        targetKey: messageKey(chatId, entry.messageId),
         baseDurationMs: hasActions ? 900 : 780,
         chapterBoundary
       };
@@ -97,15 +97,15 @@ export function animationForJournalEntry(
     case 'action':
       return {
         primitive: 'button-press',
-        targetKey: messageKey(chatId, entry.RefMessageID),
+        targetKey: messageKey(chatId, entry.refMessageId),
         baseDurationMs: 460,
         chapterBoundary
       };
     case 'uncaptured':
-      if (DELETE_METHOD.test(entry.Method) && entry.RefMessageID > 0) {
+      if (DELETE_METHOD.test(entry.method) && entry.refMessageId > 0) {
         return {
           primitive: 'vapour-delete',
-          targetKey: messageKey(chatId, entry.RefMessageID),
+          targetKey: messageKey(chatId, entry.refMessageId),
           baseDurationMs: 720,
           chapterBoundary
         };

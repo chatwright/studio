@@ -45,8 +45,8 @@ export class ProvenanceInspectorComponent {
     const entries = run.chats?.find((c) => c.chatId === target.chatId)?.entries ?? [];
     return entries.filter(
       (e) =>
-        e.MessageID === target.messageId ||
-        (e.Kind === 'action' && e.RefMessageID === target.messageId)
+        e.messageId === target.messageId ||
+        (e.kind === 'action' && e.refMessageId === target.messageId)
     );
   });
 

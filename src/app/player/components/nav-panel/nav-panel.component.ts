@@ -55,14 +55,14 @@ export class NavPanelComponent {
     }
     return (run.chats ?? []).map((chat) => {
       const entries = chat.entries ?? [];
-      const fromIds = [...new Set(entries.map((e) => e.FromID).filter((id) => id !== 0))];
+      const fromIds = [...new Set(entries.map((e) => e.fromId).filter((id) => id !== 0))];
       const participants = fromIds.map((id) => attribution(run, id).displayName);
-      const lastMessage = [...entries].reverse().find((e) => e.Kind === 'message' && !!e.Text);
+      const lastMessage = [...entries].reverse().find((e) => e.kind === 'message' && !!e.text);
       return {
         chatId: chat.chatId,
         title: `Chat ${chat.chatId}`,
         participants,
-        preview: lastMessage?.Text ?? '—',
+        preview: lastMessage?.text ?? '—',
         entryCount: entries.length
       };
     });

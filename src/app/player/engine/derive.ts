@@ -82,11 +82,11 @@ export interface MessageLineage {
 
 function actionLabelFor(entries: PlatformJournalEntry[], refMessageId: number, actionId: string): string {
   for (const entry of entries) {
-    if (entry.MessageID === refMessageId && entry.Actions) {
-      for (const row of entry.Actions) {
+    if (entry.messageId === refMessageId && entry.actions) {
+      for (const row of entry.actions) {
         for (const action of row) {
-          if (action.ID === actionId) {
-            return action.Label;
+          if (action.id === actionId) {
+            return action.label;
           }
         }
       }
@@ -110,37 +110,37 @@ export function messageLineage(
   const presses: ActionPress[] = [];
 
   entries.forEach((entry, entryIndex) => {
-    if (entry.Kind === 'message' && entry.MessageID === messageId) {
+    if (entry.kind === 'message' && entry.messageId === messageId) {
       versions.push({
         entryIndex,
-        version: entry.Version,
-        text: entry.Text,
-        actions: entry.Actions ?? [],
-        at: entry.At,
-        edit: entry.Version > 0
+        version: entry.version,
+        text: entry.text,
+        actions: entry.actions ?? [],
+        at: entry.at,
+        edit: entry.version > 0
       });
     }
-    if (entry.Kind === 'action' && entry.RefMessageID === messageId) {
+    if (entry.kind === 'action' && entry.refMessageId === messageId) {
       // First bot entry after this press is the callback's visible effect.
       let response: ActionPress['response'] = null;
       for (let j = entryIndex + 1; j < entries.length; j++) {
         const next = entries[j];
-        if (next.Direction === 'bot' && next.Kind === 'message') {
+        if (next.direction === 'bot' && next.kind === 'message') {
           response = {
             entryIndex: j,
-            messageId: next.MessageID,
-            version: next.Version,
-            text: next.Text
+            messageId: next.messageId,
+            version: next.version,
+            text: next.text
           };
           break;
         }
       }
       presses.push({
         entryIndex,
-        actionId: entry.Text,
-        actionLabel: actionLabelFor(entries, messageId, entry.Text),
-        at: entry.At,
-        fromId: entry.FromID,
+        actionId: entry.text,
+        actionLabel: actionLabelFor(entries, messageId, entry.text),
+        at: entry.at,
+        fromId: entry.fromId,
         response
       });
     }
@@ -171,12 +171,12 @@ export function loopEventForBotMessage(
     let seenAtSequence = Number.POSITIVE_INFINITY;
     for (const retained of observations) {
       const obs = retained.observation;
-      if (obs.Chat?.ChatID !== chatId) {
+      if (obs.chat?.chatId !== chatId) {
         continue;
       }
-      const has = (obs.Messages ?? []).some((m) => idMatches(m.ID, messageId));
+      const has = (obs.messages ?? []).some((m) => idMatches(m.id, messageId));
       if (has) {
-        seenAtSequence = Math.min(seenAtSequence, obs.Sequence);
+        seenAtSequence = Math.min(seenAtSequence, obs.sequence);
       }
     }
     const events = part.aiGoal.events ?? [];
@@ -184,7 +184,7 @@ export function loopEventForBotMessage(
     // in; otherwise the first event whose observation sequence >= it.
     let best = -1;
     for (let i = 0; i < events.length; i++) {
-      if (events[i].ObservationSequence >= seenAtSequence) {
+      if (events[i].observationSequence >= seenAtSequence) {
         best = i;
         break;
       }
@@ -210,21 +210,21 @@ export interface ObservedByRow {
 
 /** Human summary of a proposal ("Send: …", "Click: …", "Mark task done", …). */
 export function summariseProposal(proposal: {
-  Kind: string;
-  Text: string;
-  ActionID: string;
+  kind: string;
+  text: string;
+  actionId: string;
 }): string {
-  switch (proposal.Kind) {
+  switch (proposal.kind) {
     case 'send-text':
-      return `Send "${proposal.Text}"`;
+      return `Send "${proposal.text}"`;
     case 'click':
-      return `Click ${proposal.ActionID}`;
+      return `Click ${proposal.actionId}`;
     case 'task-done':
       return 'Mark task done';
     case 'give-up':
       return 'Give up';
     default:
-      return proposal.Kind;
+      return proposal.kind;
   }
 }
 
@@ -250,18 +250,18 @@ export function observedByParts(
     let seenAtSequence = Number.POSITIVE_INFINITY;
     for (const retained of observations) {
       const obs = retained.observation;
-      if (obs.Chat?.ChatID !== chatId) {
+      if (obs.chat?.chatId !== chatId) {
         continue;
       }
-      if ((obs.Messages ?? []).some((m) => idMatches(m.ID, messageId))) {
-        seenAtSequence = Math.min(seenAtSequence, obs.Sequence);
+      if ((obs.messages ?? []).some((m) => idMatches(m.id, messageId))) {
+        seenAtSequence = Math.min(seenAtSequence, obs.sequence);
       }
     }
     if (!Number.isFinite(seenAtSequence)) {
       return;
     }
     const events = part.aiGoal.events ?? [];
-    let eventIndex = events.findIndex((e) => e.ObservationSequence >= seenAtSequence);
+    let eventIndex = events.findIndex((e) => e.observationSequence >= seenAtSequence);
     if (eventIndex < 0 && events.length > 0) {
       eventIndex = events.length - 1;
     }
@@ -272,12 +272,12 @@ export function observedByParts(
     const actor = (run.actors ?? []).find((a) => a.id === actorId) ?? null;
     rows.push({
       partIndex,
-      partTitle: part.aiGoal.goal?.Title || part.title || part.id,
+      partTitle: part.aiGoal.goal?.title || part.title || part.id,
       actorId,
       actorName: actor?.name ?? actorId,
       eventIndex,
-      proposedNext: summariseProposal(events[eventIndex].Proposal),
-      at: events[eventIndex].At
+      proposedNext: summariseProposal(events[eventIndex].proposal),
+      at: events[eventIndex].at
     });
   });
 
@@ -315,14 +315,14 @@ export function actorStats(run: BundleRun, actor: BundleActor): ActorStats {
 
   for (const chat of run.chats ?? []) {
     const entries = chat.entries ?? [];
-    const participates = entries.some((e) => userIds.has(e.FromID));
+    const participates = entries.some((e) => userIds.has(e.fromId));
     for (const entry of entries) {
-      const mine = userIds.has(entry.FromID);
-      if (entry.Kind === 'message' && entry.Version === 0 && mine) {
+      const mine = userIds.has(entry.fromId);
+      if (entry.kind === 'message' && entry.version === 0 && mine) {
         messagesSent++;
-      } else if (entry.Kind === 'action' && mine) {
+      } else if (entry.kind === 'action' && mine) {
         clicks++;
-      } else if (entry.Kind === 'message' && entry.Version > 0 && participates && !mine) {
+      } else if (entry.kind === 'message' && entry.version > 0 && participates && !mine) {
         editsReceived++;
       }
     }
@@ -338,11 +338,11 @@ export function actorStats(run: BundleRun, actor: BundleActor): ActorStats {
       continue;
     }
     for (const event of part.aiGoal.events ?? []) {
-      inputTokens += event.Usage.InputTokens || 0;
-      outputTokens += event.Usage.OutputTokens || 0;
+      inputTokens += event.usage.inputTokens || 0;
+      outputTokens += event.usage.outputTokens || 0;
       calls++;
-      if (event.Usage.Model) {
-        models.add(event.Usage.Model);
+      if (event.usage.model) {
+        models.add(event.usage.model);
       }
     }
   }
@@ -447,15 +447,15 @@ export function deriveMarkers(run: BundleRun, timeline: Step[]): Marker[] {
       return;
     }
     (part.aiGoal.events ?? []).forEach((event, eventIndex) => {
-      if (event.Action?.Kind === 'task-completed' || event.Action?.Kind === 'task-given-up') {
+      if (event.action?.kind === 'task-completed' || event.action?.kind === 'task-given-up') {
         const stepIndex = stepIndexForEvent(timeline, partIndex, eventIndex);
         if (stepIndex >= 0) {
-          const done = event.Action.Kind === 'task-completed';
+          const done = event.action.kind === 'task-completed';
           markers.push({
             id: `task:${part.id}:${eventIndex}`,
             kind: 'task',
-            title: done ? `Task complete · ${event.TaskID}` : `Task given up · ${event.TaskID}`,
-            detail: event.Action.Detail || (done ? 'Success criteria met' : 'Actor gave up'),
+            title: done ? `Task complete · ${event.taskId}` : `Task given up · ${event.taskId}`,
+            detail: event.action.detail || (done ? 'Success criteria met' : 'Actor gave up'),
             stepIndex,
             severity: done ? 'ok' : 'warn'
           });
@@ -617,11 +617,11 @@ export function resolveAnchorMessageKey(run: BundleRun, anchor: BundleAnchor): s
   if (!entry) {
     return null;
   }
-  if (entry.Kind === 'message' && entry.MessageID) {
-    return messageKey(anchor.chatId, entry.MessageID);
+  if (entry.kind === 'message' && entry.messageId) {
+    return messageKey(anchor.chatId, entry.messageId);
   }
-  if (entry.Kind === 'action' && entry.RefMessageID) {
-    return messageKey(anchor.chatId, entry.RefMessageID);
+  if (entry.kind === 'action' && entry.refMessageId) {
+    return messageKey(anchor.chatId, entry.refMessageId);
   }
   return null;
 }

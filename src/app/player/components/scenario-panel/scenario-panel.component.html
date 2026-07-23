@@ -28,13 +28,13 @@
           </button>
           @if (isOpen(card.index, 'goal')) {
             <div class="acc-body">
-              @if (ai.goal.Description) { <p class="goal-desc">{{ ai.goal.Description }}</p> }
-              @if (ai.goal.Tasks?.length) {
+              @if (ai.goal.description) { <p class="goal-desc">{{ ai.goal.description }}</p> }
+              @if (ai.goal.tasks?.length) {
                 <ul class="tasks">
-                  @for (task of ai.goal.Tasks; track task.ID) {
+                  @for (task of ai.goal.tasks; track task.id) {
                     <li>
-                      <span class="task-title">{{ task.Title || task.ID }}</span>
-                      @if (task.SuccessCriteria) { <span class="task-crit">{{ task.SuccessCriteria }}</span> }
+                      <span class="task-title">{{ task.title || task.id }}</span>
+                      @if (task.successCriteria) { <span class="task-crit">{{ task.successCriteria }}</span> }
                     </li>
                   }
                 </ul>
@@ -54,7 +54,7 @@
           </button>
           @if (isOpen(card.index, 'loop')) {
             <div class="acc-body events">
-              @for (event of ai.events ?? []; track event.Index; let i = $index) {
+              @for (event of ai.events ?? []; track event.index; let i = $index) {
                 <div
                   class="event"
                   [id]="'scn-event-' + card.index + '-' + i"
@@ -62,40 +62,40 @@
                   [class.focused]="isEventFocused(card.index, i)"
                 >
                   <div class="event-head">
-                    <span class="step-badge mono">#{{ event.Index }}</span>
-                    <span class="task mono">{{ event.TaskID }}</span>
+                    <span class="step-badge mono">#{{ event.index }}</span>
+                    <span class="task mono">{{ event.taskId }}</span>
                   </div>
                   <div class="beat-row">
                     <span class="beat-label">Observed</span>
-                    <span class="beat-value mono">seq {{ event.ObservationSequence }}</span>
+                    <span class="beat-value mono">seq {{ event.observationSequence }}</span>
                   </div>
                   <div class="beat-row">
                     <span class="beat-label">Proposed</span>
                     <span class="beat-value"><p-tag [value]="proposalLabel(event)" [severity]="proposalSeverity(event)" /></span>
                   </div>
-                  @if (event.Proposal.Rationale) { <p class="rationale">"{{ event.Proposal.Rationale }}"</p> }
-                  @if (event.Validation.Checked) {
+                  @if (event.proposal.rationale) { <p class="rationale">"{{ event.proposal.rationale }}"</p> }
+                  @if (event.validation.checked) {
                     <div class="beat-row">
                       <span class="beat-label">Validated</span>
                       <span class="beat-value">
-                        <p-tag [value]="event.Validation.Verdict || 'unchecked'" [severity]="verdictSeverity(event.Validation.Verdict)" />
-                        @if (event.Validation.Reason) { <span class="reason">{{ event.Validation.Reason }}</span> }
+                        <p-tag [value]="event.validation.verdict || 'unchecked'" [severity]="verdictSeverity(event.validation.verdict)" />
+                        @if (event.validation.reason) { <span class="reason">{{ event.validation.reason }}</span> }
                       </span>
                     </div>
                   }
                   <div class="beat-row">
                     <span class="beat-label">Acted</span>
                     <span class="beat-value">
-                      <p-tag [value]="event.Action.Kind" [severity]="outcomeSeverity(event.Action.Kind)" />
-                      @if (event.Action.Detail) { <span class="reason">{{ event.Action.Detail }}</span> }
+                      <p-tag [value]="event.action.kind" [severity]="outcomeSeverity(event.action.kind)" />
+                      @if (event.action.detail) { <span class="reason">{{ event.action.detail }}</span> }
                     </span>
                   </div>
-                  @if (event.Usage.Model) {
+                  @if (event.usage.model) {
                     <footer class="usage mono">
-                      <span pTooltip="Model">{{ event.Usage.Model }}</span>
-                      <span pTooltip="Input / output tokens">{{ event.Usage.InputTokens }}▸{{ event.Usage.OutputTokens }} tok</span>
-                      <span pTooltip="Latency">{{ latencyMs(event.Usage.Latency) }} ms</span>
-                      @if (event.Usage.cost !== undefined) { <span pTooltip="Cost">${{ event.Usage.cost }}</span> }
+                      <span pTooltip="Model">{{ event.usage.model }}</span>
+                      <span pTooltip="Input / output tokens">{{ event.usage.inputTokens }}▸{{ event.usage.outputTokens }} tok</span>
+                      <span pTooltip="Latency">{{ latencyMs(event.usage.latencyNanoseconds) }} ms</span>
+                      @if (event.usage.cost !== undefined) { <span pTooltip="Cost">${{ event.usage.cost }}</span> }
                     </footer>
                   }
                   <cw-raw-json [value]="event" label="Raw LoopEvent (JSON)" />
@@ -157,13 +157,13 @@
             @if (isOpen(card.index, 'evidence')) {
               <div class="acc-body">
                 @for (item of ai.evidence; track $index) {
-                  <div class="evidence" [class.passed]="item.Outcome === 'passed'">
+                  <div class="evidence" [class.passed]="item.outcome === 'passed'">
                     <div class="evidence-head">
-                      <strong>{{ item.Name }}</strong>
-                      <p-tag [value]="item.Outcome" [severity]="item.Outcome === 'passed' ? 'success' : 'danger'" />
+                      <strong>{{ item.name }}</strong>
+                      <p-tag [value]="item.outcome" [severity]="item.outcome === 'passed' ? 'success' : 'danger'" />
                     </div>
-                    <code class="evidence-query">{{ item.Query }}</code>
-                    <span class="evidence-meta mono">{{ item.Holder }} · {{ item.ReturnedRows }}/{{ item.TotalRows }} rows</span>
+                    <code class="evidence-query">{{ item.query }}</code>
+                    <span class="evidence-meta mono">{{ item.holder }} · {{ item.returnedRows }}/{{ item.totalRows }} rows</span>
                   </div>
                 }
               </div>

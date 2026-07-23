@@ -1,16 +1,15 @@
 /**
  * TypeScript mirror of the Chatwright run-bundle format v1 wire contract.
  *
- * Canonical schema: chatwright/formats/run-bundle/v1/schema.json.
- * Wrapper/document fields are camelCase; embedded module types
- * (journal entries, loop events, observations) are PascalCase exactly as the
- * Go structs serialise them. Render what the schema says, not what reads
- * natural — see the schema's own $comment.
+ * Canonical schema: chatwright/formats/run-bundle/v1/schema.json. As of the
+ * upstream "normalise entire run-bundle wire to camelCase" change, EVERY wire
+ * field is camelCase — the previously PascalCase embedded module types
+ * (journal entries, platform actions, loop events, observations, goals,
+ * datastate evidence) are now camelCase too. String enum *values* are
+ * unchanged.
  *
- * Every field a consumer might touch is optional-tolerant: a hand-edited
- * bundle can omit, reorder or add fields. Decoding never rejects unknown
- * fields (forward-compatible), and dangling anchors/replyTo are a consumer
- * concern, never a decode error.
+ * Decoding stays forward-compatible: unknown fields are ignored and dangling
+ * anchors/replyTo are a consumer concern, never a decode error.
  */
 
 export const RUN_BUNDLE_FORMAT_V1 = 'https://chatwright.dev/formats/run-bundle/v1';
@@ -70,33 +69,32 @@ export interface BundleChatJournal {
   entries: PlatformJournalEntry[] | null;
 }
 
-/** PascalCase — embedded platform.JournalEntry, carried verbatim. */
 export type JournalDirection = 'user' | 'bot';
 export type JournalEntryKind = 'message' | 'action' | 'uncaptured';
 
 export interface PlatformAction {
-  Label: string;
-  ID: string;
-  URL: string;
+  label: string;
+  id: string;
+  url: string;
 }
 
 export interface PlatformJournalEntry {
-  Direction: JournalDirection;
-  Kind: JournalEntryKind;
+  direction: JournalDirection;
+  kind: JournalEntryKind;
   /** Logical message identity shared across versions; 0 when the kind has none. */
-  MessageID: number;
+  messageId: number;
   /** Action entries only: the message the action targeted. */
-  RefMessageID: number;
+  refMessageId: number;
   /** Message entries only: 0 = original, N = the Nth edit. */
-  Version: number;
-  Text: string;
+  version: number;
+  text: string;
   /** Message entries only: rows/cols of attached buttons. */
-  Actions: PlatformAction[][] | null;
+  actions: PlatformAction[][] | null;
   /** Uncaptured entries only: the Bot API method name that was called. */
-  Method: string;
-  At: string;
+  method: string;
+  at: string;
   /** Platform-native originator id; 0 when unknown. Resolves via roster. */
-  FromID: number;
+  fromId: number;
 }
 
 export type PartKind = 'ai-goal' | 'deterministic' | string;
@@ -129,27 +127,27 @@ export interface BundleAIGoalSection {
 }
 
 export interface GoalGoal {
-  ID: string;
-  Title: string;
-  Description: string;
-  Tasks: GoalTask[] | null;
-  Constraints: string[] | null;
-  Budgets: GoalBudgets;
+  id: string;
+  title: string;
+  description: string;
+  tasks: GoalTask[] | null;
+  constraints: string[] | null;
+  budgets: GoalBudgets;
 }
 
 export interface GoalTask {
-  ID: string;
-  Title: string;
-  DependsOn: string[] | null;
-  SuccessCriteria: string;
-  Milestones: string[] | null;
+  id: string;
+  title: string;
+  dependsOn: string[] | null;
+  successCriteria: string;
+  milestones: string[] | null;
 }
 
 export interface GoalBudgets {
-  MaxSteps: number;
-  MaxDuration: number;
-  MaxRepeatedFailures: number;
-  MaxCost: number | null;
+  maxSteps: number;
+  maxDurationNanoseconds: number;
+  maxRepeatedFailures: number;
+  maxCost: number | null;
 }
 
 export type ProposalKind = 'send-text' | 'click' | 'task-done' | 'give-up' | string;
@@ -164,42 +162,42 @@ export type ActionOutcomeKind =
 export type Verdict = '' | 'fresh' | 'stale' | string;
 
 export interface ActorLoopEvent {
-  Index: number;
-  At: string;
-  TaskID: string;
-  ObservationSequence: number;
-  Proposal: ActorProposal;
-  Usage: ActorUsage;
-  Validation: ActorValidationOutcome;
-  Action: ActorActionOutcome;
+  index: number;
+  at: string;
+  taskId: string;
+  observationSequence: number;
+  proposal: ActorProposal;
+  usage: ActorUsage;
+  validation: ActorValidationOutcome;
+  action: ActorActionOutcome;
 }
 
 export interface ActorProposal {
-  Kind: ProposalKind;
-  Text: string;
-  ActionID: string;
-  ObservationSequence: number;
-  Rationale: string;
+  kind: ProposalKind;
+  text: string;
+  actionId: string;
+  observationSequence: number;
+  rationale: string;
 }
 
 export interface ActorUsage {
-  Model: string;
-  InputTokens: number;
-  OutputTokens: number;
-  /** Nanoseconds (Go time.Duration). */
-  Latency: number;
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  /** Latency in nanoseconds (Go time.Duration). */
+  latencyNanoseconds: number;
   cost?: number;
 }
 
 export interface ActorValidationOutcome {
-  Checked: boolean;
-  Verdict: Verdict;
-  Reason: string;
+  checked: boolean;
+  verdict: Verdict;
+  reason: string;
 }
 
 export interface ActorActionOutcome {
-  Kind: ActionOutcomeKind;
-  Detail: string;
+  kind: ActionOutcomeKind;
+  detail: string;
 }
 
 export interface BundleRetainedObservation {
@@ -211,34 +209,34 @@ export type ObserveActor = 'user' | 'bot';
 export type ObserveChangeKind = 'new-message' | 'edited-message' | 'actions-changed' | string;
 
 export interface ObserveObservation {
-  Sequence: number;
-  PreviousSequence: number;
-  Chat: { ChatID: number };
-  Messages: ObserveVisibleMessage[] | null;
-  Changes: ObserveChange[] | null;
+  sequence: number;
+  previousSequence: number;
+  chat: { chatId: number };
+  messages: ObserveVisibleMessage[] | null;
+  changes: ObserveChange[] | null;
 }
 
 export interface ObserveVisibleMessage {
-  ID: string;
-  Version: number;
-  Edited: boolean;
-  Actor: ObserveActor;
-  Text: string;
-  Actions: ObserveAvailableAction[] | null;
+  id: string;
+  version: number;
+  edited: boolean;
+  actor: ObserveActor;
+  text: string;
+  actions: ObserveAvailableAction[] | null;
 }
 
 export interface ObserveAvailableAction {
-  ID: string;
-  Label: string;
-  SeenAt: number;
+  id: string;
+  label: string;
+  seenAt: number;
 }
 
 export interface ObserveChange {
-  Kind: ObserveChangeKind;
-  MessageID: string;
-  Actor: ObserveActor;
-  PreviousVersion: number;
-  Version: number;
+  kind: ObserveChangeKind;
+  messageId: string;
+  actor: ObserveActor;
+  previousVersion: number;
+  version: number;
 }
 
 export interface CampaignReport {
@@ -286,19 +284,19 @@ export interface CampaignAggregateUsage {
 }
 
 export interface DatastateEvidence {
-  Name: string;
-  AttachmentPoint: string;
-  Holder: string;
-  Query: string;
-  Params: Record<string, unknown> | null;
-  Outcome: string;
-  FailureMessage: string;
-  TotalRows: number;
-  ReturnedRows: number;
-  Truncated: boolean;
-  Preview: Array<Record<string, unknown>> | null;
-  RedactedFields: string[] | null;
-  ExcludedFields: string[] | null;
+  name: string;
+  attachmentPoint: string;
+  holder: string;
+  query: string;
+  params: Record<string, unknown> | null;
+  outcome: string;
+  failureMessage: string;
+  totalRows: number;
+  returnedRows: number;
+  truncated: boolean;
+  preview: Array<Record<string, unknown>> | null;
+  redactedFields: string[] | null;
+  excludedFields: string[] | null;
 }
 
 export interface BundleBookmark {

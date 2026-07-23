@@ -70,8 +70,8 @@ export class TranscriptComponent {
       const end = boundary.firstEntry + boundary.entryCount;
       for (let i = boundary.firstEntry; i < end && i < entries.length; i++) {
         const entry = entries[i];
-        if (entry.Kind === 'message' && entry.Version === 0) {
-          starts.set(`${boundary.chatId}:${entry.MessageID}`, part.title ?? part.id);
+        if (entry.kind === 'message' && entry.version === 0) {
+          starts.set(`${boundary.chatId}:${entry.messageId}`, part.title ?? part.id);
           break;
         }
       }
@@ -167,7 +167,7 @@ export class TranscriptComponent {
   }
 
   isActionPressed(message: SettledMessage, action: PlatformAction): boolean {
-    return message.pressedActionIds.includes(action.ID);
+    return message.pressedActionIds.includes(action.id);
   }
 
   threadsFor(message: SettledMessage): AnnotationThread[] {
@@ -184,7 +184,7 @@ export class TranscriptComponent {
 
   onActionClick(message: SettledMessage, action: PlatformAction, domEvent: Event): void {
     domEvent.stopPropagation();
-    this.ui.inspectMessage(message.chatId, message.messageId, action.ID);
+    this.ui.inspectMessage(message.chatId, message.messageId, action.id);
   }
 
   onAddComment(message: SettledMessage, domEvent: Event): void {

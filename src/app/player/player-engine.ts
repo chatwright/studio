@@ -190,7 +190,7 @@ export class PlayerEngine implements OnDestroy {
     const part = this.run()?.parts?.[step.partIndex];
     const observations = part?.aiGoal?.observations ?? [];
     const match = observations.find((o) => o.sequence === step.observationSequence);
-    return match?.observation.Chat?.ChatID ?? null;
+    return match?.observation.chat?.chatId ?? null;
   }
 
   /** Walk back from `index` to the nearest step that resolves to a chat. */
@@ -360,9 +360,9 @@ export class PlayerEngine implements OnDestroy {
     index: number
   ): void {
     this.stopTyping();
-    const text = step.animation.typedText ?? step.entry.Text;
+    const text = step.animation.typedText ?? step.entry.text;
     const actor = this.run()
-      ? attributionName(this.run()!, step.entry.FromID)
+      ? attributionName(this.run()!, step.entry.fromId)
       : 'User';
     if (!text) {
       return;

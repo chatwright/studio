@@ -56,7 +56,7 @@ export class ScenarioPanelComponent {
       return {
         index,
         part,
-        title: isAi ? part.aiGoal!.goal?.Title || part.title || part.id : part.title || part.id,
+        title: isAi ? part.aiGoal!.goal?.title || part.title || part.id : part.title || part.id,
         isAi,
         entryCount
       };
@@ -124,22 +124,22 @@ export class ScenarioPanelComponent {
   /* --- event formatting (shared vocabulary with the derive layer) --- */
 
   proposalLabel(event: ActorLoopEvent): string {
-    switch (event.Proposal.Kind) {
+    switch (event.proposal.kind) {
       case 'send-text':
-        return `Send: "${event.Proposal.Text}"`;
+        return `Send: "${event.proposal.text}"`;
       case 'click':
-        return `Click: ${event.Proposal.ActionID}`;
+        return `Click: ${event.proposal.actionId}`;
       case 'task-done':
         return 'Mark task done';
       case 'give-up':
         return 'Give up';
       default:
-        return event.Proposal.Kind;
+        return event.proposal.kind;
     }
   }
 
   proposalSeverity(event: ActorLoopEvent): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {
-    switch (event.Proposal.Kind) {
+    switch (event.proposal.kind) {
       case 'task-done':
         return 'success';
       case 'give-up':

@@ -72,7 +72,21 @@ export function parseBundleValue(value: unknown): ParseResult {
     return { ok: false, error: 'This bundle\'s "runs" field is not an array.' };
   }
 
-  const runs = (Array.isArray(rawRuns) ? rawRuns : []) as BundleRun[];
+  const rawRunsArray = Array.isArray(rawRuns) ? rawRuns : [];
+
+  // The wire is now uniformly camelCase. A bundle written before that change
+  // carries PascalCase journal fields (Direction/Kind/MessageID/…) and would
+  // otherwise decode to a run of empty-looking entries. Detect that signature
+  // and refuse it with an actionable message rather than rendering emptily.
+  if (looksLikeLegacyPascalCase(rawRunsArray)) {
+    return {
+      ok: false,
+      error:
+        'This bundle predates the current format — its journal fields use the old PascalCase names (e.g. "Direction"/"MessageID"). Regenerate it with a current Chatwright build.'
+    };
+  }
+
+  const runs = rawRunsArray as BundleRun[];
   if (runs.length === 0) {
     warnings.push('This bundle contains no runs — there is nothing to play.');
   }
@@ -87,4 +101,35 @@ export function parseBundleValue(value: unknown): ParseResult {
   };
 
   return { ok: true, bundle, warnings };
+}
+
+/**
+ * True when the runs carry at least one journal entry and the first such entry
+ * has the legacy PascalCase keys while lacking the current camelCase ones —
+ * the unambiguous signature of a pre-normalisation bundle.
+ */
+function looksLikeLegacyPascalCase(runs: unknown[]): boolean {
+  for (const run of runs) {
+    const chats = (run as { chats?: unknown } | null)?.chats;
+    if (!Array.isArray(chats)) {
+      continue;
+    }
+    for (const chat of chats) {
+      const entries = (chat as { entries?: unknown } | null)?.entries;
+      if (!Array.isArray(entries)) {
+        continue;
+      }
+      for (const entry of entries) {
+        if (entry === null || typeof entry !== 'object') {
+          continue;
+        }
+        const record = entry as Record<string, unknown>;
+        const hasCamel = 'direction' in record || 'kind' in record || 'messageId' in record;
+        const hasPascal = 'Direction' in record || 'Kind' in record || 'MessageID' in record;
+        // First real journal entry decides it.
+        return hasPascal && !hasCamel;
+      }
+    }
+  }
+  return false;
 }

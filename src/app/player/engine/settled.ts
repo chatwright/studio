@@ -104,22 +104,22 @@ export function settledStateAt(timeline: Step[], index: number): SettledState {
     const { entry, chatId, entryIndex } = step;
     const chat = ensureChat(chatId);
 
-    if (entry.Kind === 'message') {
-      const key = messageKey(chatId, entry.MessageID);
+    if (entry.kind === 'message') {
+      const key = messageKey(chatId, entry.messageId);
       const existing = chat.messages.get(key);
       const version: MessageVersion = {
-        version: entry.Version,
-        text: entry.Text,
-        actions: cloneActions(entry.Actions),
+        version: entry.version,
+        text: entry.text,
+        actions: cloneActions(entry.actions),
         entryIndex,
-        at: entry.At,
+        at: entry.at,
         timelineIndex: step.index
       };
       if (existing) {
-        existing.version = entry.Version;
-        existing.text = entry.Text;
-        existing.actions = cloneActions(entry.Actions);
-        existing.edited = entry.Version > 0 || existing.edited;
+        existing.version = entry.version;
+        existing.text = entry.text;
+        existing.actions = cloneActions(entry.actions);
+        existing.edited = entry.version > 0 || existing.edited;
         existing.entryIndex = entryIndex;
         existing.timelineIndex = step.index;
         existing.deleted = false;
@@ -128,13 +128,13 @@ export function settledStateAt(timeline: Step[], index: number): SettledState {
         const message: SettledMessage = {
           key,
           chatId,
-          messageId: entry.MessageID,
-          direction: entry.Direction,
-          fromId: entry.FromID,
-          version: entry.Version,
-          text: entry.Text,
-          actions: cloneActions(entry.Actions),
-          edited: entry.Version > 0,
+          messageId: entry.messageId,
+          direction: entry.direction,
+          fromId: entry.fromId,
+          version: entry.version,
+          text: entry.text,
+          actions: cloneActions(entry.actions),
+          edited: entry.version > 0,
           deleted: false,
           entryIndex,
           timelineIndex: step.index,
@@ -144,16 +144,16 @@ export function settledStateAt(timeline: Step[], index: number): SettledState {
         chat.messages.set(key, message);
         chat.slots.push({ kind: 'message', message, order: order++ });
       }
-    } else if (entry.Kind === 'action') {
-      const key = messageKey(chatId, entry.RefMessageID);
+    } else if (entry.kind === 'action') {
+      const key = messageKey(chatId, entry.refMessageId);
       const target = chat.messages.get(key);
-      if (target && entry.Text) {
-        target.pressedActionIds = [...target.pressedActionIds, entry.Text];
+      if (target && entry.text) {
+        target.pressedActionIds = [...target.pressedActionIds, entry.text];
       }
-    } else if (entry.Kind === 'uncaptured') {
-      const isDelete = /delete/i.test(entry.Method);
-      if (isDelete && entry.RefMessageID > 0) {
-        const key = messageKey(chatId, entry.RefMessageID);
+    } else if (entry.kind === 'uncaptured') {
+      const isDelete = /delete/i.test(entry.method);
+      if (isDelete && entry.refMessageId > 0) {
+        const key = messageKey(chatId, entry.refMessageId);
         const target = chat.messages.get(key);
         if (target) {
           target.deleted = true;
@@ -165,9 +165,9 @@ export function settledStateAt(timeline: Step[], index: number): SettledState {
           note: {
             chatId,
             entryIndex,
-            method: entry.Method,
-            text: entry.Text,
-            at: entry.At,
+            method: entry.method,
+            text: entry.text,
+            at: entry.at,
             timelineIndex: step.index
           },
           order: order++

@@ -64,9 +64,27 @@ interface Candidate {
   seq: number;
 }
 
+/**
+ * Milliseconds-since-epoch for an `At` timestamp, preserving sub-millisecond
+ * precision. `Date.parse` truncates the fractional seconds to milliseconds,
+ * which collapses the true order of events stamped within the same millisecond
+ * (bundles routinely carry microsecond precision). We recover the digits beyond
+ * the first three and add them as a fractional millisecond, so the timeline
+ * orders faithfully by real event time.
+ */
 function parseAtMs(at: string, fallback: number): number {
-  const t = Date.parse(at);
-  return Number.isFinite(t) ? t : fallback;
+  const base = Date.parse(at);
+  if (!Number.isFinite(base)) {
+    return fallback;
+  }
+  const fraction = /T\d{2}:\d{2}:\d{2}[.,](\d+)/.exec(at)?.[1];
+  if (fraction && fraction.length > 3) {
+    const sub = Number(`0.${fraction.slice(3)}`);
+    if (Number.isFinite(sub)) {
+      return base + sub;
+    }
+  }
+  return base;
 }
 
 /**
@@ -76,10 +94,11 @@ function parseAtMs(at: string, fallback: number): number {
  *   [partIndex, atMs, laneRank(journal<ai), constructionSeq]
  *
  * Part order is authoritative (parts are chapters); within a part, steps run
- * by their `At` timestamp. When timestamps tie — bundles routinely stamp to
- * whole seconds — journal entries come before the AI beats at that instant
- * (the transcript is the spine; the reasoning about a moment follows it), and
- * construction order is the final stable tiebreak.
+ * by their `At` timestamp (parsed with sub-millisecond precision — see
+ * parseAtMs — so events stamped microseconds apart keep their true order). When
+ * timestamps tie exactly, journal entries come before the AI beats at that
+ * instant (the transcript is the spine; the reasoning about a moment follows
+ * it), and construction order is the final stable tiebreak.
  */
 export function buildTimeline(run: BundleRun | null | undefined): Step[] {
   if (!run) {
@@ -115,7 +134,7 @@ export function buildTimeline(run: BundleRun | null | undefined): Step[] {
       const end = Math.min(entries.length, boundary.firstEntry + boundary.entryCount);
       for (let i = start; i < end; i++) {
         const entry = entries[i];
-        const atMs = parseAtMs(entry.At, lastAtMs);
+        const atMs = parseAtMs(entry.at, lastAtMs);
         lastAtMs = atMs;
         candidates.push({
           lane: LANE_JOURNAL,
@@ -128,7 +147,7 @@ export function buildTimeline(run: BundleRun | null | undefined): Step[] {
             partTitle: part.title ?? part.id,
             partKind: part.kind,
             atMs,
-            at: entry.At,
+            at: entry.at,
             chatId: boundary.chatId,
             entryIndex: i,
             entry,
@@ -141,10 +160,10 @@ export function buildTimeline(run: BundleRun | null | undefined): Step[] {
     // AI loop-event beats for an ai-goal part.
     if (part.kind === 'ai-goal' && part.aiGoal?.events) {
       part.aiGoal.events.forEach((event, eventIndex) => {
-        const atMs = parseAtMs(event.At, lastAtMs);
+        const atMs = parseAtMs(event.at, lastAtMs);
         lastAtMs = atMs;
         const beats: BeatKind[] = ['observe', 'propose'];
-        if (event.Validation?.Checked) {
+        if (event.validation?.checked) {
           beats.push('validate');
         }
         beats.push('act');
@@ -160,11 +179,11 @@ export function buildTimeline(run: BundleRun | null | undefined): Step[] {
               partTitle: part.title ?? part.id,
               partKind: part.kind,
               atMs,
-              at: event.At,
+              at: event.at,
               beat,
               eventIndex,
               event,
-              observationSequence: event.ObservationSequence,
+              observationSequence: event.observationSequence,
               animation: animationForBeat(emitChapter())
             }
           });
