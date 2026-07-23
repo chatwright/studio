@@ -53,6 +53,9 @@ function renderRecipeCard(recipe: Recipe): string {
           <div class="chip-row">${renderChips(recipe.tags)}</div>
           <ul class="impl-list">${renderImplementations(recipe.implementations)}</ul>
           ${snippetsMarkup}
+          ${recipe.watch
+            ? `<p class="card-actions"><a class="button-mini" href="${recipe.watch}">▶ Watch it run</a><span class="card-actions-note">a real recorded run, replayed in the player</span></p>`
+            : `<p class="card-actions card-actions-note">▶ Live start lands with the browser Playground — recording wanted meanwhile</p>`}
           <a class="card-link" href="${recipe.githubUrl}">View “${recipe.title}” on GitHub →</a>
         </article>`;
 }
@@ -135,6 +138,9 @@ export const recipesPageDocument = String.raw`<!doctype html>
       .chip-row { display:flex; flex-wrap:wrap; gap:.4rem; margin:.85rem 0 0; }
       .chip { padding:.22rem .58rem; border:1px solid var(--line); border-radius:999px; color:var(--soft); background:#f7f9fb; font-size:.74rem; font-weight:600; }
       .chip-snippet { color:var(--blue); background:#eef4fd; border-color:#d3e3fa; }
+      .card-actions { display:flex; align-items:center; gap:.6rem; margin:.9rem 0 0; }
+      .button-mini { display:inline-block; padding:.42rem .85rem; border-radius:8px; background:var(--mint,#37b884); color:#06271d; font-weight:700; font-size:.8rem; text-decoration:none; }
+      .card-actions-note { color:#718094; font-size:.76rem; }
       .chip-specfirst { color:var(--mint-ink); background:#effbf5; border-color:#bce9d8; }
       .impl-list { list-style:none; margin:1rem 0 0; padding:0; display:grid; gap:.5rem; }
       .impl-row { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; padding:.55rem .7rem; border:1px solid var(--line); border-radius:.5rem; background:#fbfcfd; font-size:.86rem; }
