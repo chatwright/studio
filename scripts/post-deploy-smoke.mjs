@@ -36,6 +36,12 @@ await fetchOK('/formats/chatwright-md/v1/schema.json');
 await fetchOK('/badge.svg');
 await fetchOK('/try/github/chatwright/recipes');
 
+const recipesResponse = await fetchOK('/recipes');
+const recipesBody = await recipesResponse.text();
+if (!recipesBody.includes('Every recipe runs')) {
+  throw new Error('/recipes is not the knowledge-graph recipes page');
+}
+
 if (!shell.includes('<base href="/studio/">')) {
   throw new Error('Deployed shell does not use the /studio/ Angular base href');
 }
