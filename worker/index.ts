@@ -12,6 +12,7 @@ import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
 import { chatwrightMdV1PageDocument } from './formats/chatwright-md/v1/page';
 import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
+import { recipesPageDocument } from './recipes/page';
 import { badgeSvgDocument } from './badge';
 import { tryGithubResponse } from './try-github';
 
@@ -51,6 +52,12 @@ const runBundleV1SchemaDocument = `${JSON.stringify(runBundleV1Schema, null, 2)}
 const chatwrightMdV1FormatPath = '/formats/chatwright-md/v1';
 const chatwrightMdV1SchemaPath = '/formats/chatwright-md/v1/schema.json';
 const chatwrightMdV1SchemaDocument = `${JSON.stringify(chatwrightMdV1Schema, null, 2)}\n`;
+
+// The /recipes page — the Chatwright knowledge graph (Jobs, Recipes,
+// Implementations and the federation registry) rendered from a hand-embedded
+// snapshot of chatwright/recipes; see worker/recipes/data.ts for the
+// provenance disclaimer and worker/recipes/page.ts for the page itself.
+const recipesPath = '/recipes';
 
 const badgeSvgPath = '/badge.svg';
 
@@ -146,6 +153,15 @@ export default {
       return new Response(request.method === 'HEAD' ? null : chatwrightMdV1SchemaDocument, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === recipesPath || incomingURL.pathname === `${recipesPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : recipesPageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'
         }
       });
