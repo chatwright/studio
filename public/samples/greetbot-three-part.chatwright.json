@@ -1,0 +1,925 @@
+{
+  "format": "https://chatwright.dev/formats/run-bundle/v1",
+  "metadata": {
+    "createdAt": "2026-07-23T06:03:08Z",
+    "chatwrightVersion": "v0.0.0",
+    "author": {
+      "name": "alex"
+    }
+  },
+  "runs": [
+    {
+      "id": "run-1",
+      "platform": "telegram",
+      "endpointProfile": "platform-emulated",
+      "actors": [
+        {
+          "id": "explorer",
+          "type": "scripted",
+          "name": "Explorer",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 7,
+              "firstName": "Explorer"
+            }
+          }
+        },
+        {
+          "id": "greetbot",
+          "type": "bot",
+          "name": "GreetBot",
+          "platformIdentities": {
+            "telegram": {
+              "userId": 1,
+              "firstName": "GreetBot"
+            }
+          }
+        }
+      ],
+      "chats": [
+        {
+          "chatId": 42,
+          "entries": [
+            {
+              "Direction": "user",
+              "Kind": "message",
+              "MessageID": 1,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "/start",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.109535+01:00",
+              "FromID": 7
+            },
+            {
+              "Direction": "bot",
+              "Kind": "message",
+              "MessageID": 2,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "Choose your language",
+              "Actions": [
+                [
+                  {
+                    "Label": "English",
+                    "ID": "lang:en",
+                    "URL": ""
+                  }
+                ],
+                [
+                  {
+                    "Label": "Español",
+                    "ID": "lang:es",
+                    "URL": ""
+                  }
+                ],
+                [
+                  {
+                    "Label": "Français",
+                    "ID": "lang:fr",
+                    "URL": ""
+                  }
+                ]
+              ],
+              "Method": "",
+              "At": "2026-07-23T07:03:08.112326+01:00",
+              "FromID": 1
+            },
+            {
+              "Direction": "user",
+              "Kind": "action",
+              "MessageID": 0,
+              "RefMessageID": 2,
+              "Version": 0,
+              "Text": "lang:en",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.11249+01:00",
+              "FromID": 7
+            },
+            {
+              "Direction": "bot",
+              "Kind": "message",
+              "MessageID": 2,
+              "RefMessageID": 0,
+              "Version": 1,
+              "Text": "Howdy stranger",
+              "Actions": [
+                [
+                  {
+                    "Label": "English",
+                    "ID": "lang:en",
+                    "URL": ""
+                  }
+                ],
+                [
+                  {
+                    "Label": "Español",
+                    "ID": "lang:es",
+                    "URL": ""
+                  }
+                ],
+                [
+                  {
+                    "Label": "Français",
+                    "ID": "lang:fr",
+                    "URL": ""
+                  }
+                ]
+              ],
+              "Method": "",
+              "At": "2026-07-23T07:03:08.112675+01:00",
+              "FromID": 1
+            },
+            {
+              "Direction": "user",
+              "Kind": "message",
+              "MessageID": 3,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "Thanks!",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.112847+01:00",
+              "FromID": 7
+            },
+            {
+              "Direction": "bot",
+              "Kind": "message",
+              "MessageID": 4,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "Howdy stranger",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.11302+01:00",
+              "FromID": 1
+            },
+            {
+              "Direction": "user",
+              "Kind": "message",
+              "MessageID": 5,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "/time",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.113205+01:00",
+              "FromID": 7
+            },
+            {
+              "Direction": "bot",
+              "Kind": "message",
+              "MessageID": 6,
+              "RefMessageID": 0,
+              "Version": 0,
+              "Text": "06:03:08 UTC",
+              "Actions": null,
+              "Method": "",
+              "At": "2026-07-23T07:03:08.113352+01:00",
+              "FromID": 1
+            }
+          ]
+        }
+      ],
+      "parts": [
+        {
+          "id": "onboarding",
+          "title": "Onboarding: pick English",
+          "kind": "deterministic",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 42,
+                "firstEntry": 0,
+                "entryCount": 4
+              }
+            ]
+          }
+        },
+        {
+          "id": "acknowledge",
+          "title": "AI acknowledgement",
+          "kind": "ai-goal",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 42,
+                "firstEntry": 4,
+                "entryCount": 2
+              }
+            ]
+          },
+          "aiGoal": {
+            "goal": {
+              "ID": "acknowledge-greeting",
+              "Title": "Acknowledge the greeting the onboarding established",
+              "Description": "",
+              "Tasks": [
+                {
+                  "ID": "acknowledge",
+                  "Title": "Acknowledge the greeting",
+                  "DependsOn": null,
+                  "SuccessCriteria": "the first observation already shows \"Howdy stranger\"; send an acknowledgement",
+                  "Milestones": null
+                }
+              ],
+              "Constraints": null,
+              "Budgets": {
+                "MaxSteps": 10,
+                "MaxDuration": 60000000000,
+                "MaxRepeatedFailures": 0,
+                "MaxCost": null
+              }
+            },
+            "actorId": "explorer",
+            "events": [
+              {
+                "Index": 0,
+                "At": "2026-07-23T07:03:08.112847+01:00",
+                "TaskID": "acknowledge",
+                "ObservationSequence": 1,
+                "Proposal": {
+                  "Kind": "send-text",
+                  "Text": "Thanks!",
+                  "ActionID": "",
+                  "ObservationSequence": 0,
+                  "Rationale": "acknowledge the greeting already established by onboarding"
+                },
+                "Usage": {
+                  "Model": "scripted-v1",
+                  "InputTokens": 8,
+                  "OutputTokens": 3,
+                  "Latency": 0
+                },
+                "Validation": {
+                  "Checked": false,
+                  "Verdict": "",
+                  "Reason": ""
+                },
+                "Action": {
+                  "Kind": "executed",
+                  "Detail": ""
+                }
+              },
+              {
+                "Index": 1,
+                "At": "2026-07-23T07:03:08.11317+01:00",
+                "TaskID": "acknowledge",
+                "ObservationSequence": 3,
+                "Proposal": {
+                  "Kind": "task-done",
+                  "Text": "",
+                  "ActionID": "",
+                  "ObservationSequence": 0,
+                  "Rationale": "acknowledged"
+                },
+                "Usage": {
+                  "Model": "scripted-v1",
+                  "InputTokens": 8,
+                  "OutputTokens": 3,
+                  "Latency": 0
+                },
+                "Validation": {
+                  "Checked": false,
+                  "Verdict": "",
+                  "Reason": ""
+                },
+                "Action": {
+                  "Kind": "task-completed",
+                  "Detail": ""
+                }
+              }
+            ],
+            "observations": [
+              {
+                "sequence": 1,
+                "observation": {
+                  "Sequence": 1,
+                  "PreviousSequence": 0,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 1
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 1
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "Changes": null
+                }
+              },
+              {
+                "sequence": 2,
+                "observation": {
+                  "Sequence": 2,
+                  "PreviousSequence": 1,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 2
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 2
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 2
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "msg3",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "Thanks!",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg4",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": null
+                    }
+                  ],
+                  "Changes": [
+                    {
+                      "Kind": "new-message",
+                      "MessageID": "msg3",
+                      "Actor": "user",
+                      "PreviousVersion": 0,
+                      "Version": 0
+                    },
+                    {
+                      "Kind": "new-message",
+                      "MessageID": "msg4",
+                      "Actor": "bot",
+                      "PreviousVersion": 0,
+                      "Version": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "sequence": 3,
+                "observation": {
+                  "Sequence": 3,
+                  "PreviousSequence": 2,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 3
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 3
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 3
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "msg3",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "Thanks!",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg4",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": null
+                    }
+                  ],
+                  "Changes": null
+                }
+              }
+            ],
+            "report": {
+              "schemaVersion": 1,
+              "goalId": "acknowledge-greeting",
+              "goalTitle": "Acknowledge the greeting the onboarding established",
+              "stopReason": "goal-complete",
+              "steps": 1,
+              "elapsedNanoseconds": 346708,
+              "tasks": [
+                {
+                  "taskId": "acknowledge",
+                  "title": "Acknowledge the greeting",
+                  "successCriteria": "the first observation already shows \"Howdy stranger\"; send an acknowledgement",
+                  "status": "completed",
+                  "attempted": true,
+                  "failureCount": 0
+                }
+              ],
+              "findings": [],
+              "usage": {
+                "inputTokens": 16,
+                "outputTokens": 6,
+                "callCount": 2
+              }
+            }
+          }
+        },
+        {
+          "id": "confirm-alive",
+          "title": "AI confirms the bot is still responsive",
+          "kind": "ai-goal",
+          "journalBoundary": {
+            "chats": [
+              {
+                "chatId": 42,
+                "firstEntry": 6,
+                "entryCount": 2
+              }
+            ]
+          },
+          "aiGoal": {
+            "goal": {
+              "ID": "confirm-bot-alive",
+              "Title": "Confirm the bot still responds after the greeting",
+              "Description": "",
+              "Tasks": [
+                {
+                  "ID": "confirm-alive",
+                  "Title": "Confirm the bot is still responsive",
+                  "DependsOn": null,
+                  "SuccessCriteria": "send /time and confirm the bot replies with a fresh timestamp, proving it is still responsive after the earlier greeting exchange",
+                  "Milestones": null
+                }
+              ],
+              "Constraints": null,
+              "Budgets": {
+                "MaxSteps": 10,
+                "MaxDuration": 60000000000,
+                "MaxRepeatedFailures": 0,
+                "MaxCost": null
+              }
+            },
+            "actorId": "explorer",
+            "events": [
+              {
+                "Index": 0,
+                "At": "2026-07-23T07:03:08.113205+01:00",
+                "TaskID": "confirm-alive",
+                "ObservationSequence": 1,
+                "Proposal": {
+                  "Kind": "send-text",
+                  "Text": "/time",
+                  "ActionID": "",
+                  "ObservationSequence": 0,
+                  "Rationale": "check the bot is still responsive after the earlier greeting exchange"
+                },
+                "Usage": {
+                  "Model": "scripted-v1",
+                  "InputTokens": 6,
+                  "OutputTokens": 3,
+                  "Latency": 0
+                },
+                "Validation": {
+                  "Checked": false,
+                  "Verdict": "",
+                  "Reason": ""
+                },
+                "Action": {
+                  "Kind": "executed",
+                  "Detail": ""
+                }
+              },
+              {
+                "Index": 1,
+                "At": "2026-07-23T07:03:08.113477+01:00",
+                "TaskID": "confirm-alive",
+                "ObservationSequence": 3,
+                "Proposal": {
+                  "Kind": "task-done",
+                  "Text": "",
+                  "ActionID": "",
+                  "ObservationSequence": 0,
+                  "Rationale": "bot replied with a fresh timestamp — still alive"
+                },
+                "Usage": {
+                  "Model": "scripted-v1",
+                  "InputTokens": 6,
+                  "OutputTokens": 3,
+                  "Latency": 0
+                },
+                "Validation": {
+                  "Checked": false,
+                  "Verdict": "",
+                  "Reason": ""
+                },
+                "Action": {
+                  "Kind": "task-completed",
+                  "Detail": ""
+                }
+              }
+            ],
+            "observations": [
+              {
+                "sequence": 1,
+                "observation": {
+                  "Sequence": 1,
+                  "PreviousSequence": 0,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 1
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 1
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 1
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "msg3",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "Thanks!",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg4",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": null
+                    }
+                  ],
+                  "Changes": null
+                }
+              },
+              {
+                "sequence": 2,
+                "observation": {
+                  "Sequence": 2,
+                  "PreviousSequence": 1,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 2
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 2
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 2
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "msg3",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "Thanks!",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg4",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg5",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/time",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg6",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "06:03:08 UTC",
+                      "Actions": null
+                    }
+                  ],
+                  "Changes": [
+                    {
+                      "Kind": "new-message",
+                      "MessageID": "msg5",
+                      "Actor": "user",
+                      "PreviousVersion": 0,
+                      "Version": 0
+                    },
+                    {
+                      "Kind": "new-message",
+                      "MessageID": "msg6",
+                      "Actor": "bot",
+                      "PreviousVersion": 0,
+                      "Version": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "sequence": 3,
+                "observation": {
+                  "Sequence": 3,
+                  "PreviousSequence": 2,
+                  "Chat": {
+                    "ChatID": 42
+                  },
+                  "Messages": [
+                    {
+                      "ID": "msg1",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/start",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg2",
+                      "Version": 1,
+                      "Edited": true,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": [
+                        {
+                          "ID": "act-2-1-r0c0",
+                          "Label": "English",
+                          "SeenAt": 3
+                        },
+                        {
+                          "ID": "act-2-1-r1c0",
+                          "Label": "Español",
+                          "SeenAt": 3
+                        },
+                        {
+                          "ID": "act-2-1-r2c0",
+                          "Label": "Français",
+                          "SeenAt": 3
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "msg3",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "Thanks!",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg4",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "Howdy stranger",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg5",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "user",
+                      "Text": "/time",
+                      "Actions": null
+                    },
+                    {
+                      "ID": "msg6",
+                      "Version": 0,
+                      "Edited": false,
+                      "Actor": "bot",
+                      "Text": "06:03:08 UTC",
+                      "Actions": null
+                    }
+                  ],
+                  "Changes": null
+                }
+              }
+            ],
+            "report": {
+              "schemaVersion": 1,
+              "goalId": "confirm-bot-alive",
+              "goalTitle": "Confirm the bot still responds after the greeting",
+              "stopReason": "goal-complete",
+              "steps": 1,
+              "elapsedNanoseconds": 276750,
+              "tasks": [
+                {
+                  "taskId": "confirm-alive",
+                  "title": "Confirm the bot is still responsive",
+                  "successCriteria": "send /time and confirm the bot replies with a fresh timestamp, proving it is still responsive after the earlier greeting exchange",
+                  "status": "completed",
+                  "attempted": true,
+                  "failureCount": 0
+                }
+              ],
+              "findings": [],
+              "usage": {
+                "inputTokens": 12,
+                "outputTokens": 6,
+                "callCount": 2
+              }
+            }
+          }
+        }
+      ],
+      "bookmarks": [
+        {
+          "id": "greeting-edited",
+          "title": "Greeting edited in place",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 3,
+            "messageId": 2,
+            "version": 1
+          }
+        },
+        {
+          "id": "still-alive",
+          "title": "Bot proves it's still responsive (Part 3)",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 7,
+            "messageId": 6
+          }
+        }
+      ],
+      "annotations": [
+        {
+          "id": "a1",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 3,
+            "messageId": 2,
+            "version": 1
+          },
+          "author": {
+            "name": "alex"
+          },
+          "createdAt": "2026-07-23T06:03:08Z",
+          "text": "The language picker was edited in place — versioned identity keeps both revisions; click the message to see the lineage."
+        },
+        {
+          "id": "a2",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 3,
+            "messageId": 2,
+            "version": 1
+          },
+          "author": {
+            "name": "alex"
+          },
+          "createdAt": "2026-07-23T06:04:08Z",
+          "text": "This is the state BOTH ai-goal parts observe: open the mind panel on Part 2 and Part 3 and check this message's \"Observed by\" list — it should name both.",
+          "replyTo": "a1"
+        },
+        {
+          "id": "a3",
+          "anchor": {
+            "chatId": 42,
+            "entryIndex": 7,
+            "messageId": 6
+          },
+          "author": {
+            "name": "alex"
+          },
+          "createdAt": "2026-07-23T06:05:08Z",
+          "text": "Part 3 proves the bot is still responsive after the earlier hand-off, well past the deterministic onboarding and the first ai-goal part."
+        }
+      ]
+    }
+  ]
+}

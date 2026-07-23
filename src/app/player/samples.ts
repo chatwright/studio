@@ -20,7 +20,17 @@ export const BUNDLED_SAMPLES: BundledSample[] = [
     title: 'Greetbot — language onboarding',
     description:
       'A single AI-goal run: the actor greets, the bot offers a language keyboard, and the reply is edited in place.'
+  },
+  {
+    file: 'greetbot-three-part.chatwright.json',
+    title: 'Greetbot — three parts',
+    description:
+      'Deterministic onboarding, then two AI-goal parts. Click the edited greeting to see it observed by both AI parts.'
+  },
+  {
+    file: 'debt-two-chat.chatwright.json',
+    title: 'Debt — two chats, three actors',
+    description:
+      'Alice records a debt; the bot notifies Bob in another chat; Bob acknowledges and the confirmation lands back with Alice. Watch the transcript auto-follow across chats.'
   }
-  // A 3-part run and a 2-chat run are dropped in after round 2 — add their
-  // files to public/samples/ and one entry each here.
 ];
