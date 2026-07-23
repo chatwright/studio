@@ -6,7 +6,7 @@
   "packageManager": "pnpm@11.9.0",
   "scripts": {
     "ng": "ng",
-    "prepare:config": "node scripts/prepare-local-config.mjs",
+    "prepare:config": "node scripts/prepare-local-config.mjs && node scripts/vendor-runtime.mjs",
     "start": "pnpm prepare:config && ng serve --host 127.0.0.1",
     "build": "pnpm prepare:config && ng build",
     "build:cloudflare": "pnpm prepare:config && ng build --configuration production --base-href /studio/",

@@ -83,6 +83,13 @@ export class AppComponent {
       icon: 'pi pi-play-circle',
       route: '/player',
       eyebrow: 'Replay run bundles'
+    },
+    {
+      label: 'Playground',
+      shortLabel: 'Live',
+      icon: 'pi pi-bolt',
+      route: '/playground',
+      eyebrow: 'Chat with a real bot, live'
     }
   ];
 

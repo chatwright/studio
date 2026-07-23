@@ -33,6 +33,7 @@ export interface Recipe {
   readonly jobIds: readonly string[];
   readonly status: string;
   readonly watch?: string; // player URL of a real recorded run bundle
+  readonly runLive?: string; // Playground URL — chat with the real bot live, not a recording
   readonly tags: readonly string[];
   readonly implementations: readonly RecipeImplementation[];
   /** Framework snippets under recipes/<id>/snippets/ — empty when none exist yet. */
@@ -99,6 +100,7 @@ export const recipes: readonly Recipe[] = [
   {
     id: 'language-onboarding',
     watch: '/studio/player?embed=1&autoplay=1&sample=greetbot-two-part.chatwright.json',
+    runLive: '/studio/playground',
     title: 'Language onboarding',
     jobIds: ['onboard-users-in-their-language'],
     status: 'draft',
