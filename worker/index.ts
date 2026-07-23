@@ -10,8 +10,6 @@ import { landingDocument } from './landing';
 import { vanityImportResponse } from './vanity';
 import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
-import installShDocument from './install/install.sh';
-import installPs1Document from './install/install.ps1';
 
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
@@ -84,19 +82,20 @@ export default {
     // spec/plans/code-split-restructuring.md, Task 4):
     //   curl -fsSL https://chatwright.dev/install.sh | sh
     //   irm https://chatwright.dev/install.ps1 | iex
-    if (incomingURL.pathname === '/install.sh') {
-      return new Response(request.method === 'HEAD' ? null : installShDocument, {
+    // Served from the assets bundle (angular.json copies worker/install/*
+    // to the assets root) rather than embedded in this script: the
+    // Cloudflare API's WAF false-positives on shell-installer text inside
+    // a worker-script upload, and assets keep served bytes identical to
+    // the committed files anyway.
+    if (incomingURL.pathname === '/install.sh' || incomingURL.pathname === '/install.ps1') {
+      const assetURL = new URL(request.url);
+      const assetResponse = await env.ASSETS.fetch(new Request(assetURL, request));
+      if (!assetResponse.ok) {
+        return assetResponse;
+      }
+      return new Response(request.method === 'HEAD' ? null : assetResponse.body, {
         headers: {
-          'Content-Type': 'text/x-shellscript; charset=utf-8',
-          'Cache-Control': 'public, max-age=300'
-        }
-      });
-    }
-
-    if (incomingURL.pathname === '/install.ps1') {
-      return new Response(request.method === 'HEAD' ? null : installPs1Document, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
+          'Content-Type': incomingURL.pathname === '/install.sh' ? 'text/x-shellscript; charset=utf-8' : 'text/plain; charset=utf-8',
           'Cache-Control': 'public, max-age=300'
         }
       });

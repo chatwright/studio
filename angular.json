@@ -26,6 +26,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "*",
+                "input": "worker/install",
+                "output": "/"
               }
             ],
             "styles": ["src/styles.scss"],
