@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { DemoStore } from './demo.store';
+import { parseEmbedParams } from './player/embed-params';
 
 interface NavigationItem {
   label: string;
@@ -32,6 +34,19 @@ interface NavigationItem {
 })
 export class AppComponent {
   readonly store: DemoStore;
+
+  /**
+   * `?embed=1` (landing-hero player embed, see player/embed-params.ts) hides
+   * this entire shell — sidebar, topbar, mobile nav — so an embedding iframe
+   * gets a chromeless, transcript-first surface. Query params are shared
+   * across the whole route tree, so the root ActivatedRoute sees them
+   * regardless of which child route (currently only /player) is active.
+   */
+  private readonly route = inject(ActivatedRoute);
+  private readonly queryParamMap = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap
+  });
+  readonly embed = computed(() => parseEmbedParams(this.queryParamMap()).embed);
 
   readonly navigation: NavigationItem[] = [
     {

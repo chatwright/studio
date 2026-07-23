@@ -5,7 +5,8 @@ import {
   computed,
   effect,
   inject,
-  input
+  input,
+  untracked
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -24,9 +25,17 @@ import { ProvenanceInspectorComponent } from './components/provenance-inspector/
 
 /**
  * The self-contained, embeddable run-bundle player. It provides its own engine
- * and UI-state instances, so a landing-hero embed (planned follow-up) can drop
- * several players on one page without collision. It takes a parsed `bundle`
- * input and owns nothing about file loading — that is the route page's job.
+ * and UI-state instances, so a landing-hero embed can drop several players on
+ * one page without collision. It takes a parsed `bundle` input and owns
+ * nothing about file loading — that is the route page's job.
+ *
+ * `embed` collapses the chrome (top bar, nav panel, right panel) to a
+ * transcript-first compact layout for the landing-hero iframe
+ * (?embed=1&sample=...&autoplay=1, see pages/player/player.page.ts and
+ * player/embed-params.ts). `autoplay` starts playback as soon as a bundle
+ * loads, unless the user prefers reduced motion — in which case playback
+ * lands on the settled pre-roll state and the transport bar's own Play
+ * button is used instead of animating unprompted.
  */
 @Component({
   selector: 'cw-player',
@@ -50,6 +59,8 @@ import { ProvenanceInspectorComponent } from './components/provenance-inspector/
 export class PlayerComponent {
   readonly bundle = input<Bundle | null>(null);
   readonly warnings = input<string[]>([]);
+  readonly embed = input<boolean>(false);
+  readonly autoplay = input<boolean>(false);
 
   readonly engine = inject(PlayerEngine);
   readonly ui = inject(PlayerUiState);
@@ -77,10 +88,16 @@ export class PlayerComponent {
 
   constructor() {
     // Feed the parsed bundle into the engine whenever the input changes.
+    // `reducedMotion` is read via `untracked` so an OS-level reduced-motion
+    // change mid-session (handled below) never re-triggers this effect and
+    // reloads — and therefore restarts — whatever is currently playing.
     effect(() => {
       const bundle = this.bundle();
       if (bundle) {
         this.engine.load(bundle, 0);
+        if (this.autoplay() && !untracked(() => this.engine.reducedMotion())) {
+          this.engine.play();
+        }
       }
     });
 
