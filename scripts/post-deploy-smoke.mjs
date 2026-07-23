@@ -24,8 +24,8 @@ const shell = await shellResponse.text();
 
 const rootResponse = await fetchOK('/');
 const root = await rootResponse.text();
-if (!root.includes('The platform is emulated.') || !root.includes('/studio/emulator')) {
-  throw new Error('Root domain is not the Chatwright landing page with the Studio preview');
+if (!root.includes('The platform is emulated.') || !root.includes('/studio/player')) {
+  throw new Error('Root domain is not the Chatwright landing page with the player hero');
 }
 
 if (!shell.includes('<base href="/studio/">')) {
