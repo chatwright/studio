@@ -86,6 +86,22 @@ export class PlayerComponent {
     return author.name || author.email || '';
   });
 
+  /**
+   * The bundle reference already handed to the engine. Guards against a
+   * spurious re-run of the effect below re-loading (and thereby resetting
+   * and, with autoplay, restarting) an already-playing run: `bundle()` is
+   * still read unconditionally so the effect keeps tracking it, but
+   * `engine.load()`/`engine.play()` only fire for a bundle we haven't
+   * already loaded. Confirmed in production (chatwright.dev/studio/player
+   * ?embed=1&autoplay=1&sample=...): with zoneless change detection, this
+   * effect can re-run on the *same* `bundle` reference (Angular's scheduler
+   * re-checking effects for reasons unrelated to `bundle` itself); without
+   * this guard, every re-run called `engine.load()` again, which resets
+   * stepIndex to -1 and re-armed `engine.play()`, so the run never advanced
+   * past its pre-roll state — see player-engine.spec.ts.
+   */
+  private loadedBundle: Bundle | null = null;
+
   constructor() {
     // Feed the parsed bundle into the engine whenever the input changes.
     // `reducedMotion` is read via `untracked` so an OS-level reduced-motion
@@ -93,7 +109,8 @@ export class PlayerComponent {
     // reloads — and therefore restarts — whatever is currently playing.
     effect(() => {
       const bundle = this.bundle();
-      if (bundle) {
+      if (bundle && bundle !== this.loadedBundle) {
+        this.loadedBundle = bundle;
         this.engine.load(bundle, 0);
         if (this.autoplay() && !untracked(() => this.engine.reducedMotion())) {
           this.engine.play();
