@@ -7,6 +7,7 @@ interface Env {
 }
 
 import { landingDocument } from './landing';
+import { vanityImportResponse } from './vanity';
 
 const studioMountPath = '/studio';
 const legacyMountPath = '/prototype';
@@ -63,6 +64,11 @@ export default {
           'Cache-Control': 'public, max-age=3600'
         }
       });
+    }
+
+    const vanityResponse = vanityImportResponse(incomingURL, request);
+    if (vanityResponse) {
+      return vanityResponse;
     }
 
     if (incomingURL.pathname === legacyMountPath || incomingURL.pathname.startsWith(`${legacyMountPath}/`)) {
