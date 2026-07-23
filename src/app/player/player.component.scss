@@ -116,6 +116,19 @@
   }
 }
 
+/* --- embed mode: transcript-first, chrome (top bar + side panels) hidden --- */
+.player.embed {
+  gap: 0;
+
+  .player-grid,
+  .player-grid.nav-collapsed,
+  .player-grid.right-collapsed,
+  .player-grid.nav-collapsed.right-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    height: min(94vh, 640px);
+  }
+}
+
 .col {
   display: flex;
   flex-direction: column;
