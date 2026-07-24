@@ -1,0 +1,84 @@
+name: Release Studio UI
+
+# Publishes the offline-mode UI artefact (studio-ui.zip + its manifest) as
+# GitHub Release assets, marked as the latest release, so
+# https://github.com/chatwright/studio/releases/latest/download/studio-ui.zip
+# always resolves to the newest build.
+#
+# Deliberately separate from .github/workflows/deploy.yml (the Cloudflare
+# deploy-on-push-to-main workflow): different triggers, different
+# concurrency group, no shared jobs — running this never blocks or is
+# blocked by a Cloudflare deploy.
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - "ui-v*"
+
+# Read-only by default; only the publishing job is granted write access,
+# and only to contents (for creating/updating the release).
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-ui-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release-ui:
+    name: Build and publish studio-ui.zip
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.9.0"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the offline UI zip
+        env:
+          PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
+        run: pnpm build:ui-zip
+
+      # The release tag is always derived from the manifest just produced
+      # (not from whatever tag name triggered the run, if any) — this keeps
+      # the tag consistent across the workflow_dispatch and tag-push
+      # triggers, since the manifest's version is itself fully determined
+      # by the checked-out commit (package.json version + short SHA).
+      - name: Read manifest values
+        id: manifest
+        run: |
+          version="$(jq -r '.version' dist/studio-ui.manifest.json)"
+          sha256="$(jq -r '.sha256' dist/studio-ui.manifest.json)"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "sha256=${sha256}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ui-v${{ steps.manifest.outputs.version }}
+          name: Studio UI ${{ steps.manifest.outputs.version }}
+          make_latest: "true"
+          prerelease: false
+          body: |
+            Offline-mode Studio UI build.
+
+            - version: `${{ steps.manifest.outputs.version }}`
+            - sha256(studio-ui.zip): `${{ steps.manifest.outputs.sha256 }}`
+            - uiContract: 1
+          files: |
+            dist/studio-ui.zip
+            dist/studio-ui.manifest.json
