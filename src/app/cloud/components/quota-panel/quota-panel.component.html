@@ -1,0 +1,24 @@
+@if (limitReached(); as limit) {
+  <div class="quota-limit">
+    <div class="quota-limit-head">
+      <i class="pi pi-lock"></i>
+      <span>{{ limitMessage() }}</span>
+    </div>
+    <div class="quota-limit-actions">
+      <a [href]="limit.upgradeUrl" target="_blank" rel="noopener" class="p-button p-component p-button-sm upgrade-link">
+        <i class="pi pi-arrow-up-right"></i> Upgrade plan
+      </a>
+      <p-button
+        label="Download to disk instead"
+        icon="pi pi-download"
+        size="small"
+        severity="secondary"
+        outlined
+        (click)="downloadRequested.emit()"
+      />
+    </div>
+    <small class="quota-limit-note">Downloading to disk is always free, forever — no account or upgrade needed.</small>
+  </div>
+} @else if (counterText(); as text) {
+  <div class="quota-counter"><i class="pi pi-cloud"></i> {{ text }}</div>
+}

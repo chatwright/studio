@@ -1,0 +1,26 @@
+<div class="save-to-space">
+  <button
+    type="button"
+    class="p-button p-component p-button-sm p-button-outlined save-btn"
+    [class.is-disabled]="!auth.signedIn() || saving() || !bundleText()"
+    [attr.aria-disabled]="!auth.signedIn()"
+    [pTooltip]="tooltip()"
+    tooltipPosition="bottom"
+    (click)="onSaveClick()"
+  >
+    <i [class]="saving() ? 'pi pi-spin pi-spinner' : 'pi pi-cloud-upload'" aria-hidden="true"></i>
+    {{ saving() ? 'Saving…' : 'Save to my space' }}
+  </button>
+
+  @if (savedTitle() && !limitReached()) {
+    <span class="save-note save-confirm"><i class="pi pi-check-circle"></i> Saved "{{ savedTitle() }}".</span>
+  }
+
+  @if (error()) {
+    <span class="save-note save-error"><i class="pi pi-times-circle"></i> {{ error() }}</span>
+  }
+
+  @if (quota() || limitReached()) {
+    <cw-quota-panel [quota]="quota()" [limitReached]="limitReached()" (downloadRequested)="downloadToDisk()" />
+  }
+</div>

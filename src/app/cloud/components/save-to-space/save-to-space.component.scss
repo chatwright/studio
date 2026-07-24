@@ -1,0 +1,33 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.save-btn.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.save-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.save-confirm { color: var(--cw-green); }
+.save-error { color: var(--cw-red); }
+
+cw-quota-panel {
+  flex-basis: 100%;
+}

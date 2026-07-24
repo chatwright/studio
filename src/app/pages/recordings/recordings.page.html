@@ -1,0 +1,87 @@
+<section class="page recordings-page">
+  <div class="page-heading">
+    <div>
+      <p class="page-kicker">Cloud · personal space</p>
+      <h1>My recordings.</h1>
+      <p>
+        Recordings you save from the Player land in your personal Sneat space — sign in once, and they're
+        here on any device.
+      </p>
+    </div>
+    <div class="heading-actions">
+      @if (auth.signedIn()) {
+        <p-button
+          label="Refresh"
+          icon="pi pi-refresh"
+          severity="secondary"
+          outlined
+          size="small"
+          [disabled]="loading()"
+          (click)="refresh()"
+        />
+      }
+    </div>
+  </div>
+
+  @if (quotaText() && items().length) {
+    <div class="quota-strip"><i class="pi pi-cloud"></i> {{ quotaText() }}</div>
+  }
+
+  @if (!auth.signedIn()) {
+    <div class="empty-state surface">
+      <span class="empty-icon"><i class="pi pi-sign-in"></i></span>
+      <h2>Sign in to see your saved recordings</h2>
+      <p class="quiet">Your personal space keeps every recording you save, tied to your Sneat account.</p>
+    </div>
+  } @else if (loading() && !loaded()) {
+    <div class="empty-state surface">
+      <span class="empty-icon"><i class="pi pi-spin pi-spinner"></i></span>
+      <h2>Loading your recordings…</h2>
+    </div>
+  } @else if (error()) {
+    <div class="empty-state surface">
+      <span class="empty-icon error"><i class="pi pi-times-circle"></i></span>
+      <h2>Couldn't load your recordings</h2>
+      <p class="quiet">{{ error() }}</p>
+      <p-button label="Try again" icon="pi pi-refresh" size="small" (click)="refresh()" />
+    </div>
+  } @else if (!hasKnownSpace()) {
+    <div class="empty-state surface">
+      <span class="empty-icon"><i class="pi pi-cloud-upload"></i></span>
+      <h2>Nothing here yet</h2>
+      <p class="quiet">
+        Open the <a routerLink="/player">Player</a>, load a run bundle, and click "Save to my space" — it'll
+        show up here, in your personal Sneat space.
+      </p>
+      <p class="quiet small">
+        Already saved recordings from another device? They'll appear here automatically the next time you
+        save from this browser.
+      </p>
+    </div>
+  } @else if (!items().length) {
+    <div class="empty-state surface">
+      <span class="empty-icon"><i class="pi pi-inbox"></i></span>
+      <h2>No recordings saved yet</h2>
+      <p class="quiet">Save one from the <a routerLink="/player">Player</a> to see it here.</p>
+    </div>
+  } @else {
+    <ul class="recording-list">
+      @for (recording of items(); track recording.id) {
+        <li>
+          <button type="button" class="recording-row" (click)="open(recording)">
+            <span class="recording-icon"><i class="pi pi-play-circle"></i></span>
+            <span class="recording-body">
+              <span class="recording-title">{{ recording.title }}</span>
+              <span class="recording-meta">
+                @if (recording.platform) { <span class="mono">{{ recording.platform }}</span> }
+                <span>{{ formatDate(recording.createdAt) }}</span>
+                <span>{{ formatBytes(recording.sizeBytes) }}</span>
+              </span>
+            </span>
+            <i class="pi pi-chevron-right recording-chevron" aria-hidden="true"></i>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

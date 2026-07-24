@@ -42,8 +42,8 @@ describe('routes', () => {
     }
   });
 
-  it('keeps player and playground as real, top-level lazy routes (not redirects)', () => {
-    for (const path of ['player', 'playground']) {
+  it('keeps player, recordings and playground as real, top-level lazy routes (not redirects)', () => {
+    for (const path of ['player', 'recordings', 'playground']) {
       const route = routes.find((candidate) => candidate.path === path);
       expect(route, `expected a route for /${path}`).toBeDefined();
       expect(typeof route?.loadComponent).toBe('function');

@@ -15,6 +15,7 @@
       </div>
 
       <div class="top-actions">
+        <cw-save-to-space [bundleText]="bundleText()" [fileName]="downloadFileName()" />
         <p-button
           [icon]="engine.reducedMotion() ? 'pi pi-bolt' : 'pi pi-sparkles'"
           [label]="engine.reducedMotion() ? 'Motion off' : 'Motion on'"

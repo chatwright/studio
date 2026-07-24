@@ -269,7 +269,17 @@
   border-top: 1px solid var(--cw-line);
 }
 
-.sidebar-user strong { font-size: 0.78rem; }
+.sidebar-user strong {
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-user small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .icon-button {
   width: 2rem;
   height: 2rem;
@@ -281,6 +291,53 @@
 }
 
 .icon-button:hover { color: var(--cw-text); background: var(--cw-panel); }
+
+.user-loading {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0;
+  color: var(--cw-muted);
+}
+
+/* Signed-out sidebar state: spans the whole row (unlike the signed-in
+   avatar/name/sign-out three-column layout above) since there is no
+   identity to show yet. */
+.sign-in-button {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--cw-line-strong);
+  border-radius: 0.7rem;
+  color: var(--cw-text);
+  background: var(--cw-panel);
+  font: 650 0.76rem/1 var(--cw-sans);
+  cursor: pointer;
+  transition: 160ms ease;
+}
+.sign-in-button:hover:not(:disabled) {
+  border-color: var(--cw-link);
+  box-shadow: 0 4px 14px var(--cw-shadow);
+}
+.sign-in-button:disabled { opacity: 0.7; cursor: default; }
+.sign-in-button i { color: var(--cw-link); }
+
+.sidebar-auth-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0.45rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.55rem;
+  color: var(--cw-red);
+  background: rgba(198, 67, 94, 0.08);
+  border: 1px solid rgba(198, 67, 94, 0.25);
+  font-size: 0.68rem;
+}
 
 .studio-stage { min-width: 0; }
 
@@ -354,10 +411,13 @@
   .nav-section,
   .sidebar-note,
   .sidebar-user > span,
-  .sidebar-user .icon-button { display: none; }
+  .sidebar-user .icon-button,
+  .sign-in-button span,
+  .sidebar-auth-error { display: none; }
   .workspace-switcher { display: flex; justify-content: center; padding: 0.5rem; }
   .primary-nav a { grid-template-columns: 1fr; padding: 0.7rem; justify-items: center; }
   .sidebar-user { display: flex; justify-content: center; padding-top: 0.8rem; }
+  .sign-in-button { width: 2.2rem; height: 2.2rem; padding: 0; border-radius: 0.6rem; }
 }
 
 @media (max-width: 720px) {

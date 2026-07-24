@@ -7,6 +7,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { DemoStore } from './demo.store';
+import { AuthService } from './cloud/auth.service';
 import { parseEmbedParams } from './player/embed-params';
 
 interface NavigationItem {
@@ -47,6 +48,7 @@ interface UpcomingNavigationItem {
 })
 export class AppComponent {
   readonly store: DemoStore;
+  readonly auth = inject(AuthService);
 
   /**
    * `?embed=1` (landing-hero player embed, see player/embed-params.ts) hides
@@ -81,6 +83,13 @@ export class AppComponent {
       icon: 'pi pi-play-circle',
       route: '/player',
       eyebrow: 'Replay run bundles'
+    },
+    {
+      label: 'My recordings',
+      shortLabel: 'Cloud',
+      icon: 'pi pi-cloud',
+      route: '/recordings',
+      eyebrow: 'Saved to your Sneat space'
     }
   ];
 
