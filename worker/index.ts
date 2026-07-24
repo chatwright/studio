@@ -15,6 +15,7 @@ import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
 import { recipesPageDocument } from './recipes/page';
 import { pricingPageDocument } from './pricing/page';
 import { pricingReturnPageDocument } from './pricing/return-page';
+import { billingPageDocument } from './billing/page';
 import { badgeSvgDocument } from './badge';
 import { tryGithubResponse } from './try-github';
 
@@ -69,6 +70,7 @@ const recipesPath = '/recipes';
 // the buyer afterwards — see worker/pricing/return-page.ts.
 const pricingPath = '/pricing';
 const pricingReturnPath = '/pricing/return';
+const billingPath = '/billing';
 
 const badgeSvgPath = '/badge.svg';
 
@@ -171,6 +173,15 @@ export default {
 
     if (incomingURL.pathname === recipesPath || incomingURL.pathname === `${recipesPath}/`) {
       return new Response(request.method === 'HEAD' ? null : recipesPageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === billingPath || incomingURL.pathname === `${billingPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : billingPageDocument, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'

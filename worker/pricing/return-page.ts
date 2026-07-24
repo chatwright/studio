@@ -59,6 +59,13 @@ const returnStatusScript = `<script>(function(){
         if (plan) { plan.textContent = PLAN_LABELS[status.plan] || status.plan || 'your new plan'; }
         var email = document.getElementById('return-email');
         if (email && status.customerEmail) { email.textContent = status.customerEmail; }
+        // Stripe only emails receipts for LIVE payments (and only when
+        // receipt emails are enabled) — never in test mode. Say so instead
+        // of promising mail that will not arrive.
+        var receiptNote = document.getElementById('return-receipt-note');
+        if (receiptNote) {
+          receiptNote.textContent = mode === 'test' ? ' (test mode — Stripe sends no email receipts)' : ' — Stripe emails your receipt there';
+        }
         show('return-complete');
       } else if (status.status === 'open') {
         show('return-open');
@@ -116,10 +123,10 @@ export const pricingReturnPageDocument = String.raw`<!doctype html>
 
         <div class="return-state good" id="return-complete" hidden>
           <h1>You're on <span id="return-plan">your new plan</span>.</h1>
-          <p class="lede">Receipt sent to <strong id="return-email">your email</strong>. Cloud activation lands on your account shortly — everything local keeps working meanwhile.</p>
+          <p class="lede">Paid by <strong id="return-email">your email</strong><span id="return-receipt-note"></span>. Cloud activation lands on your account shortly — everything local keeps working meanwhile.</p>
           <div class="return-actions">
             <a class="button primary" href="/studio/">Open Studio</a>
-            <a class="button quiet" href="/pricing">Back to pricing</a>
+            <a class="button quiet" href="/billing">Go to billing</a>
           </div>
         </div>
 
