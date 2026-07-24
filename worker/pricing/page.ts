@@ -16,6 +16,7 @@ import {
   freeLocalPathSentence,
   type PricingTier
 } from './data';
+import { renderHeader, renderFooter, chromeStyles } from '../chrome';
 
 const unitLabel: Record<PricingTier['unit'], string> = {
   account: 'per account',
@@ -67,10 +68,7 @@ export const pricingPageDocument = String.raw`<!doctype html>
       :root { color-scheme: light; --ink:#111827; --soft:#566477; --line:#e5eaf0; --canvas:#fcfcfd; --blue:#2c6dcc; --mint:#50cba0; --mint-ink:#0d5e49; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; color:var(--ink); background:var(--canvas); } a { color:inherit; }
       .wrap { width:min(1180px,calc(100% - 3rem)); margin-inline:auto; }
-      .nav { position:sticky; z-index:10; top:0; border-bottom:1px solid rgba(229,234,240,.9); background:rgba(252,252,253,.9); backdrop-filter:blur(16px); }
-      .nav > .wrap { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:1.2rem; }
-      .brand { color:var(--ink); font-size:1.1rem; font-weight:730; letter-spacing:-.05em; text-decoration:none; } .brand small { margin-left:.45rem; color:var(--soft); font-size:.65rem; font-weight:650; letter-spacing:.02em; }
-      .links { display:flex; align-items:center; gap:1.35rem; color:#4e5c70; font-size:.85rem; } .links a { text-decoration:none; } .links a:hover { color:var(--ink); }
+      ${chromeStyles}
       .button { min-height:2.7rem; display:inline-flex; align-items:center; justify-content:center; padding:0 .95rem; border:1px solid transparent; border-radius:.55rem; font:680 .84rem/1 inherit; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease; } .button:hover { transform:translateY(-1px); }
       .primary { color:#06271d; background:var(--mint); box-shadow:0 8px 20px rgba(80,203,160,.17); } .quiet { border-color:var(--line); background:#fff; }
       .doc { max-width:46rem; padding:clamp(2.75rem,6vw,4.5rem) 0 clamp(1rem,3vw,1.5rem); }
@@ -126,12 +124,11 @@ export const pricingPageDocument = String.raw`<!doctype html>
       table.quota-table tbody tr:last-child th, table.quota-table tbody tr:last-child td { border-bottom:none; }
       .quota-note { margin:1.1rem 0 0; padding:.75rem .95rem; border:1px solid #bce9d8; border-left:3px solid var(--mint-ink); border-radius:0 .45rem .45rem 0; background:#effbf5; color:#20614c; font-size:.9rem; font-weight:600; line-height:1.6; }
 
-      footer { padding:2.5rem 0 3rem; color:#718094; font-size:.78rem; } footer .wrap { display:flex; justify-content:space-between; gap:1rem; border-top:1px solid var(--line); padding-top:1.45rem; } footer a { color:var(--soft); text-decoration:none; }
-      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } .nav > .wrap { min-height:64px; } .links { display:none; } .brand small { display:none; } .ladder-foot { flex-direction:column; align-items:flex-start; } footer .wrap { align-items:flex-start; flex-direction:column; } }
+      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } .ladder-foot { flex-direction:column; align-items:flex-start; } }
     </style>
   </head>
   <body>
-    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="/">Home</a><a href="/studio/">Studio</a><a href="/recipes">Recipes</a><a href="https://github.com/chatwright/chatwright">GitHub</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
+    ${renderHeader('pricing')}
     <main>
       <div class="wrap doc">
         <p class="eyebrow">Pricing</p>
@@ -178,6 +175,6 @@ export const pricingPageDocument = String.raw`<!doctype html>
         <p class="quota-note">${freeLocalPathSentence}</p>
       </div></section>
     </main>
-    <footer><div class="wrap"><span>An independent open-source project by Sneat.co</span><a href="https://sneat.dev/">Explore sneat.dev →</a></div></footer>
+    ${renderFooter()}
   </body>
 </html>`;

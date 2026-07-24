@@ -7,6 +7,7 @@
 // pattern this follows: shared nav/footer styling, a single exported
 // String.raw document).
 import { jobs, recipes, registryEntries, recipesSourceCommit, type ImplementationTier, type Recipe } from './data';
+import { renderHeader, renderFooter, chromeStyles } from '../chrome';
 
 const tierLabel: Record<ImplementationTier, string> = {
   official: 'official',
@@ -117,10 +118,7 @@ export const recipesPageDocument = String.raw`<!doctype html>
       :root { color-scheme: light; --ink:#111827; --soft:#566477; --line:#e5eaf0; --canvas:#fcfcfd; --blue:#2c6dcc; --mint:#50cba0; --mint-ink:#0d5e49; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; color:var(--ink); background:var(--canvas); } a { color:inherit; }
       .wrap { width:min(1180px,calc(100% - 3rem)); margin-inline:auto; }
-      .nav { position:sticky; z-index:10; top:0; border-bottom:1px solid rgba(229,234,240,.9); background:rgba(252,252,253,.9); backdrop-filter:blur(16px); }
-      .nav > .wrap { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:1.2rem; }
-      .brand { color:var(--ink); font-size:1.1rem; font-weight:730; letter-spacing:-.05em; text-decoration:none; } .brand small { margin-left:.45rem; color:var(--soft); font-size:.65rem; font-weight:650; letter-spacing:.02em; }
-      .links { display:flex; align-items:center; gap:1.35rem; color:#4e5c70; font-size:.85rem; } .links a { text-decoration:none; } .links a:hover { color:var(--ink); }
+      ${chromeStyles}
       .button { min-height:2.7rem; display:inline-flex; align-items:center; justify-content:center; padding:0 .95rem; border:1px solid transparent; border-radius:.55rem; font:680 .84rem/1 inherit; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease; } .button:hover { transform:translateY(-1px); }
       .primary { color:#06271d; background:var(--mint); box-shadow:0 8px 20px rgba(80,203,160,.17); } .quiet { border-color:var(--line); background:#fff; }
       .doc { max-width:46rem; padding:clamp(2.75rem,6vw,4.5rem) 0 clamp(1.5rem,3vw,2.5rem); }
@@ -171,14 +169,12 @@ export const recipesPageDocument = String.raw`<!doctype html>
       .badge-link { display:inline-flex; line-height:0; }
       .badge-link img { display:block; }
       .cta-row { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:.3rem; }
-      footer { padding:2.5rem 0 3rem; color:#718094; font-size:.78rem; } footer .wrap { display:flex; justify-content:space-between; gap:1rem; border-top:1px solid var(--line); padding-top:1.45rem; } footer a { color:var(--soft); text-decoration:none; }
-      .foot-left { display:flex; flex-direction:column; gap:.35rem; }
       .foot-note code { padding:.05rem .32rem; border-radius:.3rem; background:#eef3f8; color:var(--mint-ink); font-size:.72rem; }
-      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } .nav > .wrap { min-height:64px; } .links { display:none; } .brand small { display:none; } footer .wrap { align-items:flex-start; flex-direction:column; } .job-row, .registry-row { flex-direction:column; align-items:flex-start; } }
+      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } .job-row, .registry-row { flex-direction:column; align-items:flex-start; } }
     </style>
   </head>
   <body>
-    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="/">Home</a><a href="/studio/">Studio</a><a href="https://github.com/chatwright/chatwright">GitHub</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
+    ${renderHeader('recipes')}
     <main>
       <div class="wrap doc">
         <p class="eyebrow">Jobs · Recipes · Implementations</p>
@@ -221,6 +217,6 @@ export const recipesPageDocument = String.raw`<!doctype html>
         </div>
       </div></section>
     </main>
-    <footer><div class="wrap"><div class="foot-left"><span>An independent open-source project by Sneat.co</span><span class="foot-note">Rendered from chatwright/recipes@<code>${recipesSourceCommit}</code> — automated content pipeline is research item I-72.</span></div><a href="https://sneat.dev/">Explore sneat.dev →</a></div></footer>
+    ${renderFooter(`<span class="foot-note">Rendered from chatwright/recipes@<code>${recipesSourceCommit}</code> — automated content pipeline is research item I-72.</span>`)}
   </body>
 </html>`;
