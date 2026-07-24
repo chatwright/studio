@@ -1,4 +1,6 @@
 <section class="page run-page">
+  <cw-prototype-banner />
+
   <div class="page-heading">
     <div>
       <p class="page-kicker">Run inspector · {{ store.runID }}</p>
@@ -6,8 +8,8 @@
       <p>Conversation, HTTP traffic, platform calls and assertions are correlated rather than shown as separate logs.</p>
     </div>
     <div class="heading-actions">
-      <p-button label="Open scenario" icon="pi pi-sitemap" severity="secondary" outlined routerLink="/scenario" />
-      <p-button label="Replay manually" icon="pi pi-refresh" routerLink="/emulator" />
+      <p-button label="Open scenario" icon="pi pi-sitemap" severity="secondary" outlined routerLink="/prototypes/scenario" />
+      <p-button label="Replay manually" icon="pi pi-refresh" routerLink="/prototypes/emulator" />
     </div>
   </div>
 
@@ -180,6 +182,6 @@
 
   <div class="evidence-footer">
     <span><i class="pi pi-shield"></i> Result bundle schema v0 · no secrets captured</span>
-    <a routerLink="/workspace">Back to workspace <i class="pi pi-arrow-right"></i></a>
+    <a routerLink="/prototypes/workspace">Back to workspace <i class="pi pi-arrow-right"></i></a>
   </div>
 </section>

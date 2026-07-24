@@ -5,9 +5,11 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { PrototypeBannerComponent } from '../../components/prototype-banner/prototype-banner.component';
+
 @Component({
   selector: 'cw-scenario-page',
-  imports: [ButtonModule, ProgressBarModule, RouterLink, TagModule, TooltipModule],
+  imports: [ButtonModule, ProgressBarModule, PrototypeBannerComponent, RouterLink, TagModule, TooltipModule],
   templateUrl: './scenario.page.html',
   styleUrl: './scenario.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

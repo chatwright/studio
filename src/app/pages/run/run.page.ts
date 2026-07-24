@@ -7,6 +7,7 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { PrototypeBannerComponent } from '../../components/prototype-banner/prototype-banner.component';
 import { DemoStore } from '../../demo.store';
 
 type DetailTab = 'request' | 'response' | 'rendered' | 'state';
@@ -22,7 +23,15 @@ interface AssertionRow {
 
 @Component({
   selector: 'cw-run-page',
-  imports: [ButtonModule, ProgressBarModule, RouterLink, TableModule, TagModule, TooltipModule],
+  imports: [
+    ButtonModule,
+    ProgressBarModule,
+    PrototypeBannerComponent,
+    RouterLink,
+    TableModule,
+    TagModule,
+    TooltipModule
+  ],
   templateUrl: './run.page.html',
   styleUrl: './run.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

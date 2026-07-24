@@ -7,6 +7,8 @@ import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { TreeModule } from 'primeng/tree';
 
+import { PrototypeBannerComponent } from '../../components/prototype-banner/prototype-banner.component';
+
 interface RecentRun {
   id: string;
   scenario: string;
@@ -18,7 +20,15 @@ interface RecentRun {
 
 @Component({
   selector: 'cw-workspace-page',
-  imports: [ButtonModule, ProgressBarModule, RouterLink, TableModule, TagModule, TreeModule],
+  imports: [
+    ButtonModule,
+    ProgressBarModule,
+    PrototypeBannerComponent,
+    RouterLink,
+    TableModule,
+    TagModule,
+    TreeModule
+  ],
   templateUrl: './workspace.page.html',
   styleUrl: './workspace.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -90,6 +100,6 @@ export class WorkspacePage {
   constructor(private readonly router: Router) {}
 
   openScenario(): void {
-    void this.router.navigate(['/scenario']);
+    void this.router.navigate(['/prototypes/scenario']);
   }
 }

@@ -1,4 +1,6 @@
 <section class="page emulator-page">
+  <cw-prototype-banner />
+
   <div class="page-heading">
     <div>
       <p class="page-kicker">Manual testing · faithful platform mode</p>
@@ -7,7 +9,7 @@
     </div>
     <div class="heading-actions">
       <p-button label="Reset run" icon="pi pi-refresh" severity="secondary" outlined (onClick)="reset()" />
-      <p-button label="Inspect evidence" icon="pi pi-wave-pulse" routerLink="/run" />
+      <p-button label="Inspect evidence" icon="pi pi-wave-pulse" routerLink="/prototypes/run" />
     </div>
   </div>
 
@@ -114,7 +116,7 @@
             <div><strong><i class="pi pi-send platform-icon"></i> Telegram · Alice ↔ Greeter bot</strong><small><span></span> Private chat · ID 894211</small></div>
           </div>
           <div class="chat-header-actions">
-            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/scenario" />
+            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/prototypes/scenario" />
             <p-button icon="pi pi-ellipsis-v" text rounded pTooltip="Chat options" />
           </div>
         </header>
@@ -194,7 +196,7 @@
             <div><strong><i class="pi pi-whatsapp platform-icon"></i> WhatsApp · Bob ↔ Reminder bot</strong><small><span></span> Cloud API contact · +353 86 000 1227</small></div>
           </div>
           <div class="chat-header-actions">
-            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/scenario" />
+            <p-button icon="pi pi-code" text rounded pTooltip="Open scenario" routerLink="/prototypes/scenario" />
             <p-button icon="pi pi-ellipsis-v" text rounded pTooltip="Chat options" />
           </div>
         </header>
@@ -248,7 +250,7 @@
           <a
             class="trace-event"
             [class.active]="event.active"
-            [routerLink]="['/run']"
+            [routerLink]="['/prototypes/run']"
             [queryParams]="{
               event: $index,
               platform: activePlatformID(),
@@ -291,7 +293,7 @@
         </aside>
       }
 
-      <a class="trace-link" routerLink="/run"><span>Open full run inspector</span><i class="pi pi-arrow-up-right"></i></a>
+      <a class="trace-link" routerLink="/prototypes/run"><span>Open full run inspector</span><i class="pi pi-arrow-up-right"></i></a>
     </aside>
   </div>
 </section>

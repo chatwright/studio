@@ -1,4 +1,6 @@
 <section class="page workspace-page">
+  <cw-prototype-banner />
+
   <div class="page-heading">
     <div>
       <p class="page-kicker">Workspace · greetbot</p>
@@ -9,7 +11,7 @@
     </div>
     <div class="heading-actions">
       <p-button label="New scenario" icon="pi pi-plus" severity="secondary" outlined />
-      <p-button label="Open live emulator" icon="pi pi-comments" routerLink="/emulator" />
+      <p-button label="Open live emulator" icon="pi pi-comments" routerLink="/prototypes/emulator" />
     </div>
   </div>
 
@@ -30,7 +32,7 @@
     <div class="confidence-action">
       <span class="signal"><i class="pi pi-bolt"></i></span>
       <div><strong>Fastest next gain</strong><small>Fix /help fallback deadline</small></div>
-      <p-button icon="pi pi-arrow-right" text rounded ariaLabel="Inspect the failed run" routerLink="/run" />
+      <p-button icon="pi pi-arrow-right" text rounded ariaLabel="Inspect the failed run" routerLink="/prototypes/run" />
     </div>
   </div>
 
@@ -73,7 +75,7 @@
       </div>
       <footer class="surface-footer">
         <span><i class="pi pi-info-circle"></i> Select a node to open its executable specification.</span>
-        <a routerLink="/scenario">Open language choice <i class="pi pi-arrow-right"></i></a>
+        <a routerLink="/prototypes/scenario">Open language choice <i class="pi pi-arrow-right"></i></a>
       </footer>
     </article>
 
@@ -109,14 +111,14 @@
           <small>43m</small>
         </div>
       </div>
-      <a class="activity-link" routerLink="/run">Inspect latest run <i class="pi pi-arrow-right"></i></a>
+      <a class="activity-link" routerLink="/prototypes/run">Inspect latest run <i class="pi pi-arrow-right"></i></a>
     </article>
   </div>
 
   <article class="surface recent-runs">
     <header class="surface-header">
       <div><h2>Recent runs</h2><p>Local and CI evidence share one result shape</p></div>
-      <p-button label="View run inspector" icon="pi pi-wave-pulse" severity="secondary" text routerLink="/run" />
+      <p-button label="View run inspector" icon="pi pi-wave-pulse" severity="secondary" text routerLink="/prototypes/run" />
     </header>
     <p-table [value]="recentRuns" styleClass="runs-table">
       <ng-template #header>
@@ -129,7 +131,7 @@
           <td><p-tag [value]="run.status" [severity]="run.status === 'Passed' ? 'success' : 'danger'" /></td>
           <td class="mono">{{ run.duration }}</td>
           <td class="quiet">{{ run.started }}</td>
-          <td><p-button icon="pi pi-arrow-up-right" text rounded ariaLabel="Open run" routerLink="/run" /></td>
+          <td><p-button icon="pi pi-arrow-up-right" text rounded ariaLabel="Open run" routerLink="/prototypes/run" /></td>
         </tr>
       </ng-template>
     </p-table>
