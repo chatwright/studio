@@ -49,7 +49,7 @@ export const landingDocument = String.raw`<!doctype html>
     </style>
   </head>
   <body>
-    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="#player">Player</a><a href="#graph">Graph</a><a href="/recipes">Recipes</a><a href="#bots">Bots</a><a href="#status">Status</a><a href="https://github.com/chatwright/chatwright">GitHub</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
+    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="/studio/player">Player</a><a href="/studio/playground">Playground</a><a href="/recipes">Recipes</a><a href="https://github.com/chatwright/chatwright">GitHub</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
     <main>
       <section class="hero wrap"><div class="hero-intro"><p class="eyebrow fade">Conversational UX, executable · Telegram first</p><h1 class="fade">Learn, design, test and compare conversational UX.</h1><p class="hero-copy fade delay">Chatwright is where conversational UX knowledge runs: recipes with demos you can play, capability tables generated from data, tests that produce replayable evidence — across messaging platforms. The platform is emulated. Your bot is real.</p><pre class="hero-terminal fade delay"><b>$</b> go get chatwright.dev/runtime
 <b>$</b> go test ./... -run TestGreeting
