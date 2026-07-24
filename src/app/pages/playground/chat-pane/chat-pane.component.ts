@@ -19,7 +19,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { IframeHost, Session, WhatsAppCodec, type JournalEntry, type TelegramUser } from '@chatwright/runtime';
 
 import { DemoStore } from '../../../demo.store';
-import { ChatComposerComponent } from '../../../components/chat-composer/chat-composer.component';
+import { MessageBarComponent } from '../../../components/message-bar/message-bar.component';
 import { JournalActionLike, PlaygroundBubble, reduceJournalEntries } from '../bubble-reducer';
 import { CommandSegment, tokenizeCommandText } from '../command-tokenizer';
 
@@ -70,10 +70,10 @@ const CHAT_ID = VISITOR.id;
  * @remarks
  * Extracted so the same live-pane machinery backs three contexts: the
  * Telegram tab, the WhatsApp tab, and each half of Compare mode — never
- * duplicated three times. `showComposer()` is what tells them apart: the
- * two single-platform tabs render their own `cw-chat-composer`; Compare mode
+ * duplicated three times. `showMessageBar()` is what tells them apart: the
+ * two single-platform tabs render their own `cw-message-bar`; Compare mode
  * sets it `false` and drives both panes' `submitText()` from one shared
- * composer in the parent (`PlaygroundPage`), via a template reference
+ * message bar in the parent (`PlaygroundPage`), via a template reference
  * variable — see that component's `onCompareSend`. Button clicks stay
  * per-pane either way (`onActionClick`) — they are answered by whichever
  * bot rendered them, never fanned out.
@@ -91,7 +91,7 @@ const CHAT_ID = VISITOR.id;
  */
 @Component({
   selector: 'cw-chat-pane',
-  imports: [AvatarModule, ButtonModule, TooltipModule, ChatComposerComponent],
+  imports: [AvatarModule, ButtonModule, TooltipModule, MessageBarComponent],
   templateUrl: './chat-pane.component.html',
   styleUrl: './chat-pane.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -101,8 +101,8 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
   readonly store = inject(DemoStore);
 
   readonly platform = input.required<PlaygroundPlatform>();
-  /** Compare mode supplies its own shared composer and sets this `false`. */
-  readonly showComposer = input(true);
+  /** Compare mode supplies its own shared message bar and sets this `false`. */
+  readonly showMessageBar = input(true);
   /** Tighter chrome for Compare mode's side-by-side layout. */
   readonly compact = input(false);
 
@@ -115,8 +115,8 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
   private readonly botFrame = viewChild<ElementRef<HTMLIFrameElement>>('botFrame');
   private readonly chatScroll = viewChild<ElementRef<HTMLElement>>('chatScroll');
-  /** Only resolves once `showComposer()` mounts this pane's own composer — Compare mode's panes (`showComposer=false`) never populate this, they don't own a composer to focus. */
-  private readonly composer = viewChild<ChatComposerComponent>('composer');
+  /** Only resolves once `showMessageBar()` mounts this pane's own message bar — Compare mode's panes (`showMessageBar=false`) never populate this, they don't own a message bar to focus. */
+  private readonly messageBar = viewChild<MessageBarComponent>('messageBar');
 
   readonly status = signal<ConnectionStatus>('handshaking');
   readonly errorReason = signal<string | null>(null);
@@ -156,19 +156,19 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
     });
 
     // Founder tweak: once the conversation starts (Start button or typing a
-    // first message straight into the composer), move focus into the
-    // composer's text input. `hasContent()` flips false -> true exactly
+    // first message straight into the message bar), move focus into the
+    // message bar's text input. `hasContent()` flips false -> true exactly
     // once per pane's lifetime, at which point the template swaps the
-    // Start-button composer slot for the real `cw-chat-composer` — this
-    // effect also reads `composer()` (itself a signal), so if that swap
+    // Start-button message bar slot for the real `cw-message-bar` — this
+    // effect also reads `messageBar()` (itself a signal), so if that swap
     // hasn't landed in the DOM yet on the tick `hasContent()` flips, the
-    // effect simply reruns the moment `composer()` resolves, no manual
+    // effect simply reruns the moment `messageBar()` resolves, no manual
     // rAF/microtask polling needed. A no-op for Compare mode's panes
-    // (`showComposer=false`): `composer()` never resolves there — the
-    // parent `PlaygroundPage` owns that focus move for its shared composer.
+    // (`showMessageBar=false`): `messageBar()` never resolves there — the
+    // parent `PlaygroundPage` owns that focus move for its shared message bar.
     effect(() => {
       if (this.hasContent()) {
-        this.composer()?.focus();
+        this.messageBar()?.focus();
       }
     });
   }
@@ -189,7 +189,7 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
     this.submitText('/start');
   }
 
-  /** Delivers `text` to this pane's own session — called by its own composer (single-platform tabs) or fanned out to by the parent's shared composer (Compare mode). */
+  /** Delivers `text` to this pane's own session — called by its own message bar (single-platform tabs) or fanned out to by the parent's shared message bar (Compare mode). */
   submitText(text: string): void {
     if (this.status() !== 'connected' || !this.session) {
       return;
@@ -229,7 +229,7 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
     return tokenizeCommandText(text);
   }
 
-  /** A clicked `/command` token sends that literal text as a new user message — same path as typing it into the composer. */
+  /** A clicked `/command` token sends that literal text as a new user message — same path as typing it into the message bar. */
   onCommandClick(command: string): void {
     this.submitText(command);
   }

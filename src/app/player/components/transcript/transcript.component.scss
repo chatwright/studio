@@ -310,8 +310,8 @@
   opacity: 1;
 }
 
-/* Playback composer */
-.composer {
+/* Playback message bar */
+.message-bar {
   margin-top: 0.3rem;
   display: flex;
   align-items: center;
@@ -329,7 +329,7 @@
     box-shadow: 0 0 0 3px rgba(38, 120, 189, 0.1);
   }
 }
-.composer-field {
+.message-bar-field {
   flex: 1;
   min-height: 1.3rem;
   font-size: 0.84rem;
@@ -349,7 +349,7 @@
   background: var(--cw-blue);
   animation: blink 1s step-end infinite;
 }
-.composer-send {
+.message-bar-send {
   display: inline-flex;
   align-items: center;
   justify-content: center;

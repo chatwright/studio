@@ -11,26 +11,26 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 
 /**
- * `'compare'` is Compare mode's own brand for the one shared composer that
+ * `'compare'` is Compare mode's own brand for the one shared message bar that
  * drives both platform panes at once — deliberately neither platform's own
- * color (it fans out to both), see chat-composer.component.scss.
+ * color (it fans out to both), see message-bar.component.scss.
  */
-export type ChatComposerPlatform = 'telegram' | 'whatsapp' | 'compare';
+export type MessageBarPlatform = 'telegram' | 'whatsapp' | 'compare';
 
 @Component({
-  selector: 'cw-chat-composer',
+  selector: 'cw-message-bar',
   imports: [ButtonModule, InputTextModule],
-  templateUrl: './chat-composer.component.html',
-  styleUrl: './chat-composer.component.scss',
+  templateUrl: './message-bar.component.html',
+  styleUrl: './message-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChatComposerComponent {
+export class MessageBarComponent {
   readonly actor = input.required<string>();
-  readonly platform = input.required<ChatComposerPlatform>();
+  readonly platform = input.required<MessageBarPlatform>();
   readonly placeholder = input<string>();
   readonly messageSent = output<string>();
   readonly draft = signal('');
-  readonly composerInput = viewChild<ElementRef<HTMLInputElement>>('composerInput');
+  readonly messageBarInput = viewChild<ElementRef<HTMLInputElement>>('messageBarInput');
 
   updateDraft(event: Event): void {
     this.draft.set((event.target as HTMLInputElement).value);
@@ -51,14 +51,14 @@ export class ChatComposerComponent {
 
   clear(): void {
     this.draft.set('');
-    const inputElement = this.composerInput()?.nativeElement;
+    const inputElement = this.messageBarInput()?.nativeElement;
     if (inputElement) {
       inputElement.value = '';
     }
   }
 
-  /** Moves keyboard focus into this composer's text input — called on send (above) and by the owning pane once a conversation starts (see `ChatPaneComponent`/`PlaygroundPage`). */
+  /** Moves keyboard focus into this message bar's text input — called on send (above) and by the owning pane once a conversation starts (see `ChatPaneComponent`/`PlaygroundPage`). */
   focus(): void {
-    this.composerInput()?.nativeElement.focus();
+    this.messageBarInput()?.nativeElement.focus();
   }
 }

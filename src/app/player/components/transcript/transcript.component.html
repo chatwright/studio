@@ -139,17 +139,17 @@
           }
         }
 
-        <!-- Playback composer: driven by the compose-and-send primitive. -->
-        <div class="composer" [class.active]="engine.composerTyping()?.chatId === chat.chatId">
-          @if (engine.composerTyping()?.chatId === chat.chatId) {
-            @let typing = engine.composerTyping()!;
-            <div class="composer-field">
+        <!-- Playback message bar: driven by the compose-and-send primitive. -->
+        <div class="message-bar" [class.active]="engine.messageBarTyping()?.chatId === chat.chatId">
+          @if (engine.messageBarTyping()?.chatId === chat.chatId) {
+            @let typing = engine.messageBarTyping()!;
+            <div class="message-bar-field">
               <span class="typed">{{ typing.text.slice(0, typing.chars) }}</span><span class="caret"></span>
             </div>
-            <span class="composer-send pressing"><i class="pi pi-send"></i></span>
+            <span class="message-bar-send pressing"><i class="pi pi-send"></i></span>
           } @else {
-            <div class="composer-field idle">Message…</div>
-            <span class="composer-send"><i class="pi pi-send"></i></span>
+            <div class="message-bar-field idle">Message…</div>
+            <span class="message-bar-send"><i class="pi pi-send"></i></span>
           }
         </div>
       </div>

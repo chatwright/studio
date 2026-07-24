@@ -186,7 +186,7 @@
           }
         </div>
 
-        <cw-chat-composer actor="Alice" platform="telegram" (messageSent)="sendMessage($event)" />
+        <cw-message-bar actor="Alice" platform="telegram" (messageSent)="sendMessage($event)" />
       } @else if (activeChat() === 'bob-reminder') {
         <header class="chat-header">
           <div class="chat-identity">
@@ -209,7 +209,7 @@
             <div class="message-row outgoing sent-message"><div class="message-bubble user-message"><p>{{ message.text }}</p><footer><span>{{ message.time }}</span><i class="pi pi-check"></i></footer></div><span class="message-author">{{ message.author }}</span></div>
           }
         </div>
-        <cw-chat-composer actor="Bob" platform="whatsapp" (messageSent)="sendMessage($event)" />
+        <cw-message-bar actor="Bob" platform="whatsapp" (messageSent)="sendMessage($event)" />
       } @else {
         <header class="chat-header">
           <div class="chat-identity">
@@ -227,7 +227,7 @@
             <div class="message-row outgoing sent-message"><div class="message-bubble user-message"><p>{{ message.text }}</p><footer><span>{{ message.time }}</span><i class="pi pi-check"></i></footer></div><span class="message-author">{{ message.author }}</span></div>
           }
         </div>
-        <cw-chat-composer actor="Alice" platform="telegram" placeholder="Act as Alice in Launch crew…" (messageSent)="sendMessage($event)" />
+        <cw-message-bar actor="Alice" platform="telegram" placeholder="Act as Alice in Launch crew…" (messageSent)="sendMessage($event)" />
       }
     </section>
 
