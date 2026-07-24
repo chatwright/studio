@@ -1,4 +1,6 @@
 <section class="page scenario-page">
+  <cw-prototype-banner />
+
   <div class="page-heading">
     <div>
       <p class="page-kicker">Executable specification · greeting & onboarding</p>
@@ -6,8 +8,8 @@
       <p>One scenario states conversational intent; the adapter owns Telegram callback and edit mechanics.</p>
     </div>
     <div class="heading-actions">
-      <p-button label="Try manually" icon="pi pi-comments" severity="secondary" outlined routerLink="/emulator" />
-      <p-button label="Run scenario" icon="pi pi-play" routerLink="/run" />
+      <p-button label="Try manually" icon="pi pi-comments" severity="secondary" outlined routerLink="/prototypes/emulator" />
+      <p-button label="Run scenario" icon="pi pi-play" routerLink="/prototypes/run" />
     </div>
   </div>
 
@@ -146,7 +148,7 @@
                         </button>
                       }
                     </div>
-                    <a class="expectation-link" routerLink="/emulator">See the in-place edit in the emulator <i class="pi pi-arrow-up-right"></i></a>
+                    <a class="expectation-link" routerLink="/prototypes/emulator">See the in-place edit in the emulator <i class="pi pi-arrow-up-right"></i></a>
                   </div>
                 </div>
               </div>
@@ -188,7 +190,7 @@
 <span class="line">8</span>  Text(<b>"¡Hola, forastero!"</b>)</pre>
       </div>
 
-      <a class="latest-run" routerLink="/run">
+      <a class="latest-run" routerLink="/prototypes/run">
         <span class="passed-mark"><i class="pi pi-check"></i></span>
         <span><small>LATEST EVIDENCE</small><strong>run-1842 · passed</strong><em>342 ms · 4 assertions</em></span>
         <i class="pi pi-arrow-right"></i>

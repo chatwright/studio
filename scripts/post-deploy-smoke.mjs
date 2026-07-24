@@ -52,10 +52,24 @@ if (!mainScript) {
 }
 
 await fetchOK(mainScript);
+
+// The four design-prototype pages now live under /studio/prototypes/ (see
+// spec/ideas/studio-ui-surfaces.md, MVP Scope item 2). fetchOK already
+// follows redirects, so these two forms both have to resolve: the new
+// canonical deep links, and the old top-level paths (an Angular
+// `redirectTo`, not an HTTP redirect — the SPA shell serves 200 either way,
+// so this mainly guards against the old routes 404ing if the redirect ever
+// regresses).
+await fetchOK('prototypes/emulator');
+await fetchOK('prototypes/scenario');
+await fetchOK('prototypes/run?event=2&platform=telegram&view=rendered');
 await fetchOK('emulator');
-await fetchOK('scenario');
-await fetchOK('run?event=2&platform=telegram&view=rendered');
+
 await fetchOK('/studio/playground');
+await fetchOK('/studio/player');
+
+// The legacy /prototype/ mount (worker-level 308, unrelated to the Angular
+// routes above) still has to resolve too.
 await fetchOK('/prototype/emulator');
 
 console.log(`Chatwright Studio smoke passed at ${baseURL}`);

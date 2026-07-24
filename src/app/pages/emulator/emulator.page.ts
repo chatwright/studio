@@ -16,6 +16,7 @@ import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
 
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
+import { PrototypeBannerComponent } from '../../components/prototype-banner/prototype-banner.component';
 import { DemoLanguage, DemoStore, TraceEvent } from '../../demo.store';
 
 hljs.registerLanguage('json', json);
@@ -60,6 +61,7 @@ interface SentChatMessage {
     ButtonModule,
     ChatComposerComponent,
     InputTextModule,
+    PrototypeBannerComponent,
     RouterLink,
     TagModule,
     TooltipModule

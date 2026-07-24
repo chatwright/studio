@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.prototype-banner {
+  min-height: 2.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--cw-line-strong);
+  border-radius: 0.7rem;
+  background: linear-gradient(145deg, rgba(139, 109, 255, 0.1), rgba(139, 109, 255, 0.025));
+  color: var(--cw-muted-strong);
+}
+
+.prototype-banner > i.pi-info-circle {
+  color: var(--cw-violet);
+  font-size: 0.85rem;
+}
+
+.prototype-banner p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.prototype-banner strong { color: var(--cw-text); }
+.prototype-banner a { color: var(--cw-blue); text-decoration: underline; text-underline-offset: 0.15em; }
+
+.prototype-banner button {
+  flex: 0 0 auto;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0.5rem;
+  color: var(--cw-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.prototype-banner button:hover { color: var(--cw-text); background: var(--cw-hover); }
+.prototype-banner button i { font-size: 0.72rem; }
+
+@media (max-width: 720px) {
+  .prototype-banner { align-items: flex-start; }
+  .prototype-banner p { font-size: 0.73rem; }
+}

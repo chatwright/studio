@@ -114,6 +114,7 @@ Player. Entry points and URLs never change during convergence.
 2. /prototypes/ decoupling: routes moved + redirects, real Studio menu
    (Playground, Player), prototype banner. (Executes after the current
    Playground tweak-set PR merges — same files.)
+   - **Executed 2026-07-24**: `feat/prototypes-decoupling` (chatwright/studio).
 3. Glossary cross-check in the standard repository (Playground/Player
    entries already align; add "prototype" wording if needed).
 

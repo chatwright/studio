@@ -147,8 +147,80 @@
 .primary-nav i { font-size: 0.93rem; text-align: center; }
 .primary-nav a.active i { color: var(--cw-mint); }
 .primary-nav span { display: grid; gap: 0.16rem; }
-.primary-nav strong { font-size: 0.82rem; font-weight: 650; }
+.primary-nav strong { font-size: 0.82rem; font-weight: 650; display: flex; align-items: center; gap: 0.4rem; }
 .primary-nav small { color: var(--cw-muted); font-size: 0.67rem; }
+
+/* Composer — spec'd, not built: same row shape as a real nav item but
+   non-interactive (no routerLink, no hover/active state) and dimmed, with a
+   "soon" chip so it never reads as broken or clickable. */
+.nav-upcoming {
+  min-height: 3.4rem;
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  color: var(--cw-muted);
+  border: 1px dashed transparent;
+  border-radius: 0.78rem;
+  cursor: default;
+  opacity: 0.7;
+}
+.nav-upcoming i { font-size: 0.93rem; text-align: center; }
+.nav-upcoming span { display: grid; gap: 0.16rem; }
+.nav-upcoming strong { font-size: 0.82rem; font-weight: 650; display: flex; align-items: center; gap: 0.4rem; }
+.nav-upcoming small { color: var(--cw-muted); font-size: 0.67rem; }
+
+.soon-chip,
+.hint-chip {
+  font: 700 0.56rem/1 var(--cw-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.36rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.soon-chip {
+  color: var(--cw-violet);
+  background: rgba(139, 109, 255, 0.14);
+}
+
+.hint-chip {
+  color: var(--cw-muted);
+  background: var(--cw-panel-soft);
+  border: 1px solid var(--cw-line);
+}
+
+/* "Design prototypes" — visually separated, collapsed by default (see
+   AppComponent.prototypesExpanded): a deliberate second-class citizen of
+   the menu, present but never competing with the real surfaces above. */
+.nav-section {
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--cw-line);
+}
+
+.nav-section-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: 0.6rem;
+  color: var(--cw-muted);
+  background: transparent;
+  font: 650 0.66rem/1 var(--cw-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.nav-section-toggle:hover { color: var(--cw-muted-strong); background: var(--cw-hover); }
+.nav-section-toggle i { font-size: 0.62rem; transition: transform 160ms ease; }
+.nav-section-toggle i.expanded { transform: rotate(90deg); }
+
+.prototypes-nav { margin-top: 0.3rem; }
+.prototypes-nav a { min-height: 2.9rem; }
 
 .sidebar-note {
   margin-top: auto;
@@ -272,6 +344,8 @@
   .workspace-switcher span:not(.workspace-icon),
   .workspace-switcher i,
   .primary-nav a span,
+  .nav-upcoming,
+  .nav-section,
   .sidebar-note,
   .sidebar-user > span,
   .sidebar-user .icon-button { display: none; }

@@ -43,7 +43,52 @@
           </span>
         </a>
       }
+
+      <span
+        class="nav-upcoming"
+        [pTooltip]="upcoming.eyebrow + ' — not built yet'"
+        tooltipPosition="right"
+        aria-disabled="true"
+      >
+        <i [class]="upcoming.icon" aria-hidden="true"></i>
+        <span>
+          <strong>{{ upcoming.label }}<em class="soon-chip">{{ upcoming.chip }}</em></strong>
+          <small>{{ upcoming.eyebrow }}</small>
+        </span>
+      </span>
     </nav>
+
+    <div class="nav-section prototypes-section">
+      <button
+        type="button"
+        class="nav-section-toggle"
+        [attr.aria-expanded]="prototypesExpanded()"
+        aria-controls="prototypes-nav"
+        (click)="togglePrototypes()"
+      >
+        <i class="pi pi-angle-right" [class.expanded]="prototypesExpanded()" aria-hidden="true"></i>
+        <span>Design prototypes</span>
+      </button>
+
+      @if (prototypesExpanded()) {
+        <nav class="primary-nav prototypes-nav" id="prototypes-nav">
+          @for (item of prototypeNavigation; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [pTooltip]="item.label"
+              tooltipPosition="right"
+            >
+              <i [class]="item.icon" aria-hidden="true"></i>
+              <span>
+                <strong>{{ item.label }}<em class="hint-chip">{{ item.hint }}</em></strong>
+                <small>{{ item.eyebrow }}</small>
+              </span>
+            </a>
+          }
+        </nav>
+      }
+    </div>
 
     <div class="sidebar-note">
       <div class="note-label"><span></span> Local runtime</div>
@@ -90,7 +135,7 @@
         </button>
         <p-tag value="Telegram" icon="pi pi-send" severity="info" />
         <span class="run-pill"><span></span>{{ store.runID }}</span>
-        <p-button icon="pi pi-play" label="Run" size="small" routerLink="/emulator" />
+        <p-button icon="pi pi-play" label="Run" size="small" routerLink="/prototypes/emulator" />
       </div>
     </header>
 
