@@ -101,7 +101,14 @@ export function reduceJournalEntries(entries: readonly JournalEntryLike[]): Play
           text: entry.text,
           version: entry.version,
           edited: entry.version > 0,
-          actions: entry.actions ?? existing.actions,
+          // Real Telegram's editMessageText clears a message's inline
+          // keyboard unless the call explicitly re-sends reply_markup — it
+          // never carries the previous keyboard forward (runtime-ts
+          // decision 0015, docs/runtime-parity.md). TelegramCodec journals
+          // that fidelity directly: entry.actions is the verbatim
+          // reply_markup when the edit sent one, else undefined — so take
+          // it as-is here, with no fallback to the prior version's actions.
+          actions: entry.actions,
           at: entry.at
         };
         continue;
