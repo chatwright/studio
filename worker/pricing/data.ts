@@ -83,8 +83,8 @@ export const pricingTiers: readonly PricingTier[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '$9/mo',
-    priceNote: 'per account',
+    price: '€9 / $9',
+    priceNote: 'per month, per account',
     unit: 'account',
     features: [
       'Everything in Free, with much higher usage',
@@ -96,8 +96,8 @@ export const pricingTiers: readonly PricingTier[] = [
   {
     id: 'team',
     name: 'Team',
-    price: '$29/mo',
-    priceNote: 'flat · per account, not per seat',
+    price: '€29 / $29',
+    priceNote: 'per month, flat · per account, not per seat',
     unit: 'account',
     features: [
       '1 team, up to 10 members',
@@ -109,7 +109,7 @@ export const pricingTiers: readonly PricingTier[] = [
   {
     id: 'company',
     name: 'Company',
-    price: '$9/seat/mo',
+    price: '€9 / $9',
     priceNote: 'per seat, per month',
     unit: 'seat',
     features: ['Multiple flat teams, each with its own silo', 'Up to 100 users', 'Everything in Team, for every team'],
