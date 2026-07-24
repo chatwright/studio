@@ -12,9 +12,12 @@
 .connection-state > div { display: grid; gap: 0.18rem; }
 .connection-state strong { font-size: 0.72rem; }
 .connection-state small { color: var(--cw-muted); font: 500 0.59rem var(--cw-mono); }
-.pulse { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border-radius: 0.58rem; background: rgba(112, 255, 208, 0.07); }
-.pulse span { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--cw-mint); box-shadow: 0 0 0 0 rgba(112, 255, 208, 0.25); animation: pulse 2s infinite; }
-@keyframes pulse { 50% { box-shadow: 0 0 0 0.42rem rgba(112, 255, 208, 0); } }
+/* "greetbot is listening" pulse — pre-existing brand accent, not
+   `--cw-green` (chat-pane's real "Connected" pill already uses green).
+   Swept, flagged as brand/status-ambiguous in the PR body, not recoloured. */
+.pulse { width: 1.9rem; height: 1.9rem; display: grid; place-items: center; border-radius: 0.58rem; background: rgba(94, 234, 212, 0.07); }
+.pulse span { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--cw-accent); box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.25); animation: pulse 2s infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 0.42rem rgba(94, 234, 212, 0); } }
 .toolbar-flow { display: flex; align-items: center; justify-content: center; gap: 0.55rem; color: var(--cw-muted); font: 600 0.59rem var(--cw-mono); }
 .toolbar-flow span { padding: 0.3rem 0.45rem; border: 1px solid var(--cw-line); border-radius: 0.4rem; background: var(--cw-hover); }
 .toolbar-flow i { font-size: 0.55rem; color: #4c5a70; }
@@ -70,7 +73,7 @@
   transition: 150ms ease;
 }
 .chat-preview:hover { background: rgba(255,255,255,0.025); }
-.chat-preview.active { border-color: rgba(112, 255, 208, 0.13); background: linear-gradient(90deg, rgba(112,255,208,0.08), rgba(112,255,208,0.025)); }
+.chat-preview.active { border-color: rgba(94, 234, 212, 0.13); background: linear-gradient(90deg, rgba(94,234,212,0.08), rgba(94,234,212,0.025)); }
 .preview-avatar { position: relative; width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: 0.68rem; font: 700 0.62rem var(--cw-mono); }
 .preview-avatar.platform-telegram { color: #2aabee; background: rgba(42,171,238,0.13); }
 .preview-avatar.platform-whatsapp { color: #25d366; background: rgba(37,211,102,0.13); }
@@ -89,8 +92,8 @@
 .platform-discord { --platform-color: #5865f2; }
 .message-preview { color: var(--cw-muted); font-size: 0.57rem; }
 .preview-meta { align-self: stretch; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; color: var(--cw-muted); font: 500 0.54rem var(--cw-mono); }
-.preview-meta b { min-width: 1rem; height: 1rem; display: grid; place-items: center; border-radius: 50%; color: #06100d; background: var(--cw-mint); font-size: 0.5rem; }
-.actor-callout { margin: 0.65rem; display: grid; grid-template-columns: auto 1fr; gap: 0.55rem; padding: 0.7rem; border: 1px dashed rgba(112,255,208,0.16); border-radius: 0.72rem; color: var(--cw-mint); }
+.preview-meta b { min-width: 1rem; height: 1rem; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--cw-accent); font-size: 0.5rem; }
+.actor-callout { margin: 0.65rem; display: grid; grid-template-columns: auto 1fr; gap: 0.55rem; padding: 0.7rem; border: 1px dashed rgba(94,234,212,0.16); border-radius: 0.72rem; color: var(--cw-link); }
 .actor-callout i { margin-top: 0.12rem; font-size: 0.8rem; }
 .actor-callout div { display: grid; gap: 0.18rem; }
 .actor-callout strong { font-size: 0.63rem; }
@@ -113,7 +116,7 @@
   --cw-line: var(--tg-line);
   --cw-line-strong: rgba(187, 207, 225, 0.2);
   --cw-blue: var(--tg-accent);
-  --cw-mint: var(--tg-selected);
+  --cw-link: var(--tg-selected);
   --cw-green: #68d391;
   color: var(--tg-text);
   background: radial-gradient(circle at 50% 35%, rgba(100,181,239,0.055), transparent 22rem), var(--tg-canvas);
@@ -149,7 +152,7 @@
   --cw-line: var(--tg-line);
   --cw-line-strong: rgba(233, 237, 239, 0.2);
   --cw-blue: var(--tg-accent);
-  --cw-mint: var(--tg-selected);
+  --cw-link: var(--tg-selected);
   --cw-green: #25d366;
   color: var(--tg-text);
   background-color: var(--tg-canvas);
@@ -189,7 +192,7 @@
 .message-row.incoming { align-items: flex-start; }
 .message-row.compact { max-width: 78%; }
 .message-author { color: var(--cw-muted); font-size: 0.58rem; }
-.message-author b { margin-left: 0.25rem; padding: 0.12rem 0.3rem; border-radius: 0.3rem; color: var(--cw-mint); background: rgba(112,255,208,0.08); font: 700 0.46rem var(--cw-mono); }
+.message-author b { margin-left: 0.25rem; padding: 0.12rem 0.3rem; border-radius: 0.3rem; color: var(--cw-link); background: rgba(94,234,212,0.08); font: 700 0.46rem var(--cw-mono); }
 .message-stack { min-width: 0; max-width: min(36rem, 82%); display: grid; gap: 0.32rem; }
 .message-bubble { position: relative; padding: 0.85rem 0.9rem 0.55rem; border: 1px solid var(--cw-line); box-shadow: 0 12px 32px rgba(0,0,0,0.12); }
 .message-bubble p { margin: 0; font-size: 0.78rem; line-height: 1.55; }
@@ -205,15 +208,15 @@
 .whatsapp-window .bot-message { background: var(--tg-panel-raised); }
 .whatsapp-window .simple-actions button { border-color: color-mix(in srgb, var(--tg-accent) 28%, transparent); color: var(--tg-accent); background: color-mix(in srgb, var(--tg-accent) 8%, var(--tg-panel)); }
 .bot-message { border-radius: 0.25rem 1rem 1rem 1rem; background: linear-gradient(145deg, var(--tg-panel-raised), var(--tg-panel)); transition: border 180ms ease, box-shadow 180ms ease; }
-.bot-message.edited { border-color: rgba(112,255,208,0.28); box-shadow: 0 0 0 3px rgba(112,255,208,0.035), 0 16px 38px rgba(0,0,0,0.16); }
+.bot-message.edited { border-color: rgba(94,234,212,0.28); box-shadow: 0 0 0 3px rgba(94,234,212,0.035), 0 16px 38px rgba(0,0,0,0.16); }
 .peer-message { border-radius: 0.25rem 1rem 1rem 1rem; background: var(--tg-panel-raised); }
-.bot-avatar { width: 2rem; height: 2rem; flex: 0 0 auto; display: grid; place-items: center; margin-top: 1.05rem; border-radius: 0.62rem; color: var(--cw-mint); background: rgba(112,255,208,0.1); font: 700 0.55rem var(--cw-mono); }
+.bot-avatar { width: 2rem; height: 2rem; flex: 0 0 auto; display: grid; place-items: center; margin-top: 1.05rem; border-radius: 0.62rem; color: var(--cw-link); background: rgba(94,234,212,0.1); font: 700 0.55rem var(--cw-mono); }
 .bot-avatar.blue { color: var(--cw-blue); background: rgba(102,182,255,0.1); }
 .bot-avatar.violet { color: var(--cw-violet); background: rgba(168,140,255,0.1); }
 .path-chip { width: max-content; margin: 0.9rem auto; padding: 0.3rem 0.55rem; border: 1px solid var(--cw-line); border-radius: 999px; color: var(--cw-muted); background: color-mix(in srgb, var(--tg-panel) 72%, transparent); font: 600 0.52rem var(--cw-mono); }
 .path-chip i { margin-right: 0.3rem; color: var(--cw-amber); font-size: 0.55rem; }
 .message-version { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 0.55rem; color: var(--cw-muted); font: 600 0.5rem var(--cw-mono); text-transform: uppercase; letter-spacing: 0.06em; }
-.message-version span:last-child { color: var(--cw-mint); }
+.message-version span:last-child { color: var(--cw-link); }
 .telegram-inline-keyboard { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.18rem; }
 .language-action { min-height: 2.15rem; display: flex; align-items: center; justify-content: center; gap: 0.38rem; padding: 0.45rem 0.75rem; border: 1px solid var(--tg-line); border-radius: 0.5rem; color: var(--tg-accent); background: color-mix(in srgb, var(--tg-accent) 8%, var(--tg-panel)); font: 700 0.62rem var(--cw-sans); cursor: pointer; transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease; }
 .language-action:hover { color: #d6ecff; border-color: rgba(102,182,255,0.3); background: rgba(102,182,255,0.14); }
@@ -222,9 +225,9 @@
 .language-action.selected { color: var(--tg-selected); border-color: color-mix(in srgb, var(--tg-selected) 32%, transparent); background: color-mix(in srgb, var(--tg-selected) 10%, var(--tg-panel)); }
 .language-action i { font-size: 0.58rem; }
 .delivered { color: var(--cw-green); }
-.edit-state { color: var(--cw-mint); }
+.edit-state { color: var(--cw-link); }
 .edit-proof { display: flex; align-items: center; gap: 0.38rem; padding-left: 0.35rem; color: var(--cw-muted); font: 500 0.52rem var(--cw-mono); }
-.edit-proof span { width: 0.35rem; height: 0.35rem; border-radius: 50%; background: var(--cw-mint); }
+.edit-proof span { width: 0.35rem; height: 0.35rem; border-radius: 50%; background: var(--cw-link); }
 .simple-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
 .simple-actions button { padding: 0.4rem 0.6rem; border: 1px solid rgba(102,182,255,0.2); border-radius: 0.5rem; color: var(--cw-blue); background: rgba(102,182,255,0.06); font-size: 0.58rem; cursor: pointer; }
 .mode-warning { display: flex; gap: 0.55rem; padding: 0.7rem 0.8rem; border: 1px solid rgba(255,204,120,0.18); border-radius: 0.7rem; color: var(--cw-amber); background: rgba(255,204,120,0.05); font-size: 0.6rem; line-height: 1.45; }
@@ -257,9 +260,9 @@
 .trace-event small { color: var(--cw-muted); font: 500 0.5rem var(--cw-mono); }
 .trace-event strong { font-size: 0.62rem; }
 .trace-event p { margin: 0; color: var(--cw-muted); font-size: 0.54rem; line-height: 1.4; }
-.trace-event.active .trace-marker { border-color: rgba(112,255,208,0.25); color: var(--cw-mint); background: rgba(112,255,208,0.07); }
-.trace-event.active strong { color: var(--cw-mint); }
-.trace-link { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 0.9rem; border-top: 1px solid var(--cw-line); color: var(--cw-mint); text-decoration: none; font-size: 0.62rem; }
+.trace-event.active .trace-marker { border-color: rgba(94,234,212,0.25); color: var(--cw-link); background: rgba(94,234,212,0.07); }
+.trace-event.active strong { color: var(--cw-link); }
+.trace-link { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 0.9rem; border-top: 1px solid var(--cw-line); color: var(--cw-link); text-decoration: none; font-size: 0.62rem; }
 
 .trace-preview-tooltip {
   position: fixed;

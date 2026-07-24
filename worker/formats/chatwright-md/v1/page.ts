@@ -4,18 +4,19 @@
 // chatwright/chatwright's formats/chatwright-md/v1/README.md and decision
 // 0013-chatwright-md-federation.md; see ./README.md for how schema.json
 // alongside this file is kept in sync.
-import { renderHeader, renderFooter, chromeStyles } from '../../../chrome';
+import { renderHeader, renderFooter, chromeStyles, themeInitScript } from '../../../chrome';
 
 export const chatwrightMdV1PageDocument = String.raw`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="light dark">
+    ${themeInitScript}
     <meta name="description" content="CHATWRIGHT.md manifest format v1: the repository manifest that joins a bot into the Chatwright knowledge graph — front matter, versioning by git tag, and the Try in Chatwright badge.">
     <title>CHATWRIGHT.md manifest format v1 — Chatwright</title>
     <link rel="canonical" href="https://chatwright.dev/formats/chatwright-md/v1">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111827'/%3E%3Crect x='14' y='16' width='36' height='24' rx='7' fill='%2350cba0'/%3E%3Cpath d='M22 40 L22 48 L30 40 Z' fill='%2350cba0'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111827'/%3E%3Crect x='14' y='16' width='36' height='24' rx='7' fill='%230f766e'/%3E%3Cpath d='M22 40 L22 48 L30 40 Z' fill='%230f766e'/%3E%3C/svg%3E">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="Chatwright">
     <meta property="og:title" content="CHATWRIGHT.md manifest format v1 — Chatwright">
@@ -25,36 +26,36 @@ export const chatwrightMdV1PageDocument = String.raw`<!doctype html>
     <meta name="twitter:title" content="CHATWRIGHT.md manifest format v1 — Chatwright">
     <meta name="twitter:description" content="The repository manifest that joins a bot into the Chatwright knowledge graph — front matter, versioning by git tag, and the Try in Chatwright badge.">
     <style>
-      :root { color-scheme: light; --ink:#111827; --soft:#566477; --line:#e5eaf0; --canvas:#fcfcfd; --blue:#2c6dcc; --mint:#50cba0; --mint-ink:#0d5e49; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      :root { color-scheme: light; --ink:#111827; --soft:#566477; --faint:#8290a4; --line:#e5eaf0; --canvas:#fcfcfd; --card:#ffffff; --card-soft:#f7f9fb; --blue:#2c6dcc; --code-bg:#eef2f6; --code-ink:#1a2740; --accent:#0f766e; --accent-hover:#115e59; --accent-ink:#0d9488; --accent-tint-bg:#f0fdfa; --accent-tint-border:#99f6e4; --accent-tint-ink:#115e59; --nav-bg:rgba(252,252,253,.9); --nav-border:rgba(229,234,240,.9); --nav-hover-bg:#f2f5f8; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; color:var(--ink); background:var(--canvas); } a { color:inherit; }
       .wrap { width:min(1180px,calc(100% - 3rem)); margin-inline:auto; }
       ${chromeStyles}
       .button { min-height:2.7rem; display:inline-flex; align-items:center; justify-content:center; padding:0 .95rem; border:1px solid transparent; border-radius:.55rem; font:680 .84rem/1 inherit; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease; } .button:hover { transform:translateY(-1px); }
-      .primary { color:#06271d; background:var(--mint); box-shadow:0 8px 20px rgba(80,203,160,.17); } .quiet { border-color:var(--line); background:#fff; }
+      .primary { color:#fff; background:var(--accent); box-shadow:0 8px 20px rgba(15,118,110,.17); } .primary:hover { background:var(--accent-hover); } .quiet { border-color:var(--line); background:var(--card); }
       .doc { display:grid; grid-template-columns:minmax(0,42rem) minmax(11rem,14rem); align-items:start; gap:clamp(2rem,5vw,4.5rem); padding:clamp(2.75rem,6vw,4.5rem) 0 clamp(4rem,8vw,6rem); }
       .eyebrow { margin:0 0 .85rem; color:var(--blue); font:700 .7rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.12em; text-transform:uppercase; }
       h1 { margin:0; font-size:clamp(2.1rem,3.6vw,2.85rem); line-height:1.05; letter-spacing:-.045em; }
       .lede { max-width:42rem; margin:1.1rem 0 0; color:var(--soft); font-size:1.05rem; line-height:1.65; }
-      .self-id { margin:1rem 0 0; padding:.7rem .9rem; border:1px solid var(--line); border-radius:.5rem; background:#fff; color:var(--soft); font-size:.85rem; line-height:1.55; } .self-id code { color:var(--mint-ink); font-weight:650; }
+      .self-id { margin:1rem 0 0; padding:.7rem .9rem; border:1px solid var(--line); border-radius:.5rem; background:var(--card); color:var(--soft); font-size:.85rem; line-height:1.55; } .self-id code { color:var(--accent-ink); font-weight:650; }
       article h2 { margin:2.6rem 0 .6rem; font-size:1.45rem; letter-spacing:-.03em; scroll-margin-top:5.5rem; }
       article h3 { margin:1.9rem 0 .5rem; font-size:1.08rem; letter-spacing:-.02em; scroll-margin-top:5.5rem; }
       article p { margin:.75rem 0; color:var(--soft); font-size:.96rem; line-height:1.7; }
       article ul, article ol { margin:.75rem 0; padding-left:1.25rem; color:var(--soft); font-size:.96rem; line-height:1.7; }
       article li { margin:.3rem 0; }
       article li strong { color:var(--ink); }
-      article a { color:var(--mint-ink); font-weight:600; text-decoration:underline; text-decoration-color:rgba(13,94,73,.3); text-underline-offset:.15em; }
+      article a { color:var(--accent-ink); font-weight:600; text-decoration:underline; text-decoration-color:rgba(13,148,136,.3); text-underline-offset:.15em; }
       article a:hover { text-decoration-color:currentColor; }
-      code { padding:.12rem .34rem; border-radius:.32rem; background:#eef2f6; color:#1a2740; font:500 .85em/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+      code { padding:.12rem .34rem; border-radius:.32rem; background:var(--code-bg); color:var(--code-ink); font:500 .85em/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
       pre { overflow:auto; margin:.85rem 0; padding:1rem 1.1rem; border-radius:.65rem; color:#d5e4ef; background:#101925; font:500 .78rem/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; tab-size:2; }
       pre code { padding:0; border-radius:0; background:none; color:inherit; font:inherit; }
-      figure { margin:0; } figcaption { margin:.4rem 0 0; color:#8290a4; font-size:.75rem; letter-spacing:.01em; }
-      .note { margin:.85rem 0; padding:.75rem .95rem; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:0 .45rem .45rem 0; background:#fff; color:var(--soft); font-size:.9rem; line-height:1.6; } .note strong { color:var(--ink); }
+      figure { margin:0; } figcaption { margin:.4rem 0 0; color:var(--faint); font-size:.75rem; letter-spacing:.01em; }
+      .note { margin:.85rem 0; padding:.75rem .95rem; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:0 .45rem .45rem 0; background:var(--card); color:var(--soft); font-size:.9rem; line-height:1.6; } .note strong { color:var(--ink); }
       .convlist { margin:1rem 0; padding:0; list-style:none; display:grid; gap:.7rem; }
-      .convlist li { padding:.85rem 1rem; border:1px solid var(--line); border-radius:.6rem; background:#fff; }
+      .convlist li { padding:.85rem 1rem; border:1px solid var(--line); border-radius:.6rem; background:var(--card); }
       .convlist strong { display:block; margin-bottom:.2rem; color:var(--ink); font-size:.92rem; }
       .convlist span { color:var(--soft); font-size:.88rem; line-height:1.6; }
       aside.toc { position:sticky; top:5.5rem; align-self:start; }
-      aside.toc p { margin:0 0 .6rem; color:#8290a4; font:700 .68rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.1em; text-transform:uppercase; }
+      aside.toc p { margin:0 0 .6rem; color:var(--faint); font:700 .68rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.1em; text-transform:uppercase; }
       aside.toc ol { margin:0; padding:0; list-style:none; display:grid; gap:.45rem; border-left:1px solid var(--line); }
       aside.toc a { display:block; padding:.15rem 0 .15rem .85rem; color:var(--soft); font-size:.83rem; text-decoration:none; }
       aside.toc a:hover { color:var(--ink); }

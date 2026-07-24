@@ -1,10 +1,13 @@
 // The "Try in Chatwright" README badge, served at https://chatwright.dev/badge.svg
 // (see ./index.ts). Hand-authored, dependency-free SVG — no image libraries,
 // no build step. Colours are the site's own accent pair (see the :root
-// custom properties in ./landing.ts): --ink for the brand segment, --mint
-// with the site's established on-mint text colour (the same #06271d used by
-// .primary buttons) for the call-to-action segment, so a badge pasted into a
-// third-party README reads as unmistakably Chatwright's.
+// custom properties in ./landing.ts): --ink for the brand segment (left,
+// unchanged), --accent (#0f766e) with white text for the call-to-action
+// segment (right) — the founder's brand-accent FINAL decision (2026-07-24,
+// mint/green -> teal): #0f766e bg + white text everywhere the site's own
+// accent is a solid button/badge fill. This SVG has no CSS variables of its
+// own (it's served standalone, pasted into third-party READMEs), so the
+// hex is inlined directly rather than referencing `--accent`.
 //
 // Referenced from the CHATWRIGHT.md manifest format
 // (./formats/chatwright-md/v1/page.ts) and decision
@@ -15,11 +18,11 @@ export const badgeSvgDocument = `<svg xmlns="http://www.w3.org/2000/svg" width="
   <clipPath id="cw-badge-r"><rect width="132" height="20" rx="3"/></clipPath>
   <g clip-path="url(#cw-badge-r)">
     <rect width="80" height="20" fill="#111827"/>
-    <rect x="80" width="52" height="20" fill="#50cba0"/>
+    <rect x="80" width="52" height="20" fill="#0f766e"/>
   </g>
   <g font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11" text-anchor="middle">
     <text x="40" y="14" fill="#ffffff" textLength="64" lengthAdjust="spacingAndGlyphs">Chatwright</text>
-    <text x="106" y="14" fill="#06271d" textLength="34" lengthAdjust="spacingAndGlyphs">Try it</text>
+    <text x="106" y="14" fill="#ffffff" textLength="34" lengthAdjust="spacingAndGlyphs">Try it</text>
   </g>
 </svg>
 `;

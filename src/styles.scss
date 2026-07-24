@@ -20,7 +20,22 @@
     --cw-text: #172033;
     --cw-muted-strong: #5b687b;
     --cw-muted: #8290a4;
-    --cw-mint: #087e68;
+    /* Brand accent — founder's FINAL decision (2026-07-24, mint/green ->
+       teal; backstage/strategy/brand-accent-session.md). Two roles, split
+       exactly like the rest of the site's --color contract:
+       --cw-accent/--cw-accent-hover are the SOLID-fill treatment (buttons,
+       the Compare tab, download buttons) — #0f766e + white text, uniform
+       across both themes so on-fill text contrast never has to flip.
+       --cw-link is the TEXT/current-nav/icon-row-current-dot treatment —
+       ramps by theme (teal-600 light / teal-300 dark) exactly like every
+       other ink-scale token here. `--cw-mint` no longer exists as a name;
+       every former `var(--cw-mint)` call site was reclassified into one of
+       these two on a per-occurrence basis (see the sweep's PR body for the
+       classification table) rather than mechanically renamed, because the
+       two roles need different values. */
+    --cw-accent: #0f766e;
+    --cw-accent-hover: #115e59;
+    --cw-link: #0d9488;
     --cw-blue: #2678bd;
     --cw-violet: #6e57cc;
     --cw-amber: #ad6710;
@@ -45,7 +60,9 @@
     --cw-text: #edf4ff;
     --cw-muted-strong: #a8b5c9;
     --cw-muted: #6f7e94;
-    --cw-mint: #70ffd0;
+    /* --cw-accent/--cw-accent-hover deliberately NOT overridden here — the
+       FINAL decision's solid-fill treatment is uniform across modes. */
+    --cw-link: #5eead4;
     --cw-blue: #66b6ff;
     --cw-violet: #a88cff;
     --cw-amber: #ffcc78;
@@ -67,7 +84,7 @@
 
   body { background: var(--cw-canvas); color: var(--cw-text); }
   a { color: inherit; }
-  ::selection { background: rgba(112, 255, 208, 0.28); color: #fff; }
+  ::selection { background: rgba(94, 234, 212, 0.28); color: #fff; }
 
   .page {
     width: min(1500px, 100%);
@@ -85,7 +102,7 @@
 
   .page-kicker {
     margin: 0 0 0.4rem;
-    color: var(--cw-mint);
+    color: var(--cw-link);
     font: 700 0.67rem/1.2 var(--cw-mono);
     letter-spacing: 0.11em;
     text-transform: uppercase;
@@ -147,7 +164,7 @@
   }
 
   .quiet { color: var(--cw-muted); }
-  .mint { color: var(--cw-mint); }
+  .mint { color: var(--cw-link); }
   .passed { color: var(--cw-green); }
   .failed { color: var(--cw-red); }
   code {
@@ -163,7 +180,7 @@
   .p-button.p-button-sm { font-size: 0.72rem; }
   .p-tag { font: 650 0.64rem/1 var(--cw-mono); }
   .p-progressbar { height: 0.42rem; background: rgba(255, 255, 255, 0.06); }
-  .p-progressbar .p-progressbar-value { background: linear-gradient(90deg, var(--cw-mint), var(--cw-blue)); }
+  .p-progressbar .p-progressbar-value { background: linear-gradient(90deg, var(--cw-accent), var(--cw-blue)); }
 
   @media (max-width: 720px) {
     .page-heading { align-items: flex-start; flex-direction: column; }
