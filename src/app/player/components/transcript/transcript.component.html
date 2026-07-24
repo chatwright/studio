@@ -138,20 +138,6 @@
             </div>
           }
         }
-
-        <!-- Playback message bar: driven by the compose-and-send primitive. -->
-        <div class="message-bar" [class.active]="engine.messageBarTyping()?.chatId === chat.chatId">
-          @if (engine.messageBarTyping()?.chatId === chat.chatId) {
-            @let typing = engine.messageBarTyping()!;
-            <div class="message-bar-field">
-              <span class="typed">{{ typing.text.slice(0, typing.chars) }}</span><span class="caret"></span>
-            </div>
-            <span class="message-bar-send pressing"><i class="pi pi-send"></i></span>
-          } @else {
-            <div class="message-bar-field idle">Message…</div>
-            <span class="message-bar-send"><i class="pi pi-send"></i></span>
-          }
-        </div>
       </div>
     </section>
   }
@@ -162,5 +148,24 @@
       {{ annotationLayout().dangling.length }} annotation(s) reference a moment that is not in this
       run and are shown in the Notes panel.
     </div>
+  }
+</div>
+
+<!--
+  Docked message bar: chrome, not content. One bar per panel — outside the
+  scroll region, flush to the panel's bottom edge — mirroring how a col-head
+  strip reads as attached chrome. It always reflects the active chat
+  (engine.activeChatId), driven by the compose-and-send primitive.
+-->
+<div class="message-bar" [class.active]="barActive()">
+  @if (barActive()) {
+    @let typing = engine.messageBarTyping()!;
+    <div class="message-bar-field">
+      <span class="typed">{{ typing.text.slice(0, typing.chars) }}</span><span class="caret"></span>
+    </div>
+    <span class="message-bar-send pressing"><i class="pi pi-send"></i></span>
+  } @else {
+    <div class="message-bar-field idle">Message…</div>
+    <span class="message-bar-send"><i class="pi pi-send"></i></span>
   }
 </div>

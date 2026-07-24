@@ -50,6 +50,16 @@ export class TranscriptComponent {
     return all.length ? [all[0]] : [];
   });
 
+  /** Whether the docked message bar should render its typing state: the
+   *  compose-and-send primitive is live AND targets the active chat. During
+   *  multi-chat auto-follow, `syncActiveChat()` switches the active chat
+   *  before the typing state is set, so the one docked bar always animates
+   *  for whichever chat is currently in view — never a background chat. */
+  readonly barActive = computed(() => {
+    const typing = this.engine.messageBarTyping();
+    return !!typing && typing.chatId === this.engine.activeChatId();
+  });
+
   /** Message keys that open a new part (chapter), mapped to the chapter title.
    *  Drives the subtle part-chapter boundary treatment in the transcript. */
   readonly chapterStarts = computed(() => {
