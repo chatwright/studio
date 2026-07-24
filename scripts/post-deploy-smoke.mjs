@@ -2,6 +2,12 @@ const baseURL = new URL(process.argv[2] ?? 'https://chatwright.dev/prototype/');
 
 async function fetchOK(pathname) {
   const url = new URL(pathname, baseURL);
+  // Worker pages are edge-cached (Cache-Control: public, max-age=300) and the
+  // smoke runs within a second of `wrangler deploy` — without a unique query
+  // the edge can serve the PREVIOUS deploy's HTML and fail assertions about
+  // markup that is in fact live (run 30090757271). Route handlers match on
+  // pathname only, so the parameter is invisible to the worker.
+  url.searchParams.set('smokebust', String(Date.now()));
   let response;
 
   for (let attempt = 1; attempt <= 6; attempt += 1) {
