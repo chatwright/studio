@@ -69,6 +69,20 @@ describe('loadSettings', () => {
     expect(loadSettings(storage).serverAddress).toBe(DEFAULT_SERVER_ADDRESS);
   });
 
+  it('persists a model chosen from the AI-test panel model dropdown, same as one typed into the free-text field (SettingsStore drives both through this same save/load path)', () => {
+    const storage = fakeStorage();
+    // Local AI: the dropdown (populated from GET {server}/v1/models) and the
+    // free-text fallback both end up calling `SettingsStore.setLocal({model})`,
+    // which persists via this exact snapshot shape — no separate "picked from
+    // a list" field exists, by design.
+    saveSettings(storage, { ...DEFAULT_SETTINGS, providerMode: 'local', local: { model: 'qwen3.6:latest' } });
+    expect(loadSettings(storage).local).toEqual({ model: 'qwen3.6:latest' });
+
+    // BYOK: same story via `setByok({model})` once "Load models" succeeds.
+    saveSettings(storage, { ...DEFAULT_SETTINGS, providerMode: 'byok', byok: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o-mini', apiKey: '' } });
+    expect(loadSettings(storage).byok.model).toBe('gpt-4o-mini');
+  });
+
   it('a getItem/setItem that throws (e.g. storage disabled) degrades to defaults/no-op rather than throwing', () => {
     const throwing: StorageLike = {
       getItem: () => {
