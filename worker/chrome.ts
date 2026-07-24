@@ -134,6 +134,11 @@ export function renderHeader(current: ChromeCurrentPage): string {
 // so every page gets it for free without a per-page script tag — the
 // literal 'cw-theme' key also doubles as a cheap smoke-test marker that
 // the theme wiring shipped on a given page.
+// GA4 (property "Chatwright" 546962698, Sneat account; registry:
+// sneat-ops/data/ga-properties.json). Shipped by renderFooter on every
+// worker page, like themeToggleScript.
+const gaScript = `<script async src="https://www.googletagmanager.com/gtag/js?id=G-LCJ3HXGPBZ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-LCJ3HXGPBZ');</script>`;
+
 const themeToggleScript = `<script>(function(){
   function sync(){
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -179,7 +184,8 @@ export function renderFooter(extraFooterHtml?: string): string {
     `<a href="https://sneat.dev/">Explore sneat.dev →</a>` +
     `</nav>` +
     `</div>${extraMarkup}</footer>` +
-    themeToggleScript
+    themeToggleScript +
+    gaScript
   );
 }
 
