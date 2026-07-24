@@ -33,7 +33,15 @@
     </div>
   }
 
-  @if (!bundle()) {
+  @if (!bundle() && loadingCloudRecording()) {
+    <div class="dropzone surface">
+      <div class="dropzone-inner">
+        <span class="drop-icon"><i class="pi pi-spin pi-spinner"></i></span>
+        <h2>Opening your saved recording…</h2>
+        <p class="quiet">Fetching the bundle from your Sneat space.</p>
+      </div>
+    </div>
+  } @else if (!bundle()) {
     <div class="dropzone surface" [class.drag]="dragOver()">
       <div class="dropzone-inner">
         <span class="drop-icon"><i class="pi pi-cloud-upload"></i></span>
@@ -90,7 +98,14 @@
     @if (error() && !embed()) {
       <div class="drop-error inline"><i class="pi pi-times-circle"></i> {{ error() }}</div>
     }
-    <cw-player [bundle]="bundle()" [warnings]="warnings()" [embed]="embed()" [autoplay]="autoplay()" />
+    <cw-player
+      [bundle]="bundle()"
+      [bundleText]="bundleText()"
+      [sourceFileName]="fileName()"
+      [warnings]="warnings()"
+      [embed]="embed()"
+      [autoplay]="autoplay()"
+    />
   }
 
   @if (dragOver()) {

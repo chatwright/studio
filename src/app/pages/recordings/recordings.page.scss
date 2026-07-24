@@ -1,0 +1,113 @@
+:host { display: block; }
+
+.quota-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  color: var(--cw-muted-strong);
+  background: var(--cw-hover);
+  font-size: 0.72rem;
+  width: fit-content;
+}
+.quota-strip i { color: var(--cw-link); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 3rem 1.5rem;
+
+  h2 { margin: 0.2rem 0 0; font-size: 1.05rem; letter-spacing: -0.01em; }
+  p { margin: 0; max-width: 30rem; font-size: 0.82rem; }
+  p.small { font-size: 0.72rem; }
+  a { color: var(--cw-link); font-weight: 600; }
+}
+
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1rem;
+  background: linear-gradient(140deg, rgba(94, 234, 212, 0.16), rgba(38, 120, 189, 0.1));
+  color: var(--cw-link);
+  font-size: 1.3rem;
+}
+.empty-icon.error {
+  background: rgba(198, 67, 94, 0.1);
+  color: var(--cw-red);
+}
+
+.recording-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recording-row {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--cw-line);
+  border-radius: 0.85rem;
+  background: linear-gradient(145deg, var(--cw-panel-raised), var(--cw-panel));
+  cursor: pointer;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
+
+  &:hover {
+    border-color: var(--cw-link);
+    box-shadow: 0 8px 22px var(--cw-shadow);
+    transform: translateY(-1px);
+  }
+}
+
+.recording-icon {
+  flex: 0 0 auto;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.65rem;
+  background: rgba(94, 234, 212, 0.12);
+  color: var(--cw-link);
+  font-size: 1.05rem;
+}
+
+.recording-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1 1 auto;
+}
+
+.recording-title {
+  font-weight: 650;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recording-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--cw-muted);
+  font-size: 0.7rem;
+}
+
+.recording-chevron {
+  color: var(--cw-muted);
+  font-size: 0.75rem;
+}

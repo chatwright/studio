@@ -54,6 +54,11 @@ export const routes: Routes = [
       import('./pages/player/player.page').then((module) => module.PlayerPage)
   },
   {
+    path: 'recordings',
+    loadComponent: () =>
+      import('./pages/recordings/recordings.page').then((module) => module.RecordingsPage)
+  },
+  {
     path: 'playground',
     loadComponent: () =>
       import('./pages/playground/playground.page').then((module) => module.PlaygroundPage)

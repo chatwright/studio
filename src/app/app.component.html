@@ -97,12 +97,43 @@
     </div>
 
     <div class="sidebar-user">
-      <p-avatar label="AT" shape="circle" />
-      <span><strong>Alex</strong><small>Local owner</small></span>
-      <button type="button" class="icon-button" aria-label="Account options">
-        <i class="pi pi-ellipsis-h"></i>
-      </button>
+      @if (auth.initializing()) {
+        <span class="user-loading"><i class="pi pi-spin pi-spinner"></i></span>
+      } @else if (auth.signedIn()) {
+        <p-avatar
+          [image]="auth.account()?.photoURL || undefined"
+          [label]="auth.account()?.photoURL ? undefined : auth.account()?.initials"
+          shape="circle"
+        />
+        <span>
+          <strong>{{ auth.account()?.displayName }}</strong>
+          <small>{{ auth.account()?.email }}</small>
+        </span>
+        <button
+          type="button"
+          class="icon-button"
+          aria-label="Sign out"
+          [pTooltip]="'Sign out of ' + (auth.account()?.email ?? 'your Sneat account')"
+          tooltipPosition="top"
+          (click)="auth.signOut()"
+        >
+          <i class="pi pi-sign-out"></i>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="sign-in-button"
+          [disabled]="auth.signingIn()"
+          (click)="auth.signIn()"
+        >
+          <i [class]="auth.signingIn() ? 'pi pi-spin pi-spinner' : 'pi pi-google'" aria-hidden="true"></i>
+          <span>{{ auth.signingIn() ? 'Signing in…' : 'Sign in with Sneat' }}</span>
+        </button>
+      }
     </div>
+    @if (auth.error() && !auth.signedIn()) {
+      <div class="sidebar-auth-error"><i class="pi pi-times-circle"></i> {{ auth.error() }}</div>
+    }
   </aside>
 
   <div class="studio-stage">

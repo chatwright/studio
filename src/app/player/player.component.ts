@@ -22,6 +22,7 @@ import { ScenarioPanelComponent } from './components/scenario-panel/scenario-pan
 import { CastPanelComponent } from './components/cast-panel/cast-panel.component';
 import { AnnotationsPanelComponent } from './components/annotations-panel/annotations-panel.component';
 import { ProvenanceInspectorComponent } from './components/provenance-inspector/provenance-inspector.component';
+import { SaveToSpaceComponent } from '../cloud/components/save-to-space/save-to-space.component';
 
 /**
  * The self-contained, embeddable run-bundle player. It provides its own engine
@@ -49,7 +50,8 @@ import { ProvenanceInspectorComponent } from './components/provenance-inspector/
     ScenarioPanelComponent,
     CastPanelComponent,
     AnnotationsPanelComponent,
-    ProvenanceInspectorComponent
+    ProvenanceInspectorComponent,
+    SaveToSpaceComponent
   ],
   providers: [PlayerEngine, PlayerUiState],
   templateUrl: './player.component.html',
@@ -58,12 +60,29 @@ import { ProvenanceInspectorComponent } from './components/provenance-inspector/
 })
 export class PlayerComponent {
   readonly bundle = input<Bundle | null>(null);
+  /**
+   * The loaded bundle's exact source text — see
+   * `SaveToSpaceComponent`/`RecordingsService.saveRecording`'s doc comments
+   * on why "Save to my space" needs this rather than re-serialising
+   * `bundle()`. For a locally dropped/picked/sample file this is the exact
+   * on-disk bytes. For a cloud-loaded recording (`?cloud=` handoff, see
+   * `player.page.ts`'s `loadFromCloud`) it is NOT null and NOT those exact
+   * bytes either — it's `JSON.stringify(result.data.bundle)`, a re-serialised
+   * copy of the parsed response, so re-saving a cloud-loaded recording
+   * round-trips through parse+re-serialise rather than passing the server's
+   * original bytes straight through (known limitation, not yet fixed).
+   */
+  readonly bundleText = input<string | null>(null);
+  /** Suggested file name for the "download to disk instead" fallback in the sell-at-the-limit panel. */
+  readonly sourceFileName = input<string | null>(null);
   readonly warnings = input<string[]>([]);
   readonly embed = input<boolean>(false);
   readonly autoplay = input<boolean>(false);
 
   readonly engine = inject(PlayerEngine);
   readonly ui = inject(PlayerUiState);
+
+  readonly downloadFileName = computed(() => this.sourceFileName() ?? `${this.engine.run()?.id || 'recording'}.chatwright.json`);
 
   readonly metadata = computed(() => this.engine.bundle()?.metadata ?? null);
 
