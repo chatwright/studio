@@ -21,6 +21,7 @@ import { IframeHost, Session, WhatsAppCodec, type JournalEntry, type TelegramUse
 import { DemoStore } from '../../../demo.store';
 import { ChatComposerComponent } from '../../../components/chat-composer/chat-composer.component';
 import { JournalActionLike, PlaygroundBubble, reduceJournalEntries } from '../bubble-reducer';
+import { CommandSegment, tokenizeCommandText } from '../command-tokenizer';
 
 export type PlaygroundPlatform = 'telegram' | 'whatsapp';
 export type ConnectionStatus = 'handshaking' | 'connected' | 'error';
@@ -114,10 +115,13 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
   private readonly botFrame = viewChild<ElementRef<HTMLIFrameElement>>('botFrame');
   private readonly chatScroll = viewChild<ElementRef<HTMLElement>>('chatScroll');
+  /** Only resolves once `showComposer()` mounts this pane's own composer — Compare mode's panes (`showComposer=false`) never populate this, they don't own a composer to focus. */
+  private readonly composer = viewChild<ChatComposerComponent>('composer');
 
   readonly status = signal<ConnectionStatus>('handshaking');
   readonly errorReason = signal<string | null>(null);
-  readonly showBotInternals = signal(false);
+  /** Founder tweak: open by default on large screens (matchMedia at init only — the toggle button owns it from then on). */
+  readonly showBotInternals = signal(initialShowBotInternals());
   readonly noteMessage = signal<string | null>(null);
 
   readonly entries = signal<JournalEntry[]>([]);
@@ -149,6 +153,23 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
         return;
       }
       requestAnimationFrame(() => region.scrollTo({ top: region.scrollHeight, behavior: 'smooth' }));
+    });
+
+    // Founder tweak: once the conversation starts (Start button or typing a
+    // first message straight into the composer), move focus into the
+    // composer's text input. `hasContent()` flips false -> true exactly
+    // once per pane's lifetime, at which point the template swaps the
+    // Start-button composer slot for the real `cw-chat-composer` — this
+    // effect also reads `composer()` (itself a signal), so if that swap
+    // hasn't landed in the DOM yet on the tick `hasContent()` flips, the
+    // effect simply reruns the moment `composer()` resolves, no manual
+    // rAF/microtask polling needed. A no-op for Compare mode's panes
+    // (`showComposer=false`): `composer()` never resolves there — the
+    // parent `PlaygroundPage` owns that focus move for its shared composer.
+    effect(() => {
+      if (this.hasContent()) {
+        this.composer()?.focus();
+      }
     });
   }
 
@@ -193,6 +214,24 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
   isPressed(messageId: number, actionId: string): boolean {
     return this.timeline().pressedActionIds.get(messageId)?.has(actionId) ?? false;
+  }
+
+  /**
+   * Founder tweak: `/command` tokens inside a bubble's text render as
+   * clickable links, Telegram panes only — the template gates this on
+   * `platform() === 'telegram'`, never called for a WhatsApp pane, matching
+   * how real WhatsApp renders `/start` as inert plain text. Pure fold, no
+   * HTML string ever built — the template maps this array straight to
+   * text/`<button>` nodes itself (split-and-map), so there is nothing here
+   * that could be handed to `[innerHTML]`.
+   */
+  commandSegments(text: string): readonly CommandSegment[] {
+    return tokenizeCommandText(text);
+  }
+
+  /** A clicked `/command` token sends that literal text as a new user message — same path as typing it into the composer. */
+  onCommandClick(command: string): void {
+    this.submitText(command);
   }
 
   /** `session.toBundle()` → Blob → download; returns the file name for the caller's own note. */
@@ -290,4 +329,12 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 function bundleFileName(platform: PlaygroundPlatform): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   return `session-${platform}-${stamp}.chatwright.json`;
+}
+
+/** `matchMedia` initial value for `showBotInternals` — same "declare, don't assume" guard as `DemoStore`'s `initialAppTheme`. */
+function initialShowBotInternals(): boolean {
+  if (typeof matchMedia !== 'function') {
+    return false;
+  }
+  return matchMedia('(min-width: 1280px)').matches;
 }

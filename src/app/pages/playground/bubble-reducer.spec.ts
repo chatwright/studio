@@ -58,7 +58,13 @@ describe('reduceJournalEntries', () => {
     expect(timeline.items[0]).toMatchObject({ messageId: 2, text: 'Howdy stranger', version: 1, edited: true });
   });
 
-  it('an editMessageText entry with no reply_markup keeps the previous actions, like real Telegram', () => {
+  it('an editMessageText entry with no reply_markup drops the previous actions, like real Telegram', () => {
+    // Real Telegram clears a message's inline keyboard on editMessageText
+    // unless the call explicitly re-sends reply_markup — it does not carry
+    // the previous keyboard forward. runtime-ts@52c00cd fixed
+    // TelegramCodec to journal that fidelity (actions: undefined on a
+    // markup-less edit), so the fold must take entry.actions as-is rather
+    // than falling back to the prior bubble's actions.
     const actions = [[{ label: 'English', id: 'lang:en', url: '' }]];
     const timeline = reduceJournalEntries([
       entry({ direction: 'bot', messageId: 2, version: 0, text: 'Choose your language', actions }),
@@ -67,7 +73,21 @@ describe('reduceJournalEntries', () => {
     const bubble = timeline.items[0];
     expect(bubble.kind).toBe('bubble');
     if (bubble.kind === 'bubble') {
-      expect(bubble.actions).toEqual(actions);
+      expect(bubble.actions).toBeUndefined();
+    }
+  });
+
+  it('an editMessageText entry that re-sends reply_markup uses it verbatim, not merged with the previous keyboard', () => {
+    const oldActions = [[{ label: 'English', id: 'lang:en', url: '' }]];
+    const newActions = [[{ label: 'Confirm', id: 'confirm:1', url: '' }]];
+    const timeline = reduceJournalEntries([
+      entry({ direction: 'bot', messageId: 2, version: 0, text: 'Choose your language', actions: oldActions }),
+      entry({ direction: 'bot', messageId: 2, version: 1, text: 'Confirm?', actions: newActions })
+    ]);
+    const bubble = timeline.items[0];
+    expect(bubble.kind).toBe('bubble');
+    if (bubble.kind === 'bubble') {
+      expect(bubble.actions).toEqual(newActions);
     }
   });
 
@@ -143,6 +163,10 @@ describe('reduceJournalEntries', () => {
     expect(timeline.items).toHaveLength(4); // /start, greeting (edited in place), thanks, reply — the click adds no bubble
     expect(timeline.items.map((item) => (item.kind === 'bubble' ? item.messageId : -1))).toEqual([1, 2, 5, 6]);
     expect(timeline.items[1]).toMatchObject({ messageId: 2, text: 'Howdy stranger', version: 1, edited: true });
+    // The edit's editMessageText call carried no reply_markup, so real
+    // Telegram (and runtime-ts@52c00cd) clears the language keyboard —
+    // no ghost/dimmed buttons on the edited bubble.
+    expect((timeline.items[1] as { actions?: unknown }).actions).toBeUndefined();
     expect(timeline.pressedActionIds.get(2)?.has('lang:en')).toBe(true);
   });
 });

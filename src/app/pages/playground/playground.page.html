@@ -52,7 +52,15 @@
 
         <div class="compare-composer-surface" [class.pane-light]="store.telegramTheme() === 'light'">
           @if (compareBothConnected()) {
-            <cw-chat-composer actor="Visitor" platform="compare" (messageSent)="onCompareSend($event)" />
+            @if (compareHasContent()) {
+              <cw-chat-composer #compareComposer actor="Visitor" platform="compare" (messageSent)="onCompareSend($event)" />
+            } @else {
+              <!-- Founder tweak: Compare mode's Start button — was missing entirely; starts BOTH panes via the shared fan-out. -->
+              <div class="composer-slot start-slot">
+                <button type="button" class="start-button" (click)="startCompareConversation()">▶ Start the conversation</button>
+                <p class="quiet small">Sends <code>/start</code> to both panes</p>
+              </div>
+            }
           } @else {
             <div class="composer-placeholder">{{ compareStatusNote() }}</div>
           }

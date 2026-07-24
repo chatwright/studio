@@ -120,6 +120,51 @@
   text-align: center;
 }
 
+/*
+ * Founder tweak: Compare mode's own Start button — was missing entirely
+ * before this tweak set. Same "replaces the composer, centered in its
+ * slot" treatment as each single-platform pane's own Start button
+ * (chat-pane.component.scss's `.start-slot`/`.start-button`), reproduced
+ * here rather than shared because Angular's emulated view encapsulation
+ * scopes that component's styles to its own template — this button lives
+ * in PlaygroundPage's template instead. Deliberately the same neutral
+ * violet brand `cw-chat-composer` itself uses for `platform="compare"`
+ * (`--brand-color: #a88cff`, see chat-composer.component.scss) rather than
+ * either bot's own color, matching this composer's "belongs to neither"
+ * framing above.
+ */
+.composer-slot.start-slot {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+
+  .quiet.small {
+    margin: 0;
+    color: var(--tg-muted);
+    font-size: 0.7rem;
+  }
+}
+
+.compare-composer-surface .start-button {
+  padding: 0.6rem 1.1rem;
+  border: 1px solid rgba(168, 140, 255, 0.35);
+  border-radius: 0.7rem;
+  color: #fff;
+  background: linear-gradient(135deg, #a88cff, #7c5cff);
+  font-weight: 650;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  }
+}
+
 @media (max-width: 900px) {
   .playground-frame.single {
     height: auto;

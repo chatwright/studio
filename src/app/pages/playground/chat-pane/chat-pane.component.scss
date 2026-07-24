@@ -205,6 +205,22 @@
   --cw-shadow: rgba(0, 0, 0, 0.28);
   color: var(--tg-text);
   background: var(--tg-canvas);
+
+  /*
+   * Founder tweak: distinct bubble background per author role. Bot stays
+   * the neutral panel tone (unchanged from before this tweak); the
+   * visitor's own bubbles get a solid tint of this pane's accent hue, at a
+   * strength (18%) chosen to stay comfortably within the panel-raised
+   * lightness range — `--cw-text` (already the correct light-on-dark or
+   * dark-on-light choice for this theme/platform combination) keeps
+   * reading at accessible contrast against either tint, dark or light
+   * variant. `--cw-bubble-other-bg` is infrastructure only, reserved for a
+   * future third participant role (e.g. another human in a group chat) —
+   * nothing renders with it yet.
+   */
+  --cw-bubble-bot-bg: var(--tg-panel-raised);
+  --cw-bubble-user-bg: color-mix(in srgb, var(--tg-accent) 18%, var(--tg-panel-raised));
+  --cw-bubble-other-bg: color-mix(in srgb, var(--tg-selected) 18%, var(--tg-panel-raised));
 }
 
 .telegram .pane-surface {
@@ -391,14 +407,14 @@
   border: 1px solid var(--cw-line);
   border-radius: 1rem;
   padding: 0.65rem 0.8rem;
-  background: var(--cw-panel-soft);
+  background: var(--cw-bubble-bot-bg);
   color: var(--cw-text);
 
   .from-bot & {
     border-bottom-left-radius: 0.35rem;
   }
   .from-user & {
-    background: linear-gradient(140deg, color-mix(in srgb, var(--cw-blue) 16%, var(--cw-panel-soft)), color-mix(in srgb, var(--cw-mint) 12%, var(--cw-panel-soft)));
+    background: var(--cw-bubble-user-bg);
     border-bottom-right-radius: 0.35rem;
   }
 }
@@ -466,6 +482,52 @@
   color: var(--cw-muted);
   font-size: 0.78rem;
   text-align: center;
+}
+
+/*
+ * Founder tweak: the composer slot, pre-start — the Start button renders
+ * HERE, centered, replacing the text input entirely (not layered above/
+ * beside it) until the first message lands. Same footprint as the
+ * composer it stands in for, so there's no layout jump when it's swapped
+ * out for the real `cw-chat-composer`.
+ */
+.composer-slot.start-slot {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--cw-line);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+
+  .quiet.small {
+    margin: 0;
+    color: var(--cw-muted);
+    font-size: 0.7rem;
+  }
+}
+
+/* Founder tweak: /command tokens render as inline links (Telegram panes only — see chat-pane.component.html). */
+.command-link {
+  display: inline;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  color: var(--cw-blue);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--cw-mint);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    text-decoration: none;
+  }
 }
 
 /* --- bot internals rail (Studio chrome — NOT inverted) --- */

@@ -77,8 +77,7 @@
               @case ('connected') {
                 <p>Connected — greetbot is listening.</p>
                 @if (showComposer()) {
-                  <button type="button" class="start-button" (click)="startConversation()">▶ Start the conversation</button>
-                  <p class="quiet small">Sends <code>/start</code> — or just type below.</p>
+                  <p class="quiet small">Start the conversation below.</p>
                 } @else {
                   <p class="quiet small">Waiting on the shared composer below.</p>
                 }
@@ -104,7 +103,26 @@
                 </div>
 
                 <div class="bubble">
-                  <span class="bubble-text">{{ item.text }}</span>
+                  <span class="bubble-text">
+                    @if (platform() === 'telegram') {
+                      <!-- Founder tweak: clickable /commands, Telegram panes only — real WhatsApp renders /start as plain text. Split-and-map, never [innerHTML]. -->
+                      @for (segment of commandSegments(item.text); track $index) {
+                        @if (segment.kind === 'command') {
+                          <button
+                            type="button"
+                            class="command-link"
+                            [disabled]="status() !== 'connected'"
+                            [attr.aria-label]="'Send ' + segment.value"
+                            (click)="onCommandClick(segment.value)"
+                          >{{ segment.value }}</button>
+                        } @else {
+                          <ng-container>{{ segment.value }}</ng-container>
+                        }
+                      }
+                    } @else {
+                      {{ item.text }}
+                    }
+                  </span>
 
                   @if (item.actions && item.actions.length) {
                     <span class="actions">
@@ -148,7 +166,15 @@
 
       @if (showComposer()) {
         @if (status() === 'connected') {
-          <cw-chat-composer actor="Visitor" [platform]="platform()" (messageSent)="submitText($event)" />
+          @if (hasContent()) {
+            <cw-chat-composer #composer actor="Visitor" [platform]="platform()" (messageSent)="submitText($event)" />
+          } @else {
+            <!-- Founder tweak: the Start button lives IN the composer slot, replacing the text input, until the conversation starts. -->
+            <div class="composer-slot start-slot">
+              <button type="button" class="start-button" (click)="startConversation()">▶ Start the conversation</button>
+              <p class="quiet small">Sends <code>/start</code></p>
+            </div>
+          }
         } @else {
           <div class="composer-placeholder">
             {{ status() === 'error' ? 'Composer unavailable — the bot never connected.' : 'Composer opens once greetbot connects…' }}

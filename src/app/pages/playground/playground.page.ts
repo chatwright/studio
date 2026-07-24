@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DemoStore } from '../../demo.store';
 import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
 import { ChatPaneComponent } from './chat-pane/chat-pane.component';
+import { PlaygroundTab, resolveInitialTab } from './default-tab';
 
-export type PlaygroundTab = 'telegram' | 'whatsapp' | 'compare';
+export type { PlaygroundTab };
 
 /**
  * `/studio/playground` — a live, in-browser conversation with a real bot
@@ -52,8 +54,22 @@ export type PlaygroundTab = 'telegram' | 'whatsapp' | 'compare';
 })
 export class PlaygroundPage {
   readonly store = inject(DemoStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  readonly activeTab = signal<PlaygroundTab>('telegram');
+  // Founder tweak: Compare is the default on wide viewports (room for two
+  // panes side by side), Telegram on narrow ones — an explicit `?tab=`
+  // query param always overrides both, and `setTab` writes it back on every
+  // switch (`replaceUrl: true`, Angular's own `history.replaceState` wrapper
+  // — see run.page.ts's `selectTrace`/`selectDetailTab` for the same idiom
+  // already established elsewhere in this app) so a shared/bookmarked link
+  // reproduces exactly the tab a visitor was looking at. The viewport check
+  // and query-param read happen here (Angular's own APIs); the actual
+  // decision is `resolveInitialTab`, a pure function unit-tested on its own
+  // in default-tab.spec.ts.
+  readonly activeTab = signal<PlaygroundTab>(
+    resolveInitialTab(this.route.snapshot.queryParamMap.get('tab'), isWideViewport())
+  );
 
   // Single-platform tabs mount one self-contained pane (own composer,
   // showComposer defaults true) — this page needs no handle on it at all.
@@ -65,9 +81,16 @@ export class PlaygroundPage {
   // a time, so there is never an ambiguity between them.
   private readonly comparePaneTelegram = viewChild<ChatPaneComponent>('comparePaneTelegram');
   private readonly comparePaneWhatsapp = viewChild<ChatPaneComponent>('comparePaneWhatsapp');
+  /** Only resolves once both panes are connected AND the conversation has started — see `compare-composer-surface` in the template. */
+  private readonly compareComposer = viewChild<ChatComposerComponent>('compareComposer');
 
   readonly compareBothConnected = computed(
     () => this.comparePaneTelegram()?.status() === 'connected' && this.comparePaneWhatsapp()?.status() === 'connected'
+  );
+
+  /** Founder tweak: gates the shared Start button vs. the shared composer in Compare mode's one composer slot — either pane having content means the fan-out already started this conversation. */
+  readonly compareHasContent = computed(
+    () => (this.comparePaneTelegram()?.hasContent() ?? false) || (this.comparePaneWhatsapp()?.hasContent() ?? false)
   );
 
   readonly compareStatusNote = computed(() => {
@@ -85,8 +108,28 @@ export class PlaygroundPage {
     return 'Composer opens once both bots connect…';
   });
 
+  constructor() {
+    // Founder tweak: same focus-after-start move as each ChatPaneComponent
+    // makes for its own composer (see that component's constructor) —
+    // Compare mode's shared composer is owned here instead, so it needs its
+    // own copy of the same effect. Reruns automatically once
+    // `compareComposer()` resolves if it wasn't there yet on the tick
+    // `compareHasContent()` flipped true, same reasoning as the per-pane one.
+    effect(() => {
+      if (this.compareHasContent()) {
+        this.compareComposer()?.focus();
+      }
+    });
+  }
+
   setTab(tab: PlaygroundTab): void {
     this.activeTab.set(tab);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   /** The shared composer's one send fans out to both panes' independent sessions — see this class's doc comment. */
@@ -94,4 +137,17 @@ export class PlaygroundPage {
     this.comparePaneTelegram()?.submitText(text);
     this.comparePaneWhatsapp()?.submitText(text);
   }
+
+  /** Founder tweak: Compare mode's own Start affordance — sends `/start` to both panes via the same fan-out `onCompareSend` uses for a typed message. */
+  startCompareConversation(): void {
+    this.onCompareSend('/start');
+  }
+}
+
+/** `matchMedia` viewport check for the default-tab rule — see `resolveInitialTab`'s doc comment. */
+function isWideViewport(): boolean {
+  if (typeof matchMedia !== 'function') {
+    return false;
+  }
+  return matchMedia('(min-width: 1024px)').matches;
 }
