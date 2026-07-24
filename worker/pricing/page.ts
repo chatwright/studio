@@ -1,11 +1,16 @@
 // Human-readable pricing page — served at exactly https://chatwright.dev/pricing
-// (and its trailing-slash variant); see ../index.ts. This is deliberately
-// thin: Chatwright has no pricing or checkout of its own — it is bundled
-// into the sneat.work subscription, so every card's call to action leaves
-// this page. Content comes from ./data.ts (see that file's header comment
-// for the two-source provenance disclaimer). Follows the same inline-HTML
-// doc-page pattern as worker/formats/*/v1/page.ts and worker/recipes/page.ts:
-// shared nav/footer styling, a single exported String.raw document.
+// (and its trailing-slash variant); see ../index.ts. What's sold is still the
+// sneat.work subscription bundle (the pricing/quota numbers come from
+// ./data.ts — see that file's header comment for the two-source provenance
+// disclaimer), but buying happens right here: paid tiers render as `buy`
+// buttons that open Stripe's embedded checkout on this page, backed by the
+// central checkout service (./checkout-config.ts). While that service is
+// not configured yet, buy clicks show an on-site fallback panel instead —
+// this page never bounces buyers to another pricing page. After payment
+// Stripe returns the visitor to /pricing/return (./return-page.ts). Follows
+// the same inline-HTML doc-page pattern as worker/formats/*/v1/page.ts and
+// worker/recipes/page.ts: shared nav/footer styling, a single exported
+// String.raw document.
 import {
   pricingTiers,
   lifetimeOffer,
@@ -14,8 +19,10 @@ import {
   freeForeverItems,
   quotaRows,
   freeLocalPathSentence,
-  type PricingTier
+  type PricingTier,
+  type PricingTierCta
 } from './data';
+import { checkoutBase } from './checkout-config';
 import { renderHeader, renderFooter, chromeStyles, themeInitScript } from '../chrome';
 
 const unitLabel: Record<PricingTier['unit'], string> = {
@@ -23,13 +30,23 @@ const unitLabel: Record<PricingTier['unit'], string> = {
   seat: 'per seat'
 };
 
+// Link CTAs stay anchors; buy CTAs are buttons the inline checkout script
+// below wires up by their data-buy-plan attribute (the plan id it carries is
+// exactly what POST {checkoutBase}/session accepts).
+function renderTierCta(cta: PricingTierCta): string {
+  if (cta.kind === 'buy') {
+    return `<button type="button" class="button primary tier-cta" data-buy-plan="${cta.plan}">${cta.label}</button>`;
+  }
+  return `<a class="button primary tier-cta" href="${cta.href}">${cta.label}</a>`;
+}
+
 function renderTierCard(tier: PricingTier): string {
   const featuresMarkup = tier.features.map((feature) => `<li>${feature}</li>`).join('');
   return `<article class="tier-card" id="tier-${tier.id}">
           <div class="tier-head"><h3>${tier.name}</h3><span class="unit-badge">${unitLabel[tier.unit]}</span></div>
           <p class="tier-price">${tier.price}<span class="tier-price-note">${tier.priceNote}</span></p>
           <ul class="tier-features">${featuresMarkup}</ul>
-          <a class="button primary tier-cta" href="${tier.cta.href}">${tier.cta.label}</a>
+          ${renderTierCta(tier.cta)}
         </article>`;
 }
 
@@ -40,6 +57,142 @@ function renderFreeForeverItem(item: string): string {
 function renderQuotaRow(row: (typeof quotaRows)[number]): string {
   return `<tr><th scope="row">${row.feature}</th><td>${row.counts}</td><td>${row.alwaysFree}</td></tr>`;
 }
+
+// The embedded-checkout wiring — plain pre-build-step JS in the same style
+// as the theme scripts in ../chrome.ts (IIFE, var, no template literals),
+// inlined into the document with `checkoutBase` baked in as a const. Flow:
+// buy click → GET {base}/config (ANY non-200 or network error means
+// not-configured → show the on-site fallback panel; never a bounce to
+// another pricing page) → POST {base}/session → load js.stripe.com/v3 once →
+// Stripe(pk).initEmbeddedCheckout({clientSecret}).mount('#checkout-mount'),
+// hiding the tier grid + lifetime card. The back button destroys the
+// checkout and restores the grid. Seat quantity for Company is adjusted
+// inside Stripe's own embedded UI — no seat picker here. After payment
+// Stripe sends the visitor to /pricing/return (see ./return-page.ts).
+const checkoutScript = `<script>(function(){
+  var CHECKOUT_BASE = '${checkoutBase}';
+  var PLAN_LABELS = { pro: 'Pro', team: 'Team', company: 'Company' };
+  var panel = document.getElementById('checkout-panel');
+  var mount = document.getElementById('checkout-mount');
+  var fallback = document.getElementById('checkout-fallback');
+  var fallbackMail = document.getElementById('checkout-fallback-mail');
+  var backButton = document.getElementById('checkout-back');
+  var title = document.getElementById('checkout-title');
+  var grid = document.querySelector('.tier-grid');
+  var lifetime = document.querySelector('.lifetime-card');
+  var buyButtons = document.querySelectorAll('[data-buy-plan]');
+  var checkout = null;
+  var stripeJsPromise = null;
+  var busy = false;
+
+  function loadStripeJs() {
+    if (window.Stripe) { return Promise.resolve(); }
+    if (!stripeJsPromise) {
+      stripeJsPromise = new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
+        script.src = 'https://js.stripe.com/v3/';
+        script.onload = resolve;
+        script.onerror = function () {
+          stripeJsPromise = null;
+          reject(new Error('stripe.js failed to load'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+    return stripeJsPromise;
+  }
+
+  function setBusy(value) {
+    busy = value;
+    for (var i = 0; i < buyButtons.length; i++) {
+      buyButtons[i].disabled = value;
+      buyButtons[i].setAttribute('aria-busy', value ? 'true' : 'false');
+    }
+  }
+
+  function showPanel(planLabel) {
+    if (title) { title.textContent = 'Checkout — ' + planLabel; }
+    grid.hidden = true;
+    lifetime.hidden = true;
+    panel.hidden = false;
+    if (panel.scrollIntoView) { panel.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  function showFallback(planLabel) {
+    if (fallbackMail) {
+      fallbackMail.setAttribute('href', 'mailto:hello@sneat.co?subject=' + encodeURIComponent('Chatwright ' + planLabel + ' plan'));
+    }
+    mount.hidden = true;
+    fallback.hidden = false;
+    showPanel(planLabel);
+  }
+
+  function showCheckout(planLabel) {
+    fallback.hidden = true;
+    mount.hidden = false;
+    showPanel(planLabel);
+  }
+
+  function closeCheckout() {
+    if (checkout) {
+      try { checkout.destroy(); } catch (e) {}
+      checkout = null;
+    }
+    panel.hidden = true;
+    fallback.hidden = true;
+    mount.hidden = true;
+    grid.hidden = false;
+    lifetime.hidden = false;
+  }
+
+  function startCheckout(plan) {
+    if (busy || checkout) { return; }
+    var planLabel = PLAN_LABELS[plan] || plan;
+    var publishableKey = null;
+    setBusy(true);
+    fetch(CHECKOUT_BASE + '/config?site=chatwright')
+      .then(function (response) {
+        if (!response.ok) { throw new Error('checkout not configured'); }
+        return response.json();
+      })
+      .then(function (config) {
+        publishableKey = config.publishableKey;
+        if (!publishableKey) { throw new Error('checkout not configured'); }
+        return fetch(CHECKOUT_BASE + '/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ site: 'chatwright', plan: plan })
+        });
+      })
+      .then(function (response) {
+        if (!response.ok) { throw new Error('session creation failed'); }
+        return response.json();
+      })
+      .then(function (session) {
+        return loadStripeJs().then(function () {
+          return window.Stripe(publishableKey).initEmbeddedCheckout({ clientSecret: session.clientSecret });
+        });
+      })
+      .then(function (created) {
+        checkout = created;
+        showCheckout(planLabel);
+        checkout.mount('#checkout-mount');
+      })
+      .catch(function () {
+        showFallback(planLabel);
+      })
+      .then(function () {
+        setBusy(false);
+      });
+  }
+
+  for (var i = 0; i < buyButtons.length; i++) {
+    buyButtons[i].addEventListener('click', function (event) {
+      startCheckout(event.currentTarget.getAttribute('data-buy-plan'));
+    });
+  }
+  if (backButton) { backButton.addEventListener('click', closeCheckout); }
+})();</script>`;
 
 const tierCardsMarkup = pricingTiers.map(renderTierCard).join('\n          ');
 const freeForeverMarkup = freeForeverItems.map(renderFreeForeverItem).join('');
@@ -71,7 +224,10 @@ export const pricingPageDocument = String.raw`<!doctype html>
       .wrap { width:min(1180px,calc(100% - 3rem)); margin-inline:auto; }
       ${chromeStyles}
       .button { min-height:2.7rem; display:inline-flex; align-items:center; justify-content:center; padding:0 .95rem; border:1px solid transparent; border-radius:.55rem; font:680 .84rem/1 inherit; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease; } .button:hover { transform:translateY(-1px); }
-      .primary { color:#fff; background:var(--accent); box-shadow:0 8px 20px rgba(15,118,110,.17); } .primary:hover { background:var(--accent-hover); } .quiet { border-color:var(--line); background:var(--card); }
+      .primary { color:#fff; background:var(--accent); box-shadow:0 8px 20px rgba(15,118,110,.17); } .primary:hover { background:var(--accent-hover); } .quiet { border-color:var(--line); background:var(--card); color:var(--ink); }
+      button.button { appearance:none; -webkit-appearance:none; cursor:pointer; }
+      .button[disabled] { opacity:.6; cursor:progress; } .button[disabled]:hover { transform:none; }
+      [hidden] { display:none !important; }
       .doc { max-width:46rem; padding:clamp(2.75rem,6vw,4.5rem) 0 clamp(1rem,3vw,1.5rem); }
       .eyebrow { margin:0 0 .85rem; color:var(--blue); font:700 .7rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.12em; text-transform:uppercase; }
       h1 { margin:0; font-size:clamp(2.1rem,3.6vw,2.85rem); line-height:1.1; letter-spacing:-.045em; }
@@ -112,6 +268,15 @@ export const pricingPageDocument = String.raw`<!doctype html>
       .lifetime-cta-col { text-align:right; }
       @media (max-width:640px) { .lifetime-card { grid-template-columns:1fr; text-align:left; } .lifetime-cta-col { text-align:left; } }
 
+      #checkout-panel { margin-top:1.25rem; padding:1.4rem 1.5rem 1.6rem; border:1px solid var(--line); border-radius:.75rem; background:var(--card); }
+      .checkout-head { display:flex; flex-wrap:wrap; align-items:center; gap:.75rem 1rem; margin-bottom:1.1rem; }
+      .checkout-head h3 { margin:0; font-size:1.05rem; letter-spacing:-.02em; }
+      #checkout-mount { min-height:32rem; }
+      .checkout-fallback { padding:1.4rem 1.5rem; border:1px solid var(--accent-tint-border); border-radius:.75rem; background:var(--accent-tint-bg); color:var(--accent-tint-ink); }
+      .checkout-fallback-lead { margin:0; font-size:1.02rem; font-weight:750; }
+      .checkout-fallback-body { margin:.45rem 0 0; font-size:.92rem; line-height:1.6; }
+      .checkout-fallback a { color:var(--accent-ink); font-weight:650; }
+
       .ladder-foot { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem; margin-top:1.5rem; padding-top:1.35rem; border-top:1px solid var(--line); }
       .contact-line { margin:0; color:var(--soft); font-size:.92rem; } .contact-line a { color:var(--accent-ink); font-weight:650; text-decoration:underline; text-decoration-color:rgba(13,148,136,.3); text-underline-offset:.15em; } .contact-line a:hover { text-decoration-color:currentColor; }
       .credits-line { margin:0; padding:.75rem .95rem; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:0 .45rem .45rem 0; background:var(--card); color:var(--soft); font-size:.88rem; line-height:1.6; }
@@ -134,7 +299,7 @@ export const pricingPageDocument = String.raw`<!doctype html>
       <div class="wrap doc">
         <p class="eyebrow">Pricing</p>
         <h1>Chatwright is included in your sneat.work subscription.</h1>
-        <p class="lede">One subscription covers the whole Sneat work suite — Chatwright's Cloud features (saved recordings, team sharing, hosted AI testing) come with it. There is no separate Chatwright checkout.</p>
+        <p class="lede">One subscription covers the whole Sneat work suite — Chatwright's Cloud features (saved recordings, team sharing, hosted AI testing) come with it. Pick a plan below and check out right here, on this page.</p>
       </div>
 
       <section class="block" id="free-forever"><div class="wrap">
@@ -156,6 +321,17 @@ export const pricingPageDocument = String.raw`<!doctype html>
           <div><span class="lifetime-badge">${lifetimeOffer.badge}</span><h3>${lifetimeOffer.name}</h3><p class="lifetime-price">${lifetimeOffer.price}<span>${lifetimeOffer.priceNote}</span></p><ul class="lifetime-features">${lifetimeFeaturesMarkup}</ul></div>
           <div class="lifetime-cta-col"><a class="button primary" href="${lifetimeOffer.cta.href}">${lifetimeOffer.cta.label}</a></div>
         </article>
+        <section id="checkout-panel" aria-live="polite" hidden>
+          <div class="checkout-head">
+            <button type="button" class="button quiet" id="checkout-back">← All plans</button>
+            <h3 id="checkout-title">Checkout</h3>
+          </div>
+          <div class="checkout-fallback" id="checkout-fallback" hidden>
+            <p class="checkout-fallback-lead">Checkout is being switched on.</p>
+            <p class="checkout-fallback-body">Email <a id="checkout-fallback-mail" href="mailto:hello@sneat.co">hello@sneat.co</a> with the plan name and we'll set you up the same day — or keep using the <a href="#free-forever">full local stack</a> free.</p>
+          </div>
+          <div id="checkout-mount" hidden></div>
+        </section>
         <div class="ladder-foot">
           <p class="contact-line">${contactLine.text} <a href="${contactLine.href}">${contactLine.linkLabel}</a></p>
         </div>
@@ -177,5 +353,6 @@ export const pricingPageDocument = String.raw`<!doctype html>
       </div></section>
     </main>
     ${renderFooter()}
+    ${checkoutScript}
   </body>
 </html>`;

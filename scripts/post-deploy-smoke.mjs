@@ -50,6 +50,27 @@ const pricingBody = await pricingResponse.text();
 if (!pricingBody.includes('included in your sneat.work subscription')) {
   throw new Error('/pricing is not the bundle-explaining pricing page');
 }
+if (!pricingBody.includes('data-buy-plan="team"')) {
+  throw new Error('/pricing tier cards are missing the embedded-checkout buy buttons');
+}
+// The tier cards must no longer bounce buyers to the sneat.work pricing page
+// — checkout happens on-site. Only the four tier cards are asserted: the
+// Lifetime card below the grid still links out for now, and the footer/
+// bundle prose may mention sneat.work as text.
+const tierGridStart = pricingBody.indexOf('class="tier-grid"');
+const tierGridEnd = pricingBody.indexOf('class="lifetime-card"');
+if (tierGridStart === -1 || tierGridEnd === -1 || tierGridEnd < tierGridStart) {
+  throw new Error('/pricing has lost the tier grid followed by the lifetime card');
+}
+if (pricingBody.slice(tierGridStart, tierGridEnd).includes('sneat.work/team/#pricing')) {
+  throw new Error('/pricing tier cards still link out to the sneat.work pricing page');
+}
+
+const checkoutReturnResponse = await fetchOK('/pricing/return');
+const checkoutReturnBody = await checkoutReturnResponse.text();
+if (!checkoutReturnBody.includes('id="checkout-return"')) {
+  throw new Error('/pricing/return is not the embedded-checkout return page');
+}
 
 if (!shell.includes('<base href="/studio/">')) {
   throw new Error('Deployed shell does not use the /studio/ Angular base href');

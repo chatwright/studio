@@ -20,10 +20,31 @@
 
 export type PricingUnit = 'account' | 'seat';
 
-export interface PricingTierCta {
+/**
+ * Plans purchasable on-site through the central checkout service — the ids
+ * are the service's own plan ids (POST {base}/session accepts exactly these).
+ */
+export type BuyablePlanId = 'pro' | 'team' | 'company';
+
+/** A CTA that navigates somewhere — an internal path, external URL or mailto. */
+export interface PricingCtaLink {
+  readonly kind: 'link';
   readonly label: string;
   readonly href: string;
 }
+
+/**
+ * A CTA that opens the embedded Stripe checkout right on /pricing (see
+ * ./page.ts and ./checkout-config.ts) — no pricing-page-to-pricing-page
+ * bounce; checkout happens on chatwright.dev.
+ */
+export interface PricingCtaBuy {
+  readonly kind: 'buy';
+  readonly plan: BuyablePlanId;
+  readonly label: string;
+}
+
+export type PricingTierCta = PricingCtaLink | PricingCtaBuy;
 
 /** One subscription-pricing card — mirrors @sneat/astro's PricingTier shape. */
 export interface PricingTier {
@@ -41,13 +62,10 @@ export interface PricingTier {
   readonly featured?: boolean;
 }
 
-// Every tier's CTA points at the one place Chatwright is actually sold:
-// the sneat.work subscription. There is no separate Chatwright checkout.
-const getItWithSneatWork: PricingTierCta = {
-  label: 'Get it with sneat.work →',
-  href: 'https://sneat.work/team/#pricing'
-};
-
+// What you buy is still the sneat.work subscription (the bundle framing is
+// unchanged), but the buying itself happens right here: paid tiers carry a
+// `buy` CTA that opens Stripe's embedded checkout on this page. Only the
+// Lifetime launch offer below still links out — for now.
 export const pricingTiers: readonly PricingTier[] = [
   {
     id: 'free',
@@ -60,7 +78,7 @@ export const pricingTiers: readonly PricingTier[] = [
       'Starter Cloud usage: saved recordings, composed recordings, hosted AI-testing turns',
       'The whole Sneat.work suite included — not just Chatwright'
     ],
-    cta: getItWithSneatWork
+    cta: { kind: 'link', label: 'Start free — Open Studio', href: '/studio/' }
   },
   {
     id: 'pro',
@@ -73,7 +91,7 @@ export const pricingTiers: readonly PricingTier[] = [
       'More saved recordings, composed recordings & hosted AI-testing turns',
       "For individuals and small crews who outgrow Free's limits"
     ],
-    cta: getItWithSneatWork
+    cta: { kind: 'buy', plan: 'pro', label: 'Start Pro — $9/mo' }
   },
   {
     id: 'team',
@@ -86,7 +104,7 @@ export const pricingTiers: readonly PricingTier[] = [
       'Whole-team price — invite everyone, no per-seat math',
       'Higher Cloud quotas across saved recordings, composed recordings and AI-testing turns'
     ],
-    cta: getItWithSneatWork
+    cta: { kind: 'buy', plan: 'team', label: 'Start Team — $29/mo' }
   },
   {
     id: 'company',
@@ -95,7 +113,7 @@ export const pricingTiers: readonly PricingTier[] = [
     priceNote: 'per seat, per month',
     unit: 'seat',
     features: ['Multiple flat teams, each with its own silo', 'Up to 100 users', 'Everything in Team, for every team'],
-    cta: getItWithSneatWork
+    cta: { kind: 'buy', plan: 'company', label: 'Start Company — $9/seat' }
   }
 ];
 
@@ -105,7 +123,12 @@ export interface LifetimeOffer {
   readonly price: string;
   readonly priceNote: string;
   readonly features: readonly string[];
-  readonly cta: PricingTierCta;
+  /**
+   * Deliberately still a link (not a `buy` CTA): one-time lifetime purchases
+   * aren't in the checkout service's subscription plan set yet, so this card
+   * keeps its sneat.work link until they are.
+   */
+  readonly cta: PricingCtaLink;
 }
 
 export const lifetimeOffer: LifetimeOffer = {
@@ -118,7 +141,7 @@ export const lifetimeOffer: LifetimeOffer = {
     'One payment, no subscription',
     '90-day money-back guarantee — full refund, no questions'
   ],
-  cta: { label: 'Get it with sneat.work →', href: 'https://sneat.work/team/#pricing' }
+  cta: { kind: 'link', label: 'Get it with sneat.work →', href: 'https://sneat.work/team/#pricing' }
 };
 
 export interface ContactLine {
