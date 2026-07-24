@@ -6,10 +6,16 @@
 /* Chromeless shell for ?embed=1 (landing-hero player iframe): no sidebar, no
    topbar, no mobile nav — just the routed page, filling the iframe. Default
    (unscoped) --cw-* custom properties already give this the light theme, so
-   it matches the landing page without needing the .studio-shell wrapper. */
+   it matches the landing page without needing the .studio-shell wrapper.
+   `height` (not `min-height`) makes this a definite-size flex column so the
+   routed player page can stretch to fill it exactly — the chat panel and
+   its docked message bar reach the real bottom of the iframe viewport with
+   zero dead space, and the transport bar lands as the final flex row. */
 .embed-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
   padding: 0.6rem;
   background: var(--cw-canvas);
   color: var(--cw-text);

@@ -3,6 +3,20 @@
   min-height: 0;
 }
 
+/* Embed mode: relay the full-height flex chain from the embed shell (see
+   AppComponent's .embed-shell and PlayerPageComponent's
+   :host-context(.embed-shell)) down into .player.embed below, so the stage
+   and its docked message bar can reach the real bottom of the iframe
+   viewport instead of stopping at a viewport-relative height cap. Full-page
+   mode never matches :host-context(.embed-shell) and keeps its plain
+   content-sized layout. */
+:host-context(.embed-shell) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .player {
   display: flex;
   flex-direction: column;
@@ -116,16 +130,33 @@
   }
 }
 
-/* --- embed mode: transcript-first, chrome (top bar + side panels) hidden --- */
+/* --- embed mode: transcript-first, chrome (top bar + side panels) hidden ---
+   .player.embed itself becomes a flex item (flex:1) of the full-height chain
+   started by .embed-shell, and .player-grid below drops its viewport-relative
+   height cap for flex:1 too — so .player-grid fills whatever real height the
+   iframe gives it, the stage/chat panel and its docked message bar reach the
+   true bottom, and there is zero dead space under the transport bar, even on
+   short iframes. */
 .player.embed {
   gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
 
   .player-grid,
   .player-grid.nav-collapsed,
   .player-grid.right-collapsed,
   .player-grid.nav-collapsed.right-collapsed {
     grid-template-columns: minmax(0, 1fr);
-    height: min(94vh, 640px);
+    /* A bare implicit row (grid-auto-rows: auto) sizes to its content, not
+       the grid container's own height — align-items: stretch only stretches
+       an item within its row's track, it does not stretch the track itself.
+       Without this, .col-center (and the stage/message-bar inside it) stop
+       at their content height, leaving dead space below the transport bar
+       even though .player-grid itself is a full-height flex item. */
+    grid-template-rows: minmax(0, 1fr);
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 }
 
@@ -293,31 +324,41 @@
   }
 }
 
-/* --- responsive: collapse side columns before shrinking the canvas --- */
+/* --- responsive: collapse side columns before shrinking the canvas ---
+   Full-page only (`.player:not(.embed)`): embed mode has no side columns to
+   collapse and already fills its own full-height flex chain unconditionally
+   (see `.player.embed` above), so these viewport-width breakpoints must not
+   reach it — an unscoped `.col-center { height: 60vh }` here would silently
+   override the embed fill on any iframe narrower than 820px, which is
+   effectively every landing-hero embed. */
 @media (max-width: 1080px) {
-  .player-grid,
-  .player-grid.nav-collapsed,
-  .player-grid.right-collapsed {
-    grid-template-columns: 54px minmax(0, 1fr) 330px;
-    height: min(72vh, 720px);
+  .player:not(.embed) {
+    .player-grid,
+    .player-grid.nav-collapsed,
+    .player-grid.right-collapsed {
+      grid-template-columns: 54px minmax(0, 1fr) 330px;
+      height: min(72vh, 720px);
+    }
   }
 }
 
 @media (max-width: 820px) {
-  .player-grid,
-  .player-grid.nav-collapsed,
-  .player-grid.right-collapsed,
-  .player-grid.nav-collapsed.right-collapsed {
-    grid-template-columns: minmax(0, 1fr);
-    height: auto;
-  }
-  .col-left,
-  .col-right {
-    height: auto;
-    max-height: 46vh;
-  }
-  .col-center {
-    height: 60vh;
+  .player:not(.embed) {
+    .player-grid,
+    .player-grid.nav-collapsed,
+    .player-grid.right-collapsed,
+    .player-grid.nav-collapsed.right-collapsed {
+      grid-template-columns: minmax(0, 1fr);
+      height: auto;
+    }
+    .col-left,
+    .col-right {
+      height: auto;
+      max-height: 46vh;
+    }
+    .col-center {
+      height: 60vh;
+    }
   }
 }
 
