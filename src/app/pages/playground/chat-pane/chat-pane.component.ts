@@ -18,7 +18,7 @@ import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { IframeHost, Session, WhatsAppCodec, type JournalEntry, type TelegramUser } from '@chatwright/runtime';
+import { IframeHost, Session, WhatsAppCodec, type JournalEntry, type SessionActor, type TelegramUser } from '@chatwright/runtime';
 
 import { DemoStore } from '../../../demo.store';
 import { MessageBarComponent } from '../../../components/message-bar/message-bar.component';
@@ -128,6 +128,15 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
   readonly showMessageBar = input(true);
   /** Tighter chrome for Compare mode's side-by-side layout. */
   readonly compact = input(false);
+  /**
+   * Overrides this pane's `Session`'s roster `human` actor (id/type/name) —
+   * defaults to the ordinary visitor identity below. The "AI test" tab
+   * (`ai-test/ai-test-panel.component.ts`) passes an `ai-agent`-typed actor
+   * here so a run-bundle built from this pane's session records the AI
+   * runner's provenance honestly, instead of every pane always reporting
+   * "Visitor"/"human" regardless of who is actually driving it.
+   */
+  readonly humanActor = input<SessionActor | undefined>(undefined);
 
   readonly botMeta = computed(() => BOT_META[this.platform()]);
   readonly botIframeSrc = computed<SafeResourceUrl>(() =>
@@ -166,7 +175,15 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
     }
   });
 
-  private session: Session | undefined;
+  private readonly sessionSignal = signal<Session | undefined>(undefined);
+  /**
+   * The live `Session` driving this pane's bot — exposed read-only so the
+   * "AI test" tab's control panel can hand it to `executeRun`'s
+   * `RunEnvironment` (see `humanActor`'s doc comment above and
+   * `ai-test/ai-test-panel.component.ts`). `undefined` until `connect()` has
+   * constructed one (i.e. before this pane's first `ngAfterViewInit`).
+   */
+  readonly session = this.sessionSignal.asReadonly();
   private host: IframeHost | undefined;
   private handshakeTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -218,10 +235,11 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
   /** Delivers `text` to this pane's own session — called by its own message bar (single-platform tabs) or fanned out to by the parent's shared message bar (Compare mode). */
   submitText(text: string): void {
-    if (this.status() !== 'connected' || !this.session) {
+    const session = this.sessionSignal();
+    if (this.status() !== 'connected' || !session) {
       return;
     }
-    this.session.submitText(CHAT_ID, VISITOR, text);
+    session.submitText(CHAT_ID, VISITOR, text);
   }
 
   onActionClick(item: PlaygroundBubble, action: JournalActionLike): void {
@@ -233,10 +251,11 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
     if (this.platform() === 'whatsapp') {
       return;
     }
-    if (this.status() !== 'connected' || !this.session) {
+    const session = this.sessionSignal();
+    if (this.status() !== 'connected' || !session) {
       return;
     }
-    this.session.submitClick(CHAT_ID, VISITOR, action.id, item.messageId);
+    session.submitClick(CHAT_ID, VISITOR, action.id, item.messageId);
   }
 
   isPressed(messageId: number, actionId: string): boolean {
@@ -263,7 +282,7 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
   /** `session.toBundle()` → Blob → download; returns the file name for the caller's own note. */
   downloadRecording(): string {
-    const bundle = this.session?.toBundle() ?? {};
+    const bundle = this.sessionSignal()?.toBundle() ?? {};
     const json = JSON.stringify(bundle, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -302,23 +321,24 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
 
     const platform = this.platform();
     const meta = this.botMeta();
-    this.session = new Session({
+    const session = new Session({
       runId: 'playground',
-      human: { id: 'visitor', type: 'human', name: 'Visitor' },
+      human: this.humanActor() ?? { id: 'visitor', type: 'human', name: 'Visitor' },
       bot: { id: meta.botId, type: 'bot', name: meta.botName },
       codec: platform === 'whatsapp' ? new WhatsAppCodec() : undefined
     });
+    this.sessionSignal.set(session);
 
     const host = new IframeHost(
       { expectedOrigin: this.botOrigin, platform },
       { kind: 'window', hostWindow: window, botWindow: contentWindow }
     );
     this.host = host;
-    this.session.registerBot(host);
+    session.registerBot(host);
 
     // Created eagerly (rather than lazily on first submit) so subscribe()
     // catches every entry the bot itself produces from the moment it connects.
-    const journal = this.session.journal(CHAT_ID);
+    const journal = session.journal(CHAT_ID);
     journal.subscribe((entry) => this.entries.update((list) => [...list, entry]));
 
     iframe.addEventListener('error', () => this.fail(`The ${meta.label} bot iframe failed to load.`));

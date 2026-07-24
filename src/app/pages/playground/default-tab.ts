@@ -13,9 +13,16 @@
  * the query param and viewport itself and passes both in.
  */
 
-export type PlaygroundTab = 'telegram' | 'whatsapp' | 'compare';
+/**
+ * `'ai-test'` (the AI-goal test-runner tab, see `ai-test/ai-test-panel.component.ts`)
+ * is reachable only via an explicit `?tab=ai-test` or a direct click — it is
+ * deliberately never one of `resolveInitialTab`'s own viewport-based
+ * defaults below, same as `'whatsapp'` never is either; only `'compare'`
+ * and `'telegram'` are auto-selected.
+ */
+export type PlaygroundTab = 'telegram' | 'whatsapp' | 'compare' | 'ai-test';
 
-const VALID_TABS: readonly PlaygroundTab[] = ['telegram', 'whatsapp', 'compare'];
+const VALID_TABS: readonly PlaygroundTab[] = ['telegram', 'whatsapp', 'compare', 'ai-test'];
 
 export function isPlaygroundTab(value: string | null | undefined): value is PlaygroundTab {
   return (VALID_TABS as readonly string[]).includes(value ?? '');

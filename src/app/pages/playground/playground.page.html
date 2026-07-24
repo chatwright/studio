@@ -29,6 +29,9 @@
     <button type="button" role="tab" class="compare-tab" [class.active]="activeTab() === 'compare'" [attr.aria-selected]="activeTab() === 'compare'" (click)="setTab('compare')">
       <i class="pi pi-bolt" aria-hidden="true"></i> Compare
     </button>
+    <button type="button" role="tab" class="ai-test-tab" [class.active]="activeTab() === 'ai-test'" [attr.aria-selected]="activeTab() === 'ai-test'" (click)="setTab('ai-test')">
+      <i class="pi pi-android" aria-hidden="true"></i> AI test
+    </button>
   </div>
 
   @switch (activeTab()) {
@@ -102,6 +105,16 @@
           } @else {
             <div class="message-bar-placeholder">{{ compareStatusNote() }}</div>
           }
+        </div>
+      </div>
+    }
+    @case ('ai-test') {
+      <div class="ai-test-frame surface">
+        <div class="ai-test-pane-wrap">
+          <cw-chat-pane #aiTestPane platform="telegram" [humanActor]="aiTestHumanActor" />
+        </div>
+        <div class="ai-test-panel-wrap">
+          <cw-ai-test-panel [session]="aiTestSession()" [paneStatus]="aiTestStatus()" />
         </div>
       </div>
     }
