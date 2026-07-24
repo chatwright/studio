@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { DemoStore } from '../../demo.store';
 import { MessageBarComponent } from '../../components/message-bar/message-bar.component';
 import { ChatPaneComponent } from './chat-pane/chat-pane.component';
 import { PlaygroundTab, resolveInitialTab } from './default-tab';
+import { resolveInitialShowBotInternals } from './internals-default';
 
 export type { PlaygroundTab };
 
@@ -34,6 +36,18 @@ export type { PlaygroundTab };
  * `submitText()` on both, which is exactly what a human doing the same
  * two-tab comparison by hand would do, just synchronized.
  *
+ * Compare mode's bot-internals story is likewise "one, not two": rather than
+ * each pane showing its own internals rail (the single-platform-tab
+ * behavior — see `ChatPaneComponent`'s own doc comment), this page owns ONE
+ * `compareShowInternals` toggle and projects BOTH panes' live bot iframes —
+ * via each pane's own exposed `botFrameTpl()` `TemplateRef` and
+ * `NgTemplateOutlet` — into ONE shared panel, clearly labelled Telegram /
+ * WhatsApp. It's the same bot on both platforms, so one place to watch the
+ * wire rather than two. Always closed by default regardless of viewport
+ * (`resolveInitialShowBotInternals('compare', …)` — see internals-
+ * default.ts's doc comment for why that differs from the single-platform
+ * viewport-based default) — a visitor opts in explicitly.
+ *
  * Deliberately out of scope for this slice (see I-66 in
  * chatwright/chatwright spec/research/knowledge-platform.md): more than one
  * bot per platform, a bot registry/picker, scenario execution beyond direct
@@ -47,7 +61,7 @@ export type { PlaygroundTab };
  */
 @Component({
   selector: 'cw-playground-page',
-  imports: [MessageBarComponent, ChatPaneComponent],
+  imports: [MessageBarComponent, ChatPaneComponent, NgTemplateOutlet],
   templateUrl: './playground.page.html',
   styleUrl: './playground.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -92,6 +106,12 @@ export class PlaygroundPage {
   readonly compareHasContent = computed(
     () => (this.comparePaneTelegram()?.hasContent() ?? false) || (this.comparePaneWhatsapp()?.hasContent() ?? false)
   );
+
+  /** Founder tweak: Compare mode's ONE shared "Show bot internals" control — always closed at mount regardless of viewport, unlike a single-platform tab's own toggle. See this class's + internals-default.ts's doc comments. */
+  readonly compareShowInternals = signal(resolveInitialShowBotInternals('compare', isWideViewportForInternals()));
+  /** Each pane's own live bot iframe, exposed as a `TemplateRef` for this page's shared internals panel to project via `NgTemplateOutlet` — `null` before that pane has mounted (e.g. Compare hasn't been switched to yet, or the pane hasn't finished its first render). */
+  readonly compareTelegramInternalsTpl = computed(() => this.comparePaneTelegram()?.botFrameTpl() ?? null);
+  readonly compareWhatsappInternalsTpl = computed(() => this.comparePaneWhatsapp()?.botFrameTpl() ?? null);
 
   readonly compareStatusNote = computed(() => {
     const telegramStatus = this.comparePaneTelegram()?.status() ?? 'handshaking';
@@ -150,4 +170,19 @@ function isWideViewport(): boolean {
     return false;
   }
   return matchMedia('(min-width: 1024px)').matches;
+}
+
+/**
+ * `matchMedia` read feeding `compareShowInternals`'s `resolveInitialShowBotInternals('compare', …)` call — fed
+ * through for real (rather than hardcoding `false` inline) so that call site honestly proves, at a glance, it
+ * ignores the viewport for Compare's "always closed" rule rather than merely happening to already be closed
+ * because nobody checked. Same 1280px breakpoint as a single-platform tab's own default (chat-pane.component.ts's
+ * `isWideViewportForInternals`) — duplicated rather than imported, matching this file's existing `isWideViewport`
+ * (1024px, the tab-default rule) already being its own local helper rather than shared across files.
+ */
+function isWideViewportForInternals(): boolean {
+  if (typeof matchMedia !== 'function') {
+    return false;
+  }
+  return matchMedia('(min-width: 1280px)').matches;
 }

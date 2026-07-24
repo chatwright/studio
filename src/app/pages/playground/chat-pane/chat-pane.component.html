@@ -21,17 +21,20 @@
     </span>
 
     <div class="pane-actions">
-      <p-button
-        icon="pi pi-code"
-        severity="secondary"
-        outlined
-        size="small"
-        [label]="compact() ? undefined : (showBotInternals() ? 'Hide internals' : 'Show internals')"
-        [attr.aria-label]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
-        [pTooltip]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
-        tooltipPosition="bottom"
-        (onClick)="showBotInternals.set(!showBotInternals())"
-      />
+      @if (!compact()) {
+        <!-- Compare mode has ONE shared internals control in PlaygroundPage's own header instead — see this component's doc comment. -->
+        <p-button
+          icon="pi pi-code"
+          severity="secondary"
+          outlined
+          size="small"
+          [label]="showBotInternals() ? 'Hide internals' : 'Show internals'"
+          [attr.aria-label]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
+          [pTooltip]="showBotInternals() ? 'Hide bot internals' : 'Show bot internals'"
+          tooltipPosition="bottom"
+          (onClick)="showBotInternals.set(!showBotInternals())"
+        />
+      }
       <p-button
         icon="pi pi-download"
         size="small"
@@ -62,7 +65,7 @@
     }
   </div>
 
-  <div class="pane-frame" [class.internals-open]="showBotInternals()">
+  <div class="pane-frame" [class.internals-open]="showOwnInternalsPanel()">
     <section class="chat-column pane-surface" [class.pane-light]="store.telegramTheme() === 'light'">
       <div #chatScroll class="chat-scroll">
         @if (entries().length === 0) {
@@ -79,7 +82,7 @@
                 @if (showMessageBar()) {
                   <p class="quiet small">Start the conversation below.</p>
                 } @else {
-                  <p class="quiet small">Waiting on the shared message bar below.</p>
+                  <p class="quiet small">Send a message below to begin.</p>
                 }
               }
             }
@@ -183,21 +186,41 @@
       }
     </section>
 
-    <aside class="bot-panel" aria-label="Bot internals">
-      <header>
-        <span class="eyebrow">Bot internals</span>
-        <strong>greetbot's own iframe page</strong>
-        <small>Its envelope log below shows every handshake/update/call/result on the wire.</small>
-      </header>
-      <div class="bot-frame-wrap">
-        <iframe
-          #botFrame
-          [src]="botIframeSrc()"
-          sandbox="allow-scripts allow-same-origin"
-          [title]="botMeta().label + ' greetbot — the live bot under test'"
-          loading="eager"
-        ></iframe>
-      </div>
-    </aside>
+    @if (!compact()) {
+      <aside class="bot-panel" aria-label="Bot internals">
+        <header>
+          <span class="eyebrow">Bot internals</span>
+          <strong>greetbot's own iframe page</strong>
+          <small>Its envelope log below shows every handshake/update/call/result on the wire.</small>
+        </header>
+        <div class="bot-frame-wrap">
+          <ng-container [ngTemplateOutlet]="botFrameTpl() ?? null" />
+        </div>
+      </aside>
+    }
+
+    <!--
+      The live bot iframe — always declared (never `@if`-gated) so it's
+      always mounted and connected, same "CSS hides it, nothing tears it
+      down" rule the collapsed grid column already gave single-tab mode. A
+      single-platform tab instantiates this via the outlet right above; a
+      Compare-mode pane (compact()) leaves it right here, unrendered by
+      itself, for `PlaygroundPage` to instantiate into its own shared
+      internals panel instead — see this component's doc comment. Named
+      `#botFrameSource` (not `#botFrameTpl`) so this local template-ref
+      variable doesn't shadow the `botFrameTpl` class field of the same
+      component throughout this same template (Angular scopes `#refs`
+      across the whole file, which made `botFrameTpl()` above resolve to
+      this `TemplateRef` itself rather than the class field's signal call).
+    -->
+    <ng-template #botFrameSource>
+      <iframe
+        #botFrame
+        [src]="botIframeSrc()"
+        sandbox="allow-scripts allow-same-origin"
+        [title]="botMeta().label + ' greetbot — the live bot under test'"
+        loading="eager"
+      ></iframe>
+    </ng-template>
   </div>
 </div>
