@@ -2,8 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, v
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { GREETBOT_ACTOR_ID, type SessionActor } from '@chatwright/runtime';
+
 import { DemoStore } from '../../demo.store';
 import { MessageBarComponent } from '../../components/message-bar/message-bar.component';
+import { AiTestPanelComponent } from './ai-test/ai-test-panel.component';
 import { ChatPaneComponent } from './chat-pane/chat-pane.component';
 import { PlaygroundTab, resolveInitialTab } from './default-tab';
 import { resolveInitialShowBotInternals } from './internals-default';
@@ -61,7 +64,7 @@ export type { PlaygroundTab };
  */
 @Component({
   selector: 'cw-playground-page',
-  imports: [MessageBarComponent, ChatPaneComponent, NgTemplateOutlet],
+  imports: [MessageBarComponent, ChatPaneComponent, AiTestPanelComponent, NgTemplateOutlet],
   templateUrl: './playground.page.html',
   styleUrl: './playground.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -112,6 +115,29 @@ export class PlaygroundPage {
   /** Each pane's own live bot iframe, exposed as a `TemplateRef` for this page's shared internals panel to project via `NgTemplateOutlet` — `null` before that pane has mounted (e.g. Compare hasn't been switched to yet, or the pane hasn't finished its first render). */
   readonly compareTelegramInternalsTpl = computed(() => this.comparePaneTelegram()?.botFrameTpl() ?? null);
   readonly compareWhatsappInternalsTpl = computed(() => this.comparePaneWhatsapp()?.botFrameTpl() ?? null);
+
+  /**
+   * The "AI test" tab's own pane — read for its exposed `Session` (see
+   * `ChatPaneComponent.session`'s doc comment) and connection status, both
+   * passed straight down to `<cw-ai-test-panel>` (`ai-test/ai-test-
+   * panel.component.ts`), which builds and runs an `executeRun` `Run` over
+   * that SAME session. Same viewChild idiom as the two Compare-mode panes
+   * above — only ever resolves once this tab is the active `@switch` case.
+   */
+  private readonly aiTestPane = viewChild<ChatPaneComponent>('aiTestPane');
+  readonly aiTestSession = computed(() => this.aiTestPane()?.session());
+  readonly aiTestStatus = computed(() => this.aiTestPane()?.status() ?? 'handshaking');
+
+  /**
+   * The ai-goal actor identity this tab's pane records as its `Session`'s
+   * roster `human` actor — matches `GREETBOT_ACTOR_ID` (the greetbot ai-goal
+   * part's own fixed `actorId`, see `@chatwright/runtime`'s
+   * `scenario/greetbot.ts`) so a run-bundle built from this pane's session
+   * tells a consistent story: the same actor id in both the roster and the
+   * ai-goal wire section, rather than every pane always reporting
+   * "Visitor"/"human" regardless of who is actually driving it.
+   */
+  readonly aiTestHumanActor: SessionActor = { id: GREETBOT_ACTOR_ID, type: 'ai-agent', name: 'Arena' };
 
   readonly compareStatusNote = computed(() => {
     const telegramStatus = this.comparePaneTelegram()?.status() ?? 'handshaking';

@@ -56,6 +56,16 @@
   &.compare-tab.active:hover {
     background: var(--cw-accent-hover);
   }
+
+  /* AI-test tab — same brand-accent treatment as Compare, so both of this
+     page's "non-platform" tabs read as one family, distinct from the
+     Telegram/WhatsApp platform tabs' violet-blue gradient. */
+  &.ai-test-tab.active {
+    background: var(--cw-accent);
+  }
+  &.ai-test-tab.active:hover {
+    background: var(--cw-accent-hover);
+  }
 }
 
 /* --- single-platform tab: one full-size pane --- */
@@ -66,6 +76,42 @@
   overflow: hidden;
 
   cw-chat-pane {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* --- AI-test tab: one full-size pane + the run control panel --- */
+.ai-test-frame {
+  height: max(560px, calc(100vh - 20rem));
+  min-height: 480px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+  overflow: hidden;
+}
+
+.ai-test-pane-wrap {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+
+  cw-chat-pane {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+.ai-test-panel-wrap {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  border-left: 1px solid var(--cw-line);
+  background: var(--cw-panel-soft);
+  overflow: hidden;
+
+  cw-ai-test-panel {
     flex: 1;
     min-width: 0;
     min-height: 0;
@@ -319,6 +365,19 @@
 @media (max-width: 900px) {
   .playground-frame.single {
     height: auto;
+  }
+  .ai-test-frame {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+  .ai-test-pane-wrap cw-chat-pane {
+    height: max(420px, 60vh);
+  }
+  .ai-test-panel-wrap {
+    border-left: 0;
+    border-top: 1px solid var(--cw-line);
+    height: 28rem;
   }
   .compare-panes {
     height: auto;

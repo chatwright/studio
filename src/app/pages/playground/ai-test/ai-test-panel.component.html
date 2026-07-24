@@ -1,0 +1,214 @@
+<section class="ai-test-panel">
+  <header class="panel-section">
+    <h2>Provider</h2>
+    <div class="mode-tabs" role="tablist" aria-label="AI provider mode">
+      <button type="button" role="tab" [class.active]="store.providerMode() === 'byok'" [attr.aria-selected]="store.providerMode() === 'byok'" (click)="selectMode('byok')">
+        <i class="pi pi-key" aria-hidden="true"></i> BYOK
+      </button>
+      <button type="button" role="tab" [class.active]="store.providerMode() === 'local'" [attr.aria-selected]="store.providerMode() === 'local'" (click)="selectMode('local')">
+        <i class="pi pi-desktop" aria-hidden="true"></i> Local AI
+      </button>
+      <button type="button" role="tab" [class.active]="store.providerMode() === 'cloud'" [attr.aria-selected]="store.providerMode() === 'cloud'" (click)="selectMode('cloud')">
+        <i class="pi pi-cloud" aria-hidden="true"></i> Cloud
+      </button>
+    </div>
+
+    @switch (store.providerMode()) {
+      @case ('byok') {
+        <div class="mode-fields">
+          <label class="field">
+            <span>Base URL</span>
+            <input pInputText [value]="store.byokBaseURL()" (input)="onByokBaseURLChange($event)" placeholder="https://api.openai.com/v1" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>Model</span>
+            <input pInputText [value]="store.byokModel()" (input)="onByokModelChange($event)" placeholder="gpt-4o-mini" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>API key</span>
+            <div class="key-field">
+              <input
+                [type]="apiKeyVisible() ? 'text' : 'password'"
+                pInputText
+                [value]="store.byokApiKey()"
+                (input)="onByokApiKeyChange($event)"
+                placeholder="sk-…"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="key-visibility"
+                [attr.aria-label]="apiKeyVisible() ? 'Hide API key' : 'Show API key'"
+                (click)="toggleApiKeyVisible()"
+              >
+                <i class="pi" [class.pi-eye]="!apiKeyVisible()" [class.pi-eye-slash]="apiKeyVisible()" aria-hidden="true"></i>
+              </button>
+            </div>
+          </label>
+          <p class="exposure-note">
+            <i class="pi pi-shield" aria-hidden="true"></i>
+            Stored only in this browser (localStorage) and sent directly to the base URL above — never to any Chatwright server.
+          </p>
+        </div>
+      }
+      @case ('local') {
+        <div class="mode-fields">
+          <label class="field">
+            <span>Companion server address</span>
+            <input pInputText [value]="store.serverAddress()" (input)="onServerAddressChange($event)" [placeholder]="defaultServerAddress" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>Model</span>
+            <input pInputText [value]="store.localModel()" (input)="onLocalModelChange($event)" placeholder="qwen2.5" autocomplete="off" />
+          </label>
+
+          @switch (serverCheck()) {
+            @case ('checking') {
+              <p class="server-status checking"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Checking for a companion server…</p>
+            }
+            @case ('available') {
+              <p class="server-status available">
+                <i class="pi pi-check-circle" aria-hidden="true"></i>
+                {{ serverHealth()?.name }} {{ serverHealth()?.version }} — capabilities: {{ serverHealth()?.capabilities?.join(', ') || 'none declared' }}
+              </p>
+            }
+            @case ('unavailable') {
+              <p class="server-status unavailable">
+                <i class="pi pi-times-circle" aria-hidden="true"></i>
+                No companion server found at this address — run <code>chatwright server start</code>, then it will be detected automatically.
+              </p>
+            }
+          }
+        </div>
+      }
+      @case ('cloud') {
+        <div class="mode-fields">
+          <p class="coming-soon">
+            <i class="pi pi-clock" aria-hidden="true"></i>
+            Cloud (quota-based hosted inference) is coming soon as a subscription feature. Use BYOK or Local AI to run a test today.
+          </p>
+        </div>
+      }
+    }
+  </header>
+
+  <section class="panel-section">
+    <h2>Scenario</h2>
+    <div class="mode-tabs" role="tablist" aria-label="Scenario source">
+      <button type="button" role="tab" [class.active]="scenarioSource() === 'greetbot'" [attr.aria-selected]="scenarioSource() === 'greetbot'" (click)="onScenarioSourceChange('greetbot')">
+        <i class="pi pi-sitemap" aria-hidden="true"></i> Built-in: greetbot
+      </button>
+      <button type="button" role="tab" [class.active]="scenarioSource() === 'document'" [attr.aria-selected]="scenarioSource() === 'document'" (click)="onScenarioSourceChange('document')">
+        <i class="pi pi-file-import" aria-hidden="true"></i> Load scenario document…
+      </button>
+    </div>
+
+    @switch (scenarioSource()) {
+      @case ('greetbot') {
+        <p class="quiet small">{{ greetbotScenarioTitle }} — send <code>/start</code>, pick English, acknowledge the greeting.</p>
+      }
+      @case ('document') {
+        <div class="manifest-picker">
+          <label class="file-picker">
+            <input type="file" accept="application/json,.json" (change)="onManifestFilePicked($event)" />
+            <span><i class="pi pi-upload" aria-hidden="true"></i> Choose a scenario-manifest JSON file</span>
+          </label>
+          @if (manifestFileName(); as name) {
+            <p class="quiet small">{{ name }}</p>
+          }
+          @if (manifestErrors(); as errors) {
+            <ul class="manifest-errors">
+              @for (error of errors; track error) {
+                <li>{{ error }}</li>
+              }
+            </ul>
+          }
+          @if (parsedManifest(); as manifest) {
+            <p class="manifest-ok"><i class="pi pi-check-circle" aria-hidden="true"></i> Valid manifest — scenario "{{ manifest.scenario }}"</p>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  <section class="panel-section run-controls">
+    @if (preflightError(); as error) {
+      <p class="preflight-error"><i class="pi pi-exclamation-triangle" aria-hidden="true"></i> {{ error }}</p>
+    }
+    <div class="run-buttons">
+      <p-button label="Run" icon="pi pi-play" [disabled]="!canRun()" (onClick)="run()" />
+      <p-button label="Stop" icon="pi pi-stop-circle" severity="secondary" outlined [disabled]="!isRunning() || runner.stopRequested()" (onClick)="stop()" />
+    </div>
+  </section>
+
+  @if (runner.status() !== 'idle') {
+    <section class="panel-section live-progress">
+      <h2>Progress</h2>
+      <p class="run-status" [class]="runner.status()">
+        <i class="pi" [class.pi-spin]="isRunning()" [class.pi-spinner]="isRunning()" [class.pi-check-circle]="runner.status() === 'completed'" [class.pi-times-circle]="runner.status() === 'failed'" [class.pi-ban]="runner.status() === 'stopped'" aria-hidden="true"></i>
+        {{ runner.status() }}
+      </p>
+
+      @if (runner.loopSnapshot(); as snapshot) {
+        <div class="loop-meter">
+          <p class="quiet small">
+            Task {{ snapshot.taskIndex }}/{{ snapshot.taskCount }} · step {{ snapshot.iteration }}/{{ snapshot.budgets.maxSteps || '∞' }}
+            @if (snapshot.stopped) {
+              · stopped ({{ snapshot.stopReason || 'unknown reason' }})
+            }
+          </p>
+          <p-progressbar [value]="stepBudgetPercent()" [showValue]="false" />
+        </div>
+      }
+
+      @if (runner.assertionLog().length > 0) {
+        <div class="assertion-chips">
+          @for (entry of runner.assertionLog(); track $index) {
+            <p-tag
+              [value]="entry.outcome.kind"
+              [severity]="entry.outcome.verdict === 'pass' ? 'success' : entry.outcome.verdict === 'fail' ? 'danger' : 'secondary'"
+              [pTooltip]="entry.outcome.diagnostic"
+              tooltipPosition="top"
+            />
+          }
+        </div>
+      }
+
+      @if (runner.error(); as error) {
+        <p class="run-error"><i class="pi pi-exclamation-circle" aria-hidden="true"></i> {{ error }}</p>
+      }
+    </section>
+  }
+
+  @if (campaignReport(); as report) {
+    <section class="panel-section report">
+      <h2>Report</h2>
+      <dl class="report-grid">
+        <dt>Stop reason</dt>
+        <dd>{{ report.stopReason }}</dd>
+        <dt>Steps</dt>
+        <dd>{{ report.steps }}</dd>
+        <dt>Tokens</dt>
+        <dd>{{ report.usage.inputTokens }} in / {{ report.usage.outputTokens }} out ({{ report.usage.callCount }} calls)</dd>
+      </dl>
+
+      @if (report.findings.length > 0) {
+        <div class="findings">
+          <strong>Findings</strong>
+          <ul>
+            @for (finding of report.findings; track $index) {
+              <li><span class="finding-kind">{{ finding.kind }}</span> — {{ finding.summary }}</li>
+            }
+          </ul>
+        </div>
+      } @else {
+        <p class="quiet small">No findings — a clean run.</p>
+      }
+
+      <div class="report-actions">
+        <p-button label="Download bundle" icon="pi pi-download" severity="secondary" outlined (onClick)="downloadBundle()" />
+        <p-button label="Open in Player" icon="pi pi-play-circle" severity="secondary" outlined (onClick)="openInPlayer()" />
+      </div>
+    </section>
+  }
+</section>
