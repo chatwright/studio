@@ -71,6 +71,14 @@ function renderQuotaRow(row: (typeof quotaRows)[number]): string {
 // Stripe sends the visitor to /pricing/return (see ./return-page.ts).
 const checkoutScript = `<script>(function(){
   var CHECKOUT_BASE = '${checkoutBase}';
+  // ?checkout=test (or =live) forces the Stripe mode for this visit — the
+  // service's own default is live-once-configured. This is how test-mode
+  // checkout stays reachable on production forever, no redeploy needed.
+  var FORCED_MODE = null;
+  try {
+    var modeParam = new URLSearchParams(location.search).get('checkout');
+    if (modeParam === 'test' || modeParam === 'live') { FORCED_MODE = modeParam; }
+  } catch (e) {}
   var PLAN_LABELS = { pro: 'Pro', team: 'Team', company: 'Company' };
   var panel = document.getElementById('checkout-panel');
   var mount = document.getElementById('checkout-mount');
@@ -150,7 +158,7 @@ const checkoutScript = `<script>(function(){
     var planLabel = PLAN_LABELS[plan] || plan;
     var publishableKey = null;
     setBusy(true);
-    fetch(CHECKOUT_BASE + '/config?site=chatwright')
+    fetch(CHECKOUT_BASE + '/config?site=chatwright' + (FORCED_MODE ? '&mode=' + FORCED_MODE : ''))
       .then(function (response) {
         if (!response.ok) { throw new Error('checkout not configured'); }
         return response.json();
@@ -158,10 +166,12 @@ const checkoutScript = `<script>(function(){
       .then(function (config) {
         publishableKey = config.publishableKey;
         if (!publishableKey) { throw new Error('checkout not configured'); }
+        var payload = { site: 'chatwright', plan: plan };
+        if (FORCED_MODE) { payload.mode = FORCED_MODE; }
         return fetch(CHECKOUT_BASE + '/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ site: 'chatwright', plan: plan })
+          body: JSON.stringify(payload)
         });
       })
       .then(function (response) {

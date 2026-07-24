@@ -29,8 +29,14 @@ const returnStatusScript = `<script>(function(){
   }
 
   var sessionId = null;
+  // The service bakes &mode=test|live into Stripe's return URL so this
+  // page can query the session in the same Stripe mode it was created in.
+  var mode = null;
   try {
-    sessionId = new URLSearchParams(location.search).get('session_id');
+    var params = new URLSearchParams(location.search);
+    sessionId = params.get('session_id');
+    var modeParam = params.get('mode');
+    if (modeParam === 'test' || modeParam === 'live') { mode = modeParam; }
   } catch (e) {}
   if (!sessionId) {
     show('return-error');
@@ -42,7 +48,7 @@ const returnStatusScript = `<script>(function(){
     refreshButton.addEventListener('click', function () { location.reload(); });
   }
 
-  fetch(CHECKOUT_BASE + '/session-status?site=chatwright&session_id=' + encodeURIComponent(sessionId))
+  fetch(CHECKOUT_BASE + '/session-status?site=chatwright&session_id=' + encodeURIComponent(sessionId) + (mode ? '&mode=' + mode : ''))
     .then(function (response) {
       if (!response.ok) { throw new Error('session-status failed'); }
       return response.json();
