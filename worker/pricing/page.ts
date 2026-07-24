@@ -328,7 +328,7 @@ export const pricingPageDocument = String.raw`<!doctype html>
 
       <section class="block" id="ladder"><div class="wrap">
         <h2>The ladder</h2>
-        <p class="block-lede">Sneat.work's published tiers — Chatwright's Cloud quotas scale with whichever one your account is on. Pricing is flat per account except Company, which is per seat.</p>
+        <p class="block-lede">Sneat.work's published tiers — Chatwright's Cloud quotas scale with whichever one your account is on. Pricing is flat per account except Company, which is per seat. Same price in euro and dollars — checkout charges your local currency (EUR or USD), and invoices follow it.</p>
         <div class="tier-grid">
           ${tierCardsMarkup}
         </div>
