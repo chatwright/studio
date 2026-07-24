@@ -44,6 +44,9 @@ export class ChatComposerComponent {
 
     this.messageSent.emit(text);
     this.clear();
+    // Founder tweak: refocus after every send, so a rapid back-and-forth
+    // never needs a re-click on the input between messages.
+    this.focus();
   }
 
   clear(): void {
@@ -52,5 +55,10 @@ export class ChatComposerComponent {
     if (inputElement) {
       inputElement.value = '';
     }
+  }
+
+  /** Moves keyboard focus into this composer's text input — called on send (above) and by the owning pane once a conversation starts (see `ChatPaneComponent`/`PlaygroundPage`). */
+  focus(): void {
+    this.composerInput()?.nativeElement.focus();
   }
 }
