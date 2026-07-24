@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  TemplateRef,
   computed,
   effect,
   inject,
@@ -11,6 +12,7 @@ import {
   signal,
   viewChild
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 import { AvatarModule } from 'primeng/avatar';
 import { ButtonModule } from 'primeng/button';
@@ -22,6 +24,7 @@ import { DemoStore } from '../../../demo.store';
 import { MessageBarComponent } from '../../../components/message-bar/message-bar.component';
 import { JournalActionLike, PlaygroundBubble, reduceJournalEntries } from '../bubble-reducer';
 import { CommandSegment, tokenizeCommandText } from '../command-tokenizer';
+import { resolveInitialShowBotInternals } from '../internals-default';
 
 export type PlaygroundPlatform = 'telegram' | 'whatsapp';
 export type ConnectionStatus = 'handshaking' | 'connected' | 'error';
@@ -88,10 +91,30 @@ const CHAT_ID = VISITOR.id;
  * but `Session.submitClick` itself throws for a codec with no
  * interactive-action support, and this guard keeps that throw from ever
  * being reachable via this pane's own UI.
+ *
+ * **Bot internals — owned here, shown from here or projected out:** the
+ * live greetbot iframe (and the toolbar toggle that reveals it) is declared
+ * once, in `#botFrameSource`, and stays mounted for this pane's entire
+ * lifetime regardless of visibility — same "always connected, CSS collapses
+ * the column" trick as before, now just routed through an `ng-template` so
+ * the same markup can render in two different places. `compact()` (true
+ * only for Compare mode's two panes — see that input's own doc comment)
+ * decides which: `false` (single-platform tabs) renders the toggle + panel
+ * right here, unchanged from before this tweak. `true` (Compare mode) skips
+ * both — no per-pane toggle, no per-pane panel — and instead leaves
+ * `botFrameTpl()` for `PlaygroundPage` to project into its own ONE shared
+ * internals panel via `NgTemplateOutlet`, alongside the other platform's
+ * pane. A `TemplateRef`'s expression context and `viewChild` queries stay
+ * bound to the component that *declared* it no matter where an outlet
+ * elsewhere instantiates it, so `#botFrame`'s own `viewChild` (used by
+ * `connect()` below) resolves correctly either way. `showBotInternals` (the
+ * open/closed signal + its toggle) is likewise only meaningful for a
+ * single-platform pane now — Compare mode's shared panel has its own
+ * open/closed state one level up, in `PlaygroundPage.compareShowInternals`.
  */
 @Component({
   selector: 'cw-chat-pane',
-  imports: [AvatarModule, ButtonModule, TooltipModule, MessageBarComponent],
+  imports: [AvatarModule, ButtonModule, TooltipModule, MessageBarComponent, NgTemplateOutlet],
   templateUrl: './chat-pane.component.html',
   styleUrl: './chat-pane.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -117,11 +140,15 @@ export class ChatPaneComponent implements AfterViewInit, OnDestroy {
   private readonly chatScroll = viewChild<ElementRef<HTMLElement>>('chatScroll');
   /** Only resolves once `showMessageBar()` mounts this pane's own message bar — Compare mode's panes (`showMessageBar=false`) never populate this, they don't own a message bar to focus. */
   private readonly messageBar = viewChild<MessageBarComponent>('messageBar');
+  /** The live bot iframe, as a template — always declared, so it's always mounted (and connected) regardless of who renders it. See this class's doc comment for the single-tab-vs-Compare split. */
+  readonly botFrameTpl = viewChild<TemplateRef<unknown>>('botFrameSource');
 
   readonly status = signal<ConnectionStatus>('handshaking');
   readonly errorReason = signal<string | null>(null);
-  /** Founder tweak: open by default on large screens (matchMedia at init only — the toggle button owns it from then on). */
-  readonly showBotInternals = signal(initialShowBotInternals());
+  /** Founder tweak: open by default on large screens (matchMedia at init only — the toggle button owns it from then on). Single-platform tabs only now — see this class's doc comment; Compare mode's shared panel has its own default (`resolveInitialShowBotInternals('compare', …)` is always `false`, see internals-default.ts) owned by `PlaygroundPage.compareShowInternals` instead. */
+  readonly showBotInternals = signal(resolveInitialShowBotInternals('single-tab', isWideViewportForInternals()));
+  /** This pane's own toggle+panel only ever render for a single-platform tab (`!compact()`) — Compare mode's panes skip both, see this class's doc comment. */
+  readonly showOwnInternalsPanel = computed(() => !this.compact() && this.showBotInternals());
   readonly noteMessage = signal<string | null>(null);
 
   readonly entries = signal<JournalEntry[]>([]);
@@ -331,8 +358,8 @@ function bundleFileName(platform: PlaygroundPlatform): string {
   return `session-${platform}-${stamp}.chatwright.json`;
 }
 
-/** `matchMedia` initial value for `showBotInternals` — same "declare, don't assume" guard as `DemoStore`'s `initialAppTheme`. */
-function initialShowBotInternals(): boolean {
+/** `matchMedia` read feeding `resolveInitialShowBotInternals`'s `isWideViewport` arg — same "declare, don't assume" guard as `DemoStore`'s `initialAppTheme`. */
+function isWideViewportForInternals(): boolean {
   if (typeof matchMedia !== 'function') {
     return false;
   }

@@ -44,10 +44,48 @@
     }
     @case ('compare') {
       <div class="compare-frame surface">
-        <div class="compare-panes">
-          <cw-chat-pane #comparePaneTelegram platform="telegram" [showMessageBar]="false" [compact]="true" />
-          <div class="compare-divider" aria-hidden="true"></div>
-          <cw-chat-pane #comparePaneWhatsapp platform="whatsapp" [showMessageBar]="false" [compact]="true" />
+        <div class="compare-header">
+          <p class="quiet small">Same bot, both platforms — one place to watch the wire.</p>
+          <button
+            type="button"
+            class="internals-toggle"
+            [class.active]="compareShowInternals()"
+            [attr.aria-pressed]="compareShowInternals()"
+            [attr.aria-label]="compareShowInternals() ? 'Hide bot internals' : 'Show bot internals'"
+            (click)="compareShowInternals.set(!compareShowInternals())"
+          >
+            <i class="pi pi-code" aria-hidden="true"></i>
+            {{ compareShowInternals() ? 'Hide bot internals' : 'Show bot internals' }}
+          </button>
+        </div>
+
+        <div class="compare-body" [class.internals-open]="compareShowInternals()">
+          <div class="compare-panes">
+            <cw-chat-pane #comparePaneTelegram platform="telegram" [showMessageBar]="false" [compact]="true" />
+            <div class="compare-divider" aria-hidden="true"></div>
+            <cw-chat-pane #comparePaneWhatsapp platform="whatsapp" [showMessageBar]="false" [compact]="true" />
+          </div>
+
+          <aside class="compare-internals" aria-label="Bot internals — both platforms">
+            <div class="compare-internals-block telegram">
+              <header>
+                <span class="eyebrow"><i class="pi pi-send" aria-hidden="true"></i> Telegram</span>
+                <small>greetbot's own iframe page — its envelope log below shows every handshake/update/call/result on the wire.</small>
+              </header>
+              <div class="bot-frame-wrap">
+                <ng-container [ngTemplateOutlet]="compareTelegramInternalsTpl()" />
+              </div>
+            </div>
+            <div class="compare-internals-block whatsapp">
+              <header>
+                <span class="eyebrow"><i class="pi pi-whatsapp" aria-hidden="true"></i> WhatsApp</span>
+                <small>greetbot's own iframe page — its envelope log below shows every handshake/update/call/result on the wire.</small>
+              </header>
+              <div class="bot-frame-wrap">
+                <ng-container [ngTemplateOutlet]="compareWhatsappInternalsTpl()" />
+              </div>
+            </div>
+          </aside>
         </div>
 
         <div class="compare-message-bar-surface" [class.pane-light]="store.telegramTheme() === 'light'">

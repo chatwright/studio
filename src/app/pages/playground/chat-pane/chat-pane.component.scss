@@ -158,10 +158,6 @@
   }
 }
 
-.compact .pane-frame.internals-open {
-  grid-template-columns: minmax(0, 1fr) minmax(14rem, 16rem);
-}
-
 .chat-column {
   min-width: 0;
   min-height: 0;
