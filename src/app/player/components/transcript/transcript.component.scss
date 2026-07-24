@@ -1,11 +1,17 @@
+/* The panel is a flex column: a scrolling transcript region on top and one
+   docked message-bar footer beneath it, outside the scroll — chrome, not
+   content. Mirrors how a col-head strip is attached chrome at the top of a
+   panel; this is the same treatment at the bottom. */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
 }
 
 .transcript-scroll {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1.1rem 1.2rem 1.4rem;
@@ -37,9 +43,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  /* Fill the window when the conversation is short, so the message bar
-     below anchors to the bottom edge instead of floating mid-window. */
-  flex: 1 0 auto;
 }
 
 .chat-head {
@@ -63,9 +66,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  /* The message bar lives INSIDE this stream — the growth must reach it,
-     not stop at .chat, or the bar floats mid-window on short runs. */
-  flex: 1 0 auto;
 }
 
 .method-note {
@@ -316,24 +316,25 @@
   opacity: 1;
 }
 
-/* Playback message bar */
+/* Docked message-bar footer — chrome, not content. Flush to the panel's
+   bottom/left/right edges, outside .transcript-scroll, fixed-height. Same
+   "attached strip" treatment as a col-head, mirrored at the bottom edge:
+   full width, one separating border, panel background, no floating-card
+   margins or outer rounding (the parent .stage's overflow:hidden + radius
+   already clips this flush, same as it clips .stage's other docked chrome). */
 .message-bar {
-  margin-top: auto;
-  margin-top: 0.3rem;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--cw-line);
-  border-radius: 0.9rem;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--cw-line);
   background: var(--cw-panel);
-  opacity: 0.55;
-  transition: opacity 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 
   &.active {
-    opacity: 1;
-    border-color: var(--cw-blue);
-    box-shadow: 0 0 0 3px rgba(38, 120, 189, 0.1);
+    border-top-color: var(--cw-blue);
+    background: var(--cw-panel-soft);
   }
 }
 .message-bar-field {
