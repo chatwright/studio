@@ -14,6 +14,7 @@ import { chatwrightMdV1PageDocument } from './formats/chatwright-md/v1/page';
 import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
 import { recipesPageDocument } from './recipes/page';
 import { pricingPageDocument } from './pricing/page';
+import { pricingReturnPageDocument } from './pricing/return-page';
 import { badgeSvgDocument } from './badge';
 import { tryGithubResponse } from './try-github';
 
@@ -60,11 +61,14 @@ const chatwrightMdV1SchemaDocument = `${JSON.stringify(chatwrightMdV1Schema, nul
 // provenance disclaimer and worker/recipes/page.ts for the page itself.
 const recipesPath = '/recipes';
 
-// The /pricing page — thin, bundle-explaining: Chatwright has no pricing or
-// checkout of its own, it's included in the sneat.work subscription; see
-// worker/pricing/data.ts for the provenance disclaimer and worker/pricing/page.ts
-// for the page itself.
+// The /pricing page — bundle-explaining (what's sold is the sneat.work
+// subscription; see worker/pricing/data.ts for the provenance disclaimer)
+// with on-site embedded Stripe checkout: paid tiers open Stripe's embedded
+// checkout right on the page, backed by the central checkout service
+// (worker/pricing/checkout-config.ts). /pricing/return is where Stripe sends
+// the buyer afterwards — see worker/pricing/return-page.ts.
 const pricingPath = '/pricing';
+const pricingReturnPath = '/pricing/return';
 
 const badgeSvgPath = '/badge.svg';
 
@@ -167,6 +171,15 @@ export default {
 
     if (incomingURL.pathname === recipesPath || incomingURL.pathname === `${recipesPath}/`) {
       return new Response(request.method === 'HEAD' ? null : recipesPageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === pricingReturnPath || incomingURL.pathname === `${pricingReturnPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : pricingReturnPageDocument, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'
