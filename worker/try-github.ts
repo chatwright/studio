@@ -6,6 +6,8 @@
 // repository) — it is an honest, static interim page until the browser
 // runtime lands; the real resolution (manifest fetch, player/runtime
 // hand-off) is a follow-up design session's concern.
+import { renderHeader, renderFooter, chromeStyles } from './chrome';
+
 const ownerRepoPattern = /^[A-Za-z0-9_.-]+$/;
 // Extra path segments (a manifest subdirectory for monorepos) are looser
 // than owner/repo but still constrained to safe URL-path characters — never
@@ -100,10 +102,7 @@ function tryGithubPageDocument(params: {
       :root { color-scheme: light; --ink:#111827; --soft:#566477; --line:#e5eaf0; --canvas:#fcfcfd; --blue:#2c6dcc; --mint:#50cba0; --mint-ink:#0d5e49; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; color:var(--ink); background:var(--canvas); } a { color:inherit; }
       .wrap { width:min(1180px,calc(100% - 3rem)); margin-inline:auto; }
-      .nav { position:sticky; z-index:10; top:0; border-bottom:1px solid rgba(229,234,240,.9); background:rgba(252,252,253,.9); backdrop-filter:blur(16px); }
-      .nav > .wrap { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:1.2rem; }
-      .brand { color:var(--ink); font-size:1.1rem; font-weight:730; letter-spacing:-.05em; text-decoration:none; } .brand small { margin-left:.45rem; color:var(--soft); font-size:.65rem; font-weight:650; letter-spacing:.02em; }
-      .links { display:flex; align-items:center; gap:1.35rem; color:#4e5c70; font-size:.85rem; } .links a { text-decoration:none; } .links a:hover { color:var(--ink); }
+      ${chromeStyles}
       .button { min-height:2.7rem; display:inline-flex; align-items:center; justify-content:center; padding:0 .95rem; border:1px solid transparent; border-radius:.55rem; font:680 .84rem/1 inherit; text-decoration:none; transition:transform .18s ease,box-shadow .18s ease; } .button:hover { transform:translateY(-1px); }
       .primary { color:#06271d; background:var(--mint); box-shadow:0 8px 20px rgba(80,203,160,.17); } .quiet { border-color:var(--line); background:#fff; }
       .doc { max-width:42rem; padding:clamp(2.75rem,6vw,4.5rem) 0 clamp(4rem,8vw,6rem); }
@@ -116,12 +115,11 @@ function tryGithubPageDocument(params: {
       article a:hover { text-decoration-color:currentColor; }
       code { padding:.12rem .34rem; border-radius:.32rem; background:#eef2f6; color:#1a2740; font:500 .85em/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
       .actions { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:1.6rem; }
-      footer { padding:2.5rem 0 3rem; color:#718094; font-size:.78rem; } footer .wrap { display:flex; justify-content:space-between; gap:1rem; border-top:1px solid var(--line); padding-top:1.45rem; } footer a { color:var(--soft); text-decoration:none; }
-      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } .nav > .wrap { min-height:64px; } .links { display:none; } .brand small { display:none; } footer .wrap { align-items:flex-start; flex-direction:column; } }
+      @media (max-width:720px) { .wrap { width:min(100% - 2rem,1180px); } }
     </style>
   </head>
   <body>
-    <header class="nav"><div class="wrap"><a class="brand" href="/" aria-label="Chatwright home">Chatwright <small>by sneat.dev</small></a><nav class="links" aria-label="Primary navigation"><a href="/">Home</a><a href="/studio/">Studio</a><a href="https://github.com/chatwright/chatwright">GitHub</a></nav><a class="button primary" href="/studio/">Open Studio</a></div></header>
+    ${renderHeader(null)}
     <main class="wrap doc">
       <article>
         <p class="eyebrow">Try in Chatwright</p>
@@ -135,7 +133,7 @@ function tryGithubPageDocument(params: {
         </div>
       </article>
     </main>
-    <footer><div class="wrap"><span>An independent open-source project by Sneat.co</span><a href="https://sneat.dev/">Explore sneat.dev →</a></div></footer>
+    ${renderFooter()}
   </body>
 </html>
 `;
