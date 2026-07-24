@@ -13,6 +13,7 @@ import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
 import { chatwrightMdV1PageDocument } from './formats/chatwright-md/v1/page';
 import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
 import { recipesPageDocument } from './recipes/page';
+import { pricingPageDocument } from './pricing/page';
 import { badgeSvgDocument } from './badge';
 import { tryGithubResponse } from './try-github';
 
@@ -58,6 +59,12 @@ const chatwrightMdV1SchemaDocument = `${JSON.stringify(chatwrightMdV1Schema, nul
 // snapshot of chatwright/recipes; see worker/recipes/data.ts for the
 // provenance disclaimer and worker/recipes/page.ts for the page itself.
 const recipesPath = '/recipes';
+
+// The /pricing page — thin, bundle-explaining: Chatwright has no pricing or
+// checkout of its own, it's included in the sneat.work subscription; see
+// worker/pricing/data.ts for the provenance disclaimer and worker/pricing/page.ts
+// for the page itself.
+const pricingPath = '/pricing';
 
 const badgeSvgPath = '/badge.svg';
 
@@ -160,6 +167,15 @@ export default {
 
     if (incomingURL.pathname === recipesPath || incomingURL.pathname === `${recipesPath}/`) {
       return new Response(request.method === 'HEAD' ? null : recipesPageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === pricingPath || incomingURL.pathname === `${pricingPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : pricingPageDocument, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'

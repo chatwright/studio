@@ -30,6 +30,9 @@ if (!root.includes('The platform is emulated.') || !root.includes('/studio/playe
 if (!root.includes('conversational UX') || !root.includes('/formats/chatwright-md/v1')) {
   throw new Error('Root domain is not the repositioned knowledge-platform landing page');
 }
+if (!root.includes('href="/pricing"')) {
+  throw new Error('Root domain landing page is missing the /pricing link');
+}
 
 await fetchOK('/formats/chatwright-md/v1');
 await fetchOK('/formats/chatwright-md/v1/schema.json');
@@ -40,6 +43,12 @@ const recipesResponse = await fetchOK('/recipes');
 const recipesBody = await recipesResponse.text();
 if (!recipesBody.includes('Every recipe runs')) {
   throw new Error('/recipes is not the knowledge-graph recipes page');
+}
+
+const pricingResponse = await fetchOK('/pricing');
+const pricingBody = await pricingResponse.text();
+if (!pricingBody.includes('included in your sneat.work subscription')) {
+  throw new Error('/pricing is not the bundle-explaining pricing page');
 }
 
 if (!shell.includes('<base href="/studio/">')) {
