@@ -2,8 +2,30 @@
   display: block;
 }
 
+/* Embed mode (?embed=1, see AppComponent's .embed-shell): this host sits
+   directly inside the embed shell's flex column and must relay its full
+   available height down to <cw-player> rather than sizing to content —
+   otherwise the player's own full-height flex chain has nothing to fill and
+   the chat panel stops short of the iframe's real bottom edge. Full-page
+   (non-embed) mode is unaffected: :host-context(.embed-shell) never matches
+   there, so this host keeps its plain `display: block` content-sized layout
+   inside .studio-content. */
+:host-context(.embed-shell) {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .player-page {
   position: relative;
+}
+
+.player-page.embed {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .file-name {
