@@ -144,6 +144,13 @@ Player. Entry points and URLs never change during convergence.
 
 ## Open Questions
 
+- Resolved (founder 2026-07-24): the third door is the **Conversation
+  Composer** (idea: conversation-composer in the standard repository) —
+  Player = watch, Playground = try, Composer = perform. "Builder" is
+  reserved for possible future bot code-building. The chat input
+  component will be renamed (candidate: message bar) to free the word.
+
+
 - What does the Player's "continue live from here" do about mid-recording
   state (fresh-start with the same bot vs true branch-from-checkpoint via
   state branching)?
