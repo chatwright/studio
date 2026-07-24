@@ -3,24 +3,14 @@
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
     "strict": true,
+    "noImplicitOverride": true,
     // Left off (was on) so the vendored @chatwright/runtime source (see
     // scripts/vendor-runtime.mjs) compiles as-is: its handshake-envelope
     // parsing narrows `Record<string, unknown>` values with plain dot
-    // access (protocol/iframe-host.ts, telegram/codec.ts), which a stricter
-    // index-signature-access flag would reject. runtime-ts's own
-    // tsconfig.json does not set that flag either — the PR that introduced
-    // the vendoring reports this as a finding rather than editing the
-    // vendored copy (never fork/patch it).
-    //
-    // `noImplicitOverride` (part of `strict`'s neighbourhood, listed
-    // explicitly here so this note sits next to it) is off for the exact
-    // same reason, added when the vendored source grew the actor-model
-    // engine: `actor/openai/errors.ts`'s error subclasses set a `cause`
-    // property without the `override` modifier (TS4114/TS4115). Studio's
-    // own app code does not currently rely on this check (no class member
-    // here shadows a base-class member without a mismatch already being a
-    // type error on its own), so turning it off costs nothing locally.
-    "noImplicitOverride": false,
+    // access (protocol/iframe-host.ts, telegram/codec.ts), which this flag
+    // rejects. runtime-ts's own tsconfig.json does not set this flag either
+    // — the PR that introduced the vendoring reports this as a finding
+    // rather than editing the vendored copy (never fork/patch it).
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
