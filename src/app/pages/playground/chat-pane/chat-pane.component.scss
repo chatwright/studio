@@ -173,7 +173,7 @@
  * --- pane-surface: the inverted-chat theming seam ---
  *
  * A phone-like messenger reads wrong sitting flush with Studio's own theme,
- * so the actual chat surface (bubbles + composer) is deliberately the
+ * so the actual chat surface (bubbles + message bar) is deliberately the
  * INVERSE of the Studio shell's theme, keyed off DemoStore.telegramTheme()
  * (itself the computed inverse of DemoStore.appTheme() — see the store's own
  * doc comment). This mirrors the exact `--tg-*` seam the live emulator
@@ -185,7 +185,7 @@
  * `.bubble`/`.action-btn`/etc. rule (already written in terms of `--cw-*`)
  * correct with zero changes: they read the *locally overridden* value from
  * this ancestor's own scope, without knowing it's a "pane" at all.
- * `cw-chat-composer`'s own stylesheet already expects `--tg-*` directly —
+ * `cw-message-bar`'s own stylesheet already expects `--tg-*` directly —
  * this is the first place in the app that actually supplies it, no changes
  * needed there either.
  */
@@ -476,7 +476,7 @@
   }
 }
 
-.composer-placeholder {
+.message-bar-placeholder {
   padding: 0.85rem 1rem;
   border-top: 1px solid var(--cw-line);
   color: var(--cw-muted);
@@ -485,13 +485,13 @@
 }
 
 /*
- * Founder tweak: the composer slot, pre-start — the Start button renders
+ * Founder tweak: the message bar slot, pre-start — the Start button renders
  * HERE, centered, replacing the text input entirely (not layered above/
  * beside it) until the first message lands. Same footprint as the
- * composer it stands in for, so there's no layout jump when it's swapped
- * out for the real `cw-chat-composer`.
+ * message bar it stands in for, so there's no layout jump when it's swapped
+ * out for the real `cw-message-bar`.
  */
-.composer-slot.start-slot {
+.message-bar-slot.start-slot {
   padding: 0.85rem 1rem;
   border-top: 1px solid var(--cw-line);
   display: flex;

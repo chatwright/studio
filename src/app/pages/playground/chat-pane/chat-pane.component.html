@@ -76,10 +76,10 @@
               }
               @case ('connected') {
                 <p>Connected — greetbot is listening.</p>
-                @if (showComposer()) {
+                @if (showMessageBar()) {
                   <p class="quiet small">Start the conversation below.</p>
                 } @else {
-                  <p class="quiet small">Waiting on the shared composer below.</p>
+                  <p class="quiet small">Waiting on the shared message bar below.</p>
                 }
               }
             }
@@ -164,20 +164,20 @@
         }
       </div>
 
-      @if (showComposer()) {
+      @if (showMessageBar()) {
         @if (status() === 'connected') {
           @if (hasContent()) {
-            <cw-chat-composer #composer actor="Visitor" [platform]="platform()" (messageSent)="submitText($event)" />
+            <cw-message-bar #messageBar actor="Visitor" [platform]="platform()" (messageSent)="submitText($event)" />
           } @else {
-            <!-- Founder tweak: the Start button lives IN the composer slot, replacing the text input, until the conversation starts. -->
-            <div class="composer-slot start-slot">
+            <!-- Founder tweak: the Start button lives IN the message bar slot, replacing the text input, until the conversation starts. -->
+            <div class="message-bar-slot start-slot">
               <button type="button" class="start-button" (click)="startConversation()">▶ Start the conversation</button>
               <p class="quiet small">Sends <code>/start</code></p>
             </div>
           }
         } @else {
-          <div class="composer-placeholder">
-            {{ status() === 'error' ? 'Composer unavailable — the bot never connected.' : 'Composer opens once greetbot connects…' }}
+          <div class="message-bar-placeholder">
+            {{ status() === 'error' ? 'Message bar unavailable — the bot never connected.' : 'Message bar opens once greetbot connects…' }}
           </div>
         }
       }

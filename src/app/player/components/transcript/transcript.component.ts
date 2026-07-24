@@ -20,7 +20,7 @@ import { PlatformAction } from '../../model/bundle.types';
 /**
  * The animated conversation canvas. Renders settled transcript state and, only
  * during continuous forward playback (and only when reduced-motion is off),
- * plays each mutation's animation primitive: composer typing → send → land,
+ * plays each mutation's animation primitive: message bar typing → send → land,
  * bot "typing…" → land, edit crossfade morph, vapouring deletion, keyboard
  * slide-in, and eased auto-follow scrolling. Because the rendered messages come
  * from settled state (a pure function of the step index), Prev/Next/scrub land
@@ -103,7 +103,7 @@ export class TranscriptComponent {
     // Eased auto-follow scrolling, paced with the playhead.
     effect(() => {
       this.engine.stepIndex();
-      this.engine.composerTyping();
+      this.engine.messageBarTyping();
       const region = this.scrollRegion()?.nativeElement;
       if (!region) {
         return;
@@ -135,7 +135,7 @@ export class TranscriptComponent {
   }
 
   isTypingTarget(message: SettledMessage): boolean {
-    const typing = this.engine.composerTyping();
+    const typing = this.engine.messageBarTyping();
     return (
       !!typing &&
       this.engine.animatingIndex() === message.timelineIndex &&

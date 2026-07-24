@@ -65,7 +65,7 @@
   }
 }
 
-/* --- Compare mode: two compact panes + one shared composer --- */
+/* --- Compare mode: two compact panes + one shared message bar --- */
 .compare-frame {
   display: flex;
   flex-direction: column;
@@ -91,14 +91,14 @@
 }
 
 /*
- * The shared composer sits between two panes, belonging to neither — its
+ * The shared message bar sits between two panes, belonging to neither — its
  * own small "pane-surface", following the exact inversion rule every chat
  * pane uses (see chat-pane.component.scss's doc comment): site light →
  * this bar renders dark, site dark → it renders light. A neutral
- * violet-leaning palette, not either bot's brand color, since one composer
+ * violet-leaning palette, not either bot's brand color, since one message bar
  * here is deliberately not "Telegram's" or "WhatsApp's".
  */
-.compare-composer-surface {
+.compare-message-bar-surface {
   --tg-panel: #171423;
   --tg-text: #f1edff;
   --tg-line: rgba(216, 204, 255, 0.14);
@@ -113,7 +113,7 @@
   }
 }
 
-.composer-placeholder {
+.message-bar-placeholder {
   padding: 0.85rem 1rem;
   color: var(--cw-muted);
   font-size: 0.78rem;
@@ -122,18 +122,18 @@
 
 /*
  * Founder tweak: Compare mode's own Start button — was missing entirely
- * before this tweak set. Same "replaces the composer, centered in its
+ * before this tweak set. Same "replaces the message bar, centered in its
  * slot" treatment as each single-platform pane's own Start button
  * (chat-pane.component.scss's `.start-slot`/`.start-button`), reproduced
  * here rather than shared because Angular's emulated view encapsulation
  * scopes that component's styles to its own template — this button lives
  * in PlaygroundPage's template instead. Deliberately the same neutral
- * violet brand `cw-chat-composer` itself uses for `platform="compare"`
- * (`--brand-color: #a88cff`, see chat-composer.component.scss) rather than
- * either bot's own color, matching this composer's "belongs to neither"
+ * violet brand `cw-message-bar` itself uses for `platform="compare"`
+ * (`--brand-color: #a88cff`, see message-bar.component.scss) rather than
+ * either bot's own color, matching this message bar's "belongs to neither"
  * framing above.
  */
-.composer-slot.start-slot {
+.message-bar-slot.start-slot {
   padding: 0.85rem 1rem;
   display: flex;
   flex-direction: column;
@@ -148,7 +148,7 @@
   }
 }
 
-.compare-composer-surface .start-button {
+.compare-message-bar-surface .start-button {
   padding: 0.6rem 1.1rem;
   border: 1px solid rgba(168, 140, 255, 0.35);
   border-radius: 0.7rem;

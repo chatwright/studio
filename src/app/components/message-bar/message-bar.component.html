@@ -1,12 +1,12 @@
 <footer
-  class="composer"
+  class="message-bar"
   [class.telegram]="platform() === 'telegram'"
   [class.whatsapp]="platform() === 'whatsapp'"
   [class.compare]="platform() === 'compare'"
 >
-  <button type="button" class="composer-action" aria-label="Attach a test event"><i class="pi pi-paperclip"></i></button>
+  <button type="button" class="message-bar-action" aria-label="Attach a test event"><i class="pi pi-paperclip"></i></button>
   <input
-    #composerInput
+    #messageBarInput
     pInputText
     [placeholder]="placeholder() || 'Act as ' + actor() + '…'"
     [attr.aria-label]="'Message as ' + actor()"
@@ -22,5 +22,5 @@
     [disabled]="!draft().trim()"
     (onClick)="send()"
   />
-  <div class="composer-hint"><kbd>↵</kbd> send · every action is recorded</div>
+  <div class="message-bar-hint"><kbd>↵</kbd> send · every action is recorded</div>
 </footer>
