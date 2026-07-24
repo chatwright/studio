@@ -10,6 +10,7 @@ Pre-spec one-pagers. Each Idea is a lint-clean problem-direction-MVP one-pager t
 
 | Idea | Status | Date | Owner | Promotes To |
 |------|--------|------|-------|-------------|
+| [studio-ui-surfaces](studio-ui-surfaces.md) | Approved | 2026-07-24 | alex | — |
 
 ## Open Questions
 
