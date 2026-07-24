@@ -46,8 +46,15 @@
     box-shadow: 0 8px 20px var(--cw-shadow);
   }
 
+  /* Compare tab — brand accent, solid (founder's FINAL brand-accent
+     decision, 2026-07-24): #0f766e + white text, uniform across modes; not
+     the violet-blue gradient the platform tabs use, and deliberately kept
+     apart from Telegram-blue/WhatsApp-green in the panes below it. */
   &.compare-tab.active {
-    background: linear-gradient(135deg, var(--cw-violet), var(--cw-mint));
+    background: var(--cw-accent);
+  }
+  &.compare-tab.active:hover {
+    background: var(--cw-accent-hover);
   }
 }
 

@@ -10,7 +10,20 @@
 // footer/nav rules, not the general `.wrap`/`.button`/`:root` primitives
 // every page already declares for its own body content), then calls
 // `renderHeader(current)` and `renderFooter(extraFooterHtml?)` in its markup.
-
+// Each page also inlines `themeInitScript` early in its own <head> (right
+// after the color-scheme meta tag) so the light/dark choice applies before
+// first paint — see that export's own comment for why it can't live here.
+//
+// Light/dark theme: every page's own `:root { ... }` declares the LIGHT
+// value of the shared token set (--ink/--soft/--faint/--line/--canvas/
+// --card/--card-soft/--blue/--code-bg/--code-ink/--accent/--accent-hover/
+// --accent-ink/--accent-tint-*/--nav-bg/--nav-border/--nav-hover-bg);
+// `chromeStyles` below carries the single `[data-theme="dark"]` override of
+// that same set, so it only has to be tuned once. `--accent`/`--accent-hover`
+// are deliberately NOT overridden in dark — the brand solid (#0f766e bg +
+// white text, #115e59 hover) is uniform across both modes per the founder's
+// FINAL brand-accent decision; only the link/current-nav ink
+// (--accent-ink) and the soft tint trio ramp between modes.
 export type ChromeCurrentPage = 'home' | 'player' | 'playground' | 'recipes' | 'pricing' | null;
 
 interface ChromeNavLink {
@@ -48,6 +61,35 @@ function renderCompactNavLink(link: ChromeNavLink, current: ChromeCurrentPage): 
 }
 
 /**
+ * Renders the light/dark toggle — a small pill (sun/moon + sliding track,
+ * visually echoing the Studio player's own `.theme-toggle`) in the full
+ * nav, and a plain sun/moon icon button in the ≤720px compact icon row.
+ * Both share `data-cw-theme-toggle`, which `themeToggleScript` (see
+ * `renderFooter`) queries to wire up clicks and keep `aria-checked` in
+ * sync — it renders `aria-checked="false"` here because the page is
+ * generated server-side with no knowledge of the visitor's stored
+ * preference; `themeInitScript` (in `<head>`) and `themeToggleScript`
+ * (at the end of `<body>`) reconcile the real state before/after paint.
+ */
+function renderThemeToggle(compact: boolean): string {
+  const icons =
+    `<span class="${compact ? 'icon-emoji ' : 'theme-toggle-icon '}theme-toggle-icon-sun" aria-hidden="true">☀️</span>` +
+    `<span class="${compact ? 'icon-emoji ' : 'theme-toggle-icon '}theme-toggle-icon-moon" aria-hidden="true">🌙</span>`;
+  if (compact) {
+    return (
+      `<button type="button" class="icon-link theme-toggle-compact" data-cw-theme-toggle role="switch" aria-checked="false" aria-label="Switch to dark theme" title="Switch theme">` +
+      icons +
+      `<span class="visually-hidden">Switch theme</span></button>`
+    );
+  }
+  return (
+    `<button type="button" class="theme-toggle" data-cw-theme-toggle role="switch" aria-checked="false" aria-label="Switch to dark theme">` +
+    icons +
+    `<span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span></button>`
+  );
+}
+
+/**
  * Renders the shared `<header class="nav">` for every worker-rendered page.
  *
  * `current` marks which nav item is "this page" — bold + underline in the
@@ -61,7 +103,8 @@ function renderCompactNavLink(link: ChromeNavLink, current: ChromeCurrentPage): 
  * The CTA is responsive by CSS alone (see `chromeStyles`): "Open Studio" at
  * ≥1024px, "Studio" at 721–1023px, and — at ≤720px — the CTA text button
  * disappears in favour of the 🎛️ accent icon button already living in the
- * compact icon row alongside the other icons.
+ * compact icon row alongside the other icons. The theme toggle sits
+ * immediately before the CTA in both the full nav and the compact row.
  */
 export function renderHeader(current: ChromeCurrentPage): string {
   const fullLinksMarkup = navLinks.map((link) => renderFullNavLink(link, current)).join('') + `<a href="${githubHref}">GitHub</a>`;
@@ -73,12 +116,44 @@ export function renderHeader(current: ChromeCurrentPage): string {
     `<nav class="links" aria-label="Primary navigation">${fullLinksMarkup}</nav>` +
     `<nav class="links-compact" aria-label="Primary navigation">${compactLinksMarkup}` +
     `<a class="icon-link icon-svg" href="${githubHref}" aria-label="GitHub" title="GitHub"><span aria-hidden="true">${githubIconSvg}</span><span class="visually-hidden">GitHub</span></a>` +
+    renderThemeToggle(true) +
     `<a class="icon-link icon-cta" href="/studio/" aria-label="Open Studio" title="Open Studio"><span class="icon-emoji" aria-hidden="true">🎛️</span><span class="visually-hidden">Open Studio</span></a>` +
     `</nav>` +
+    renderThemeToggle(false) +
     `<a class="button primary" href="/studio/"><span class="cta-label-full">Open Studio</span><span class="cta-label-short">Studio</span></a>` +
     `</div></header>`
   );
 }
+
+// Wires every `[data-cw-theme-toggle]` button on the page: syncs its
+// `aria-checked`/`aria-label` to the current `data-theme` on load (the
+// server has no idea what the visitor's stored preference is, so the
+// markup always starts at `aria-checked="false"` — this reconciles it),
+// then flips `data-theme`, persists to `localStorage['cw-theme']` and
+// re-syncs on click. Appended once, at the end of `renderFooter`'s markup,
+// so every page gets it for free without a per-page script tag — the
+// literal 'cw-theme' key also doubles as a cheap smoke-test marker that
+// the theme wiring shipped on a given page.
+const themeToggleScript = `<script>(function(){
+  function sync(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var toggles = document.querySelectorAll('[data-cw-theme-toggle]');
+    for (var i = 0; i < toggles.length; i++) {
+      toggles[i].setAttribute('aria-checked', dark ? 'true' : 'false');
+      toggles[i].setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+    }
+  }
+  sync();
+  var toggles = document.querySelectorAll('[data-cw-theme-toggle]');
+  for (var i = 0; i < toggles.length; i++) {
+    toggles[i].addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('cw-theme', next); } catch (e) {}
+      sync();
+    });
+  }
+})();</script>`;
 
 /**
  * Renders the shared `<footer>` for every worker-rendered page — the
@@ -87,7 +162,9 @@ export function renderHeader(current: ChromeCurrentPage): string {
  * footer content of their own (e.g. /recipes' provenance note) pass it as
  * `extraFooterHtml`; it renders in its own row beneath the shared block
  * rather than being spliced into it, so the shared block itself stays
- * identical byte-for-byte across every page.
+ * identical byte-for-byte across every page. Carries `themeToggleScript`
+ * (see that constant) after the markup — every page calls this once, near
+ * the end of `<body>`, so the toggle wiring ships everywhere for free.
  */
 export function renderFooter(extraFooterHtml?: string): string {
   const extraMarkup = extraFooterHtml ? `<div class="wrap foot-extra">${extraFooterHtml}</div>` : '';
@@ -101,9 +178,48 @@ export function renderFooter(extraFooterHtml?: string): string {
     `<a href="https://specscore.md/">Developed spec-first with SpecScore</a>` +
     `<a href="https://sneat.dev/">Explore sneat.dev →</a>` +
     `</nav>` +
-    `</div>${extraMarkup}</footer>`
+    `</div>${extraMarkup}</footer>` +
+    themeToggleScript
   );
 }
+
+/**
+ * Tiny, dependency-free, render-blocking script every page inlines in its
+ * own `<head>` (right after `<meta name="color-scheme">`) — NOT here in
+ * `chromeStyles`, because `chromeStyles` lands inside `<body>`'s markup
+ * (via `renderHeader`/`renderFooter`'s callers), too late to avoid a flash
+ * of the wrong theme.
+ *
+ * Resolution order: `localStorage['cw-theme']` ('light' | 'dark') → live
+ * `prefers-color-scheme` → LIGHT as the final fallback (the designed
+ * baseline; also what a visitor with no `matchMedia` support or no OS
+ * preference gets). Stamps `data-theme` on `<html>` before the browser
+ * paints `<body>`.
+ *
+ * While there is NO stored choice, a `prefers-color-scheme` change
+ * listener keeps the page following a live OS theme switch (e.g. macOS's
+ * auto dark-at-sunset) — the listener re-checks `localStorage` on every
+ * fire, so the instant the visitor clicks the toggle (`themeToggleScript`
+ * persists the click), it stops applying without needing to be torn down.
+ * The click-driven half of the toggle (persisting a new choice, keeping
+ * `aria-checked` in sync) is `themeToggleScript`, appended once by
+ * `renderFooter` — see that constant's own comment.
+ */
+export const themeInitScript = `<script>(function(){
+  try {
+    var mq = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
+    function apply(dark) { document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light'); }
+    var stored = localStorage.getItem('cw-theme');
+    apply(stored ? stored === 'dark' : !!(mq && mq.matches));
+    if (mq && !stored) {
+      var follow = function (e) {
+        if (!localStorage.getItem('cw-theme')) { apply(e.matches); }
+      };
+      if (mq.addEventListener) { mq.addEventListener('change', follow); }
+      else if (mq.addListener) { mq.addListener(follow); }
+    }
+  } catch (e) {}
+})();</script>`;
 
 /**
  * Shared header/footer/nav CSS, meant to be interpolated into every page's
@@ -112,24 +228,46 @@ export function renderFooter(extraFooterHtml?: string): string {
  * styles stay page-local — they're used well beyond the header and footer,
  * so duplicating a handful of shared primitives per page is the right
  * trade-off against pulling a whole design system through this module).
+ * Also carries the single shared `[data-theme="dark"]` token override — see
+ * this file's header comment.
  */
 export const chromeStyles = `
-      .nav { position:sticky; z-index:10; top:0; border-bottom:1px solid rgba(229,234,240,.9); background:rgba(252,252,253,.9); backdrop-filter:blur(16px); }
+      .nav { position:sticky; z-index:10; top:0; border-bottom:1px solid var(--nav-border); background:var(--nav-bg); backdrop-filter:blur(16px); }
       .nav > .wrap { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:1.2rem; }
       .brand { color:var(--ink); font-size:1.1rem; font-weight:730; letter-spacing:-.05em; text-decoration:none; } .brand small { margin-left:.45rem; color:var(--soft); font-size:.65rem; font-weight:650; letter-spacing:.02em; }
-      .links { display:flex; align-items:center; gap:1.35rem; color:#4e5c70; font-size:.85rem; } .links a { text-decoration:none; } .links a:hover { color:var(--ink); }
-      .links a.current { color:var(--ink); font-weight:800; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:.28em; }
-      .links-compact { display:none; align-items:center; gap:.2rem; color:#4e5c70; }
-      .icon-link { position:relative; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:.55rem; color:#4e5c70; text-decoration:none; } .icon-link:hover { color:var(--ink); background:#f2f5f8; } .icon-emoji { font-size:1.05rem; line-height:1; } .icon-svg svg { display:block; width:18px; height:18px; }
-      .icon-link.current { color:var(--ink); }
-      .icon-link.current::after { content:""; position:absolute; left:50%; bottom:.3rem; width:.3rem; height:.3rem; border-radius:50%; background:var(--mint-ink); transform:translateX(-50%); }
-      .icon-cta { margin-left:.15rem; color:#06271d; background:var(--mint); box-shadow:0 4px 10px rgba(80,203,160,.24); } .icon-cta:hover { color:#06271d; background:var(--mint); filter:brightness(1.05); }
+      .links { display:flex; align-items:center; gap:1.35rem; color:var(--faint); font-size:.85rem; } .links a { text-decoration:none; } .links a:hover { color:var(--ink); }
+      .links a.current { color:var(--accent-ink); font-weight:800; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:.28em; }
+      .links-compact { display:none; align-items:center; gap:.2rem; color:var(--faint); }
+      .icon-link { position:relative; display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:.55rem; color:var(--faint); text-decoration:none; background:transparent; border:0; cursor:pointer; font:inherit; } .icon-link:hover { color:var(--ink); background:var(--nav-hover-bg); } .icon-emoji { font-size:1.05rem; line-height:1; } .icon-svg svg { display:block; width:18px; height:18px; }
+      .icon-link.current { color:var(--accent-ink); }
+      .icon-link.current::after { content:""; position:absolute; left:50%; bottom:.3rem; width:.3rem; height:.3rem; border-radius:50%; background:var(--accent-ink); transform:translateX(-50%); }
+      .icon-cta { margin-left:.15rem; color:#fff; background:var(--accent); box-shadow:0 4px 10px rgba(15,118,110,.24); } .icon-cta:hover { color:#fff; background:var(--accent-hover); filter:brightness(1.05); }
       .icon-cta.current::after { display:none; }
       .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
       .cta-label-short { display:none; }
       @media (max-width:1023px) { .cta-label-full { display:none; } .cta-label-short { display:inline; } }
-      footer { padding:2.5rem 0 3rem; color:#718094; font-size:.78rem; } footer .wrap { display:flex; flex-wrap:wrap; justify-content:space-between; gap:1rem; border-top:1px solid var(--line); padding-top:1.45rem; } footer a { color:var(--soft); text-decoration:none; }
+      .theme-toggle { display:inline-flex; align-items:center; gap:.4rem; margin-right:.4rem; padding:.32rem .62rem; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--soft); font:600 .72rem/1 inherit; cursor:pointer; }
+      .theme-toggle:hover { color:var(--ink); }
+      .theme-toggle:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+      .theme-toggle-icon { font-size:.78rem; line-height:1; }
+      .theme-toggle-icon-moon { display:none; }
+      [data-theme="dark"] .theme-toggle-icon-sun { display:none; }
+      [data-theme="dark"] .theme-toggle-icon-moon { display:inline; }
+      .theme-toggle-track { position:relative; width:1.65rem; height:.95rem; border-radius:999px; background:var(--line); }
+      .theme-toggle-thumb { position:absolute; left:.13rem; top:.13rem; width:.57rem; height:.57rem; border-radius:50%; background:var(--accent); transition:transform .18s ease; }
+      [data-theme="dark"] .theme-toggle-thumb { transform:translateX(.68rem); }
+      .theme-toggle-compact .theme-toggle-icon-moon { display:none; }
+      [data-theme="dark"] .theme-toggle-compact .theme-toggle-icon-sun { display:none; }
+      [data-theme="dark"] .theme-toggle-compact .theme-toggle-icon-moon { display:inline; }
+      footer { padding:2.5rem 0 3rem; color:var(--faint); font-size:.78rem; } footer .wrap { display:flex; flex-wrap:wrap; justify-content:space-between; gap:1rem; border-top:1px solid var(--line); padding-top:1.45rem; } footer a { color:var(--soft); text-decoration:none; }
       .foot-links { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem 1.1rem; }
-      footer .foot-extra { margin-top:0; padding-top:.85rem; border-top:none; color:#8290a4; font-size:.76rem; }
-      @media (max-width:720px) { .nav > .wrap { min-height:64px; } .links { display:none; } .links-compact { display:flex; } .nav > .wrap > .button.primary { display:none; } .brand small { display:none; } footer .wrap { align-items:flex-start; flex-direction:column; } }
+      footer .foot-extra { margin-top:0; padding-top:.85rem; border-top:none; color:var(--faint); font-size:.76rem; }
+      @media (max-width:720px) { .nav > .wrap { min-height:64px; } .links { display:none; } .links-compact { display:flex; } .nav > .wrap > .button.primary { display:none; } .nav > .wrap > .theme-toggle { display:none; } .brand small { display:none; } footer .wrap { align-items:flex-start; flex-direction:column; } }
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --ink:#eef2f8; --soft:#a9b6c9; --faint:#7c8aa0; --line:rgba(255,255,255,.12); --canvas:#0b1220; --card:#101a29; --card-soft:#0d1622;
+        --blue:#6ea8f2; --code-bg:rgba(255,255,255,.08); --code-ink:#d7e2f0;
+        --accent-ink:#5eead4; --accent-tint-bg:rgba(15,118,110,.18); --accent-tint-border:rgba(94,234,212,.35); --accent-tint-ink:#5eead4;
+        --nav-bg:rgba(11,18,32,.85); --nav-border:rgba(255,255,255,.08); --nav-hover-bg:rgba(255,255,255,.08);
+      }
 `;

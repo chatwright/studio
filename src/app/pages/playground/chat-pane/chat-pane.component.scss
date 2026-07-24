@@ -140,7 +140,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--cw-mint);
+  color: var(--cw-link);
   font-size: 0.72rem;
 }
 
@@ -195,7 +195,7 @@
   --cw-muted-strong: var(--tg-muted-strong);
   --cw-muted: var(--tg-muted);
   --cw-blue: var(--tg-accent);
-  --cw-mint: var(--tg-selected);
+  --cw-link: var(--tg-selected);
   --cw-green: var(--tg-selected);
   --cw-code-bg: color-mix(in srgb, var(--tg-line) 55%, transparent);
   --cw-shadow: rgba(0, 0, 0, 0.28);
@@ -362,8 +362,8 @@
     --p-avatar-color: var(--cw-blue);
   }
   &.user {
-    --p-avatar-background: color-mix(in srgb, var(--cw-mint) 18%, transparent);
-    --p-avatar-color: var(--cw-mint);
+    --p-avatar-background: color-mix(in srgb, var(--cw-link) 18%, transparent);
+    --p-avatar-color: var(--cw-link);
   }
 }
 
@@ -517,7 +517,7 @@
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    color: var(--cw-mint);
+    color: var(--cw-link);
   }
   &:disabled {
     opacity: 0.6;
