@@ -13,16 +13,17 @@ import { FirebaseOptions } from 'firebase/app';
  * not hiding this object), so committing it here is the same posture every
  * other Sneat app already ships.
  *
- * `authDomain` deliberately does NOT copy sneat-app's `'sneat.app'` value.
- * sneat-apps' own migration notes (`docs/superpowers/plans/2026-07-06-sneat-
- * app-cloudflare-landing.md`, "Root-mounting the app on a CF Worker breaks
- * Google OAuth redirect sign-in unless the Firebase auth handler is served
- * natively") record that a Cloudflare-Worker-hosted app must pin `authDomain`
- * to the project's own Firebase Hosting domain
- * (`sneat-eur3-1.firebaseapp.com`), which serves `/__/auth/handler` out of
- * the box — `chatwright.dev` is exactly this same shape (CF Worker root-
- * mount, see wrangler.jsonc), so it inherits that fix rather than
- * rediscovering it. See this file's sibling `auth.service.ts` doc comment
+ * `authDomain` is `'sneat.app'` — the same value every shipped Sneat app
+ * uses (see assetus' `frontend/apps/assetus-app/src/environments
+ * /environment.ts` and sneat-apps commit `5e012f81c`), NOT the project's raw
+ * `sneat-eur3-1.firebaseapp.com` Firebase Hosting domain. The `*.firebaseapp
+ * .com` domain only serves `/__/auth/handler`; it 404s on
+ * `/__/firebase/init.json`, which the Firebase Auth SDK's popup handler
+ * fetches to finalize `signInWithPopup` — pointing `authDomain` there breaks
+ * sign-in outright. `sneat.app` serves both, matching every other Sneat app
+ * (including CF-Worker-root-mounted ones), so Chatwright Cloud inherits the
+ * same working configuration rather than the superseded plan this file
+ * previously cited. See this file's sibling `auth.service.ts` doc comment
  * for the sign-in flow this enables.
  *
  * ⚠️ For `signInWithPopup` to succeed at all, `chatwright.dev` (and
@@ -37,6 +38,6 @@ export const SNEAT_FIREBASE_CONFIG: FirebaseOptions = {
   projectId: 'sneat-eur3-1',
   appId: '1:588648831063:web:303af7e0c5f8a7b10d6b12',
   apiKey: 'AIzaSyCeQu1WC182yD0VHrRm4nHUxVf27fY-MLQ',
-  authDomain: 'sneat-eur3-1.firebaseapp.com',
+  authDomain: 'sneat.app',
   messagingSenderId: '588648831063'
 };

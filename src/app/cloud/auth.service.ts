@@ -24,9 +24,9 @@ export interface SneatAccount {
 
 /**
  * "Sign in with a Sneat account" over the plain `firebase/auth` SDK, reusing
- * the SAME Firebase project every other Sneat app signs into
- * (`sneat-eur3-1` — see `firebase.config.ts`'s doc comment for why
- * `authDomain` differs from sneat-app's own value) rather than standing up a
+ * the SAME Firebase project every other Sneat app signs into (`sneat-eur3-1`,
+ * with the same `authDomain` — `'sneat.app'` — every shipped Sneat app uses;
+ * see `firebase.config.ts`'s doc comment) rather than standing up a
  * Chatwright-specific identity. Google is the only provider wired today
  * (`signIn()`); the SDK supports adding more later without touching this
  * service's public surface.

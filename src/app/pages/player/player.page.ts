@@ -9,6 +9,7 @@ import { parseBundleText } from '../../player/model/parse-bundle';
 import { EmbedParams, parseEmbedParams } from '../../player/embed-params';
 import { PlayerComponent } from '../../player/player.component';
 import { BUNDLED_SAMPLES, BundledSample } from '../../player/samples';
+import { AuthService } from '../../cloud/auth.service';
 import { RecordingsService } from '../../cloud/recordings.service';
 
 /**
@@ -53,6 +54,7 @@ export class PlayerPage {
   readonly samples: BundledSample[] = BUNDLED_SAMPLES;
 
   private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthService);
   private readonly recordings = inject(RecordingsService);
   private readonly queryParamMap = toSignal(this.route.queryParamMap, {
     initialValue: this.route.snapshot.queryParamMap
@@ -65,7 +67,15 @@ export class PlayerPage {
    *  below — without reactively depending on `fileName`/`bundle`, which would
    *  otherwise fight a visitor's own manual drop of a different file. */
   private lastAutoSample: string | null = null;
-  /** Same de-dupe idea as `lastAutoSample`, for the `?cloud=` handoff below. */
+  /**
+   * Same de-dupe idea as `lastAutoSample`, for the `?cloud=` handoff below —
+   * but only ever set on a SUCCESSFUL `loadFromCloud`, never before it
+   * starts. Marking it consumed up front (before the async load settles)
+   * would permanently block retrying a load that failed (e.g. a transient
+   * network error): the id would already equal `lastAutoCloudID`, so the
+   * effect would never fire again for it even after a manual reload of
+   * `queryParamMap`/state.
+   */
   private lastAutoCloudID: string | null = null;
 
   constructor() {
@@ -82,13 +92,20 @@ export class PlayerPage {
     });
 
     effect(() => {
+      // Bail while Firebase's async session restore is still in flight —
+      // same reasoning as recordings.page.ts's refresh effect: reading
+      // queryParamMap and kicking off `loadFromCloud` before `initializing()`
+      // settles races that restore (e.g. `getRecording` would run before a
+      // just-restored session's ID token is available).
+      if (this.auth.initializing()) {
+        return;
+      }
       const params = this.queryParamMap();
       const cloudID = params.get('cloud');
       const spaceID = params.get('spaceID');
       if (!cloudID || !spaceID || cloudID === this.lastAutoCloudID) {
         return;
       }
-      this.lastAutoCloudID = cloudID;
       void this.loadFromCloud(spaceID, cloudID);
     });
   }
@@ -113,8 +130,12 @@ export class PlayerPage {
             this.error.set(result.message);
             break;
         }
+        // Deliberately NOT marking `lastAutoCloudID` here — a failed load
+        // must be retryable on the next effect run (e.g. after the visitor
+        // signs in and reloads), not permanently skipped.
         return;
       }
+      this.lastAutoCloudID = id;
       this.applyText(JSON.stringify(result.data.bundle), `${result.data.title || 'recording'}.chatwright.json`);
     } finally {
       this.loadingCloudRecording.set(false);

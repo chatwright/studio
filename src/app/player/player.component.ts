@@ -60,7 +60,18 @@ import { SaveToSpaceComponent } from '../cloud/components/save-to-space/save-to-
 })
 export class PlayerComponent {
   readonly bundle = input<Bundle | null>(null);
-  /** The loaded bundle's exact source text — see `SaveToSpaceComponent`/`RecordingsService.saveRecording`'s doc comments on why "Save to my space" needs this rather than re-serialising `bundle()`. `null` for a cloud-loaded recording that hasn't round-tripped through a local file (still fine — `SaveToSpaceComponent` just disables/no-ops without it). */
+  /**
+   * The loaded bundle's exact source text — see
+   * `SaveToSpaceComponent`/`RecordingsService.saveRecording`'s doc comments
+   * on why "Save to my space" needs this rather than re-serialising
+   * `bundle()`. For a locally dropped/picked/sample file this is the exact
+   * on-disk bytes. For a cloud-loaded recording (`?cloud=` handoff, see
+   * `player.page.ts`'s `loadFromCloud`) it is NOT null and NOT those exact
+   * bytes either — it's `JSON.stringify(result.data.bundle)`, a re-serialised
+   * copy of the parsed response, so re-saving a cloud-loaded recording
+   * round-trips through parse+re-serialise rather than passing the server's
+   * original bytes straight through (known limitation, not yet fixed).
+   */
   readonly bundleText = input<string | null>(null);
   /** Suggested file name for the "download to disk instead" fallback in the sell-at-the-limit panel. */
   readonly sourceFileName = input<string | null>(null);

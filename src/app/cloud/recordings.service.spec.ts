@@ -1,6 +1,7 @@
+import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AuthService } from './auth.service';
+import { AuthService, SneatAccount } from './auth.service';
 import { RECORDINGS_API } from './api.config';
 import { RecordingsService } from './recordings.service';
 import { GetRecordingResponse, ListRecordingsResponse, SaveRecordingResponse } from './recordings.types';
@@ -28,12 +29,31 @@ class MemoryStorage implements Storage {
   }
 }
 
-/** A duck-typed `AuthService` stand-in — only `account`/`getIdToken` are read by `RecordingsService`. */
-function fakeAuth(uid: string | null, token: string | null): AuthService {
+function testAccount(uid: string): SneatAccount {
+  return { uid, displayName: 'Test user', email: null, photoURL: null, initials: 'TU' };
+}
+
+/**
+ * A duck-typed `AuthService` stand-in — only `account`/`getIdToken` are read
+ * by `RecordingsService`. `account` is backed by a REAL Angular `signal()`
+ * (not a plain closure) so it behaves exactly like the production
+ * `AuthService.account` for `RecordingsService`'s `computed(spaceID)` —
+ * `computed()` only invalidates on genuine tracked-signal reads, so a plain
+ * function standing in for `account` would silently never re-evaluate,
+ * masking the very bug `setUid` exists to reproduce. `setUid` lets a test
+ * simulate an in-tab account switch (sign out + sign in as someone else)
+ * against the SAME `RecordingsService` instance — what actually happens in
+ * the app, since it's a `providedIn: 'root'` singleton.
+ */
+function fakeAuth(uid: string | null, token: string | null): AuthService & { setUid(uid: string | null): void } {
+  const account = signal<SneatAccount | null>(uid ? testAccount(uid) : null);
   return {
-    account: () => (uid ? { uid, displayName: 'Test user', email: null, photoURL: null, initials: 'TU' } : null),
-    getIdToken: async () => token
-  } as unknown as AuthService;
+    account,
+    getIdToken: async () => token,
+    setUid: (nextUid: string | null) => {
+      account.set(nextUid ? testAccount(nextUid) : null);
+    }
+  } as unknown as AuthService & { setUid(uid: string | null): void };
 }
 
 function jsonResponse(status: number, body: unknown): Response {
@@ -214,6 +234,34 @@ describe('RecordingsService', () => {
       localStorage.setItem('chatwright.cloud.spaceID.u1', 'space-42');
       const service = new RecordingsService(fakeAuth('u2', 'tok'));
       expect(service.knownSpaceID()).toBeNull();
+    });
+
+    it('does not serve a stale spaceID after an in-tab account switch on the same service instance', () => {
+      // RecordingsService is a `providedIn: 'root'` singleton — it outlives
+      // any one sign-in, so the real bug only shows up when ONE instance
+      // sees a sequence of different uids, not when each uid gets its own
+      // fresh instance (that proves nothing about the cache surviving a
+      // switch).
+      localStorage.setItem('chatwright.cloud.spaceID.u1', 'space-42');
+      const auth = fakeAuth('u1', 'tok');
+      const service = new RecordingsService(auth);
+
+      // u1 signs in first and the service caches u1's remembered spaceID.
+      expect(service.knownSpaceID()).toBe('space-42');
+      expect(service.spaceID()).toBe('space-42');
+
+      // Same tab, same RecordingsService instance — u1 signs out and u2
+      // signs in. u2 has never saved/listed anything, so nothing is
+      // remembered for u2 in localStorage; u1's cached spaceID must NOT
+      // leak through to u2.
+      auth.setUid('u2');
+      expect(service.spaceID()).toBeNull();
+      expect(service.knownSpaceID()).toBeNull();
+
+      // u1 signs back in within the same tab — their spaceID is still
+      // legitimately known (both from the in-memory cache and localStorage).
+      auth.setUid('u1');
+      expect(service.knownSpaceID()).toBe('space-42');
     });
   });
 });

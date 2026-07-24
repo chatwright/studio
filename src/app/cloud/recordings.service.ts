@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 
 import { AuthService } from './auth.service';
 import { RECORDINGS_API } from './api.config';
@@ -42,8 +42,22 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class RecordingsService {
-  /** The last personal `spaceID` this browser has seen for the signed-in user — `null` until a save/list reveals one. Mirrors `localStorage`; see `knownSpaceID`/`rememberSpaceID`. */
-  readonly spaceID = signal<string | null>(null);
+  /**
+   * The in-memory cache backing `spaceID`/`knownSpaceID`, keyed to the uid it
+   * was cached for. `RecordingsService` is a root singleton (`providedIn:
+   * 'root'`) that outlives any one sign-in — a plain `signal<string | null>`
+   * with no uid attached would keep serving the PREVIOUS account's spaceID
+   * after an in-tab account switch (sign out + sign in as someone else,
+   * still the same service instance). `spaceID` below masks this cache back
+   * to `null` whenever the current uid no longer matches.
+   */
+  private readonly cachedSpaceID = signal<{ uid: string; spaceID: string } | null>(null);
+
+  /** The last personal `spaceID` this browser has seen for the CURRENTLY signed-in user — `null` until a save/list reveals one, or once the signed-in uid no longer matches who it was cached for (see `cachedSpaceID`). Mirrors `localStorage`; see `knownSpaceID`/`rememberSpaceID`. */
+  readonly spaceID = computed(() => {
+    const cached = this.cachedSpaceID();
+    return cached && cached.uid === this.currentUID() ? cached.spaceID : null;
+  });
 
   constructor(private readonly auth: AuthService) {}
 
@@ -120,17 +134,19 @@ export class RecordingsService {
     }
     const stored = readStorage(storageKey(uid));
     if (stored) {
-      this.spaceID.set(stored);
+      this.cachedSpaceID.set({ uid, spaceID: stored });
     }
     return stored;
   }
 
   private rememberSpaceID(spaceID: string): void {
-    this.spaceID.set(spaceID);
     const uid = this.currentUID();
-    if (uid) {
-      writeStorage(storageKey(uid), spaceID);
+    if (!uid) {
+      // No signed-in uid to key the cache to — nothing safe to remember.
+      return;
     }
+    this.cachedSpaceID.set({ uid, spaceID });
+    writeStorage(storageKey(uid), spaceID);
   }
 
   private currentUID(): string | null {
