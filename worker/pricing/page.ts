@@ -146,6 +146,7 @@ const checkoutScript = `<script>(function(){
       try { checkout.destroy(); } catch (e) {}
       checkout = null;
     }
+    busy = false;
     panel.hidden = true;
     fallback.hidden = true;
     mount.hidden = true;
@@ -191,7 +192,11 @@ const checkoutScript = `<script>(function(){
       .catch(function () {
         showFallback(planLabel);
       })
-      .then(function () {
+      // .finally, not .then: if anything inside the fallback path itself
+      // throws, busy must still clear — a stuck busy flag silently swallows
+      // every later buy click while a stale panel (wrong plan title) stays
+      // on screen.
+      .finally(function () {
         setBusy(false);
       });
   }
