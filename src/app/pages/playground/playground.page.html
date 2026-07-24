@@ -5,7 +5,7 @@
       <h1>Chat with a real bot, live.</h1>
       @if (activeTab() === 'compare') {
         <p>
-          Same conversation. Two platforms. Watch the UX differ. One composer below drives two independent
+          Same conversation. Two platforms. Watch the UX differ. One message bar below drives two independent
           <code>@chatwright/runtime</code> <code>Session</code>s — greetbot on Telegram and greetbot on WhatsApp — each
           live over <code>postMessage</code>, not a recording.
         </p>
@@ -45,24 +45,24 @@
     @case ('compare') {
       <div class="compare-frame surface">
         <div class="compare-panes">
-          <cw-chat-pane #comparePaneTelegram platform="telegram" [showComposer]="false" [compact]="true" />
+          <cw-chat-pane #comparePaneTelegram platform="telegram" [showMessageBar]="false" [compact]="true" />
           <div class="compare-divider" aria-hidden="true"></div>
-          <cw-chat-pane #comparePaneWhatsapp platform="whatsapp" [showComposer]="false" [compact]="true" />
+          <cw-chat-pane #comparePaneWhatsapp platform="whatsapp" [showMessageBar]="false" [compact]="true" />
         </div>
 
-        <div class="compare-composer-surface" [class.pane-light]="store.telegramTheme() === 'light'">
+        <div class="compare-message-bar-surface" [class.pane-light]="store.telegramTheme() === 'light'">
           @if (compareBothConnected()) {
             @if (compareHasContent()) {
-              <cw-chat-composer #compareComposer actor="Visitor" platform="compare" (messageSent)="onCompareSend($event)" />
+              <cw-message-bar #compareMessageBar actor="Visitor" platform="compare" (messageSent)="onCompareSend($event)" />
             } @else {
               <!-- Founder tweak: Compare mode's Start button — was missing entirely; starts BOTH panes via the shared fan-out. -->
-              <div class="composer-slot start-slot">
+              <div class="message-bar-slot start-slot">
                 <button type="button" class="start-button" (click)="startCompareConversation()">▶ Start the conversation</button>
                 <p class="quiet small">Sends <code>/start</code> to both panes</p>
               </div>
             }
           } @else {
-            <div class="composer-placeholder">{{ compareStatusNote() }}</div>
+            <div class="message-bar-placeholder">{{ compareStatusNote() }}</div>
           }
         </div>
       </div>

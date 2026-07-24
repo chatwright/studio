@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, v
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { DemoStore } from '../../demo.store';
-import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
+import { MessageBarComponent } from '../../components/message-bar/message-bar.component';
 import { ChatPaneComponent } from './chat-pane/chat-pane.component';
 import { PlaygroundTab, resolveInitialTab } from './default-tab';
 
@@ -19,11 +19,11 @@ export type { PlaygroundTab };
  * `./chat-pane/chat-pane.component.ts` (`ChatPaneComponent`), one live
  * platform pane; this page is the thin shell around it: a platform tab
  * strip (Telegram | WhatsApp | ⚡ Compare) plus, in Compare mode, the one
- * shared composer that fans a submitted message out to both panes' own
+ * shared message bar that fans a submitted message out to both panes' own
  * sessions at once.
  *
  * @remarks
- * **Why one composer, two sessions, not one session, two platforms:** the
+ * **Why one message bar, two sessions, not one session, two platforms:** the
  * runtime's `Session` is deliberately single-codec (see
  * `@chatwright/runtime`'s `Session` doc comment) — a `PlatformCodec` is the
  * only thing allowed to know a platform's wire shape, and mixing two into
@@ -47,7 +47,7 @@ export type { PlaygroundTab };
  */
 @Component({
   selector: 'cw-playground-page',
-  imports: [ChatComposerComponent, ChatPaneComponent],
+  imports: [MessageBarComponent, ChatPaneComponent],
   templateUrl: './playground.page.html',
   styleUrl: './playground.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -71,24 +71,24 @@ export class PlaygroundPage {
     resolveInitialTab(this.route.snapshot.queryParamMap.get('tab'), isWideViewport())
   );
 
-  // Single-platform tabs mount one self-contained pane (own composer,
-  // showComposer defaults true) — this page needs no handle on it at all.
+  // Single-platform tabs mount one self-contained pane (own message bar,
+  // showMessageBar defaults true) — this page needs no handle on it at all.
   //
-  // Compare mode mounts two panes with showComposer=false and drives both
-  // from the shared composer below via these two refs. Angular's viewChild
+  // Compare mode mounts two panes with showMessageBar=false and drives both
+  // from the shared message bar below via these two refs. Angular's viewChild
   // resolves the currently-rendered template reference regardless of which
   // `@switch`/`@if` branch put it there — only one branch is ever active at
   // a time, so there is never an ambiguity between them.
   private readonly comparePaneTelegram = viewChild<ChatPaneComponent>('comparePaneTelegram');
   private readonly comparePaneWhatsapp = viewChild<ChatPaneComponent>('comparePaneWhatsapp');
-  /** Only resolves once both panes are connected AND the conversation has started — see `compare-composer-surface` in the template. */
-  private readonly compareComposer = viewChild<ChatComposerComponent>('compareComposer');
+  /** Only resolves once both panes are connected AND the conversation has started — see `compare-message-bar-surface` in the template. */
+  private readonly compareMessageBar = viewChild<MessageBarComponent>('compareMessageBar');
 
   readonly compareBothConnected = computed(
     () => this.comparePaneTelegram()?.status() === 'connected' && this.comparePaneWhatsapp()?.status() === 'connected'
   );
 
-  /** Founder tweak: gates the shared Start button vs. the shared composer in Compare mode's one composer slot — either pane having content means the fan-out already started this conversation. */
+  /** Founder tweak: gates the shared Start button vs. the shared message bar in Compare mode's one message bar slot — either pane having content means the fan-out already started this conversation. */
   readonly compareHasContent = computed(
     () => (this.comparePaneTelegram()?.hasContent() ?? false) || (this.comparePaneWhatsapp()?.hasContent() ?? false)
   );
@@ -97,7 +97,7 @@ export class PlaygroundPage {
     const telegramStatus = this.comparePaneTelegram()?.status() ?? 'handshaking';
     const whatsappStatus = this.comparePaneWhatsapp()?.status() ?? 'handshaking';
     if (telegramStatus === 'error' || whatsappStatus === 'error') {
-      return 'Composer unavailable — a bot never connected.';
+      return 'Message bar unavailable — a bot never connected.';
     }
     if (telegramStatus === 'connected' && whatsappStatus !== 'connected') {
       return 'Telegram connected — waiting on WhatsApp…';
@@ -105,19 +105,19 @@ export class PlaygroundPage {
     if (whatsappStatus === 'connected' && telegramStatus !== 'connected') {
       return 'WhatsApp connected — waiting on Telegram…';
     }
-    return 'Composer opens once both bots connect…';
+    return 'Message bar opens once both bots connect…';
   });
 
   constructor() {
     // Founder tweak: same focus-after-start move as each ChatPaneComponent
-    // makes for its own composer (see that component's constructor) —
-    // Compare mode's shared composer is owned here instead, so it needs its
+    // makes for its own message bar (see that component's constructor) —
+    // Compare mode's shared message bar is owned here instead, so it needs its
     // own copy of the same effect. Reruns automatically once
-    // `compareComposer()` resolves if it wasn't there yet on the tick
+    // `compareMessageBar()` resolves if it wasn't there yet on the tick
     // `compareHasContent()` flipped true, same reasoning as the per-pane one.
     effect(() => {
       if (this.compareHasContent()) {
-        this.compareComposer()?.focus();
+        this.compareMessageBar()?.focus();
       }
     });
   }
@@ -132,7 +132,7 @@ export class PlaygroundPage {
     });
   }
 
-  /** The shared composer's one send fans out to both panes' independent sessions — see this class's doc comment. */
+  /** The shared message bar's one send fans out to both panes' independent sessions — see this class's doc comment. */
   onCompareSend(text: string): void {
     this.comparePaneTelegram()?.submitText(text);
     this.comparePaneWhatsapp()?.submitText(text);

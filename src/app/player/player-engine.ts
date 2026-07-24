@@ -19,8 +19,8 @@ import { Chapter, Step, buildTimeline, chaptersOf } from './engine/timeline';
 export const SPEED_STOPS = [0.2, 0.5, 1, 2, 4] as const;
 export type Speed = (typeof SPEED_STOPS)[number];
 
-/** Live, transient composer-typing state for the compose-and-send primitive. */
-export interface ComposerTyping {
+/** Live, transient message-bar-typing state for the compose-and-send primitive. */
+export interface MessageBarTyping {
   chatId: number;
   actor: string;
   text: string;
@@ -34,7 +34,7 @@ export interface ComposerTyping {
  *   - Pure layer (engine/*.ts): buildTimeline + settledStateAt + derivations.
  *     No Angular, no timers, no animation — a pure function of (run, index).
  *   - This service: signals, the virtual clock, and *transient* animation
- *     state (which step is currently animating, live composer typing).
+ *     state (which step is currently animating, live message bar typing).
  *
  * Settled state is always `settledStateAt(timeline, stepIndex)` — derived
  * purely from the integer index. Animations are decorative overlays keyed off
@@ -68,8 +68,8 @@ export class PlayerEngine implements OnDestroy {
 
   /** The step index whose entrance animation is currently playing (or null). */
   readonly animatingIndex = signal<number | null>(null);
-  /** Live composer typing for a compose-and-send primitive (or null). */
-  readonly composerTyping = signal<ComposerTyping | null>(null);
+  /** Live message bar typing for a compose-and-send primitive (or null). */
+  readonly messageBarTyping = signal<MessageBarTyping | null>(null);
 
   private frameTimer: ReturnType<typeof setTimeout> | null = null;
   private typingRaf: number | null = null;
@@ -356,7 +356,7 @@ export class PlayerEngine implements OnDestroy {
     this.animatingIndex.set(index);
     const step = this._timeline()[index];
     if (step && step.kind === 'journal' && step.animation.primitive === 'compose-and-send') {
-      this.runComposerTyping(step, index);
+      this.runMessageBarTyping(step, index);
     } else {
       this.stopTyping();
     }
@@ -373,7 +373,7 @@ export class PlayerEngine implements OnDestroy {
     return frameDelayMs(Math.abs(curr - prev), this.speed());
   }
 
-  private runComposerTyping(
+  private runMessageBarTyping(
     step: Extract<Step, { kind: 'journal' }>,
     index: number
   ): void {
@@ -388,22 +388,22 @@ export class PlayerEngine implements OnDestroy {
     const perChar = (36 * BASE_TEMPO) / this.speed();
     const budget = Math.min(this.frameDelay(index) * 0.82, Math.max(320, text.length * perChar));
     const start = performance.now();
-    this.composerTyping.set({ chatId: step.chatId, actor, text, chars: 0 });
+    this.messageBarTyping.set({ chatId: step.chatId, actor, text, chars: 0 });
 
     const tick = () => {
       const elapsed = performance.now() - start;
       const ratio = budget <= 0 ? 1 : Math.min(1, elapsed / budget);
       const chars = Math.round(ratio * text.length);
-      const current = this.composerTyping();
+      const current = this.messageBarTyping();
       if (!current) {
         return;
       }
-      this.composerTyping.set({ ...current, chars });
+      this.messageBarTyping.set({ ...current, chars });
       if (ratio < 1) {
         this.typingRaf = requestAnimationFrame(tick);
       } else {
-        // Typed out: the composer clears and the bubble (already settled) lands.
-        this.composerTyping.set(null);
+        // Typed out: the message bar clears and the bubble (already settled) lands.
+        this.messageBarTyping.set(null);
         this.typingRaf = null;
       }
     };
@@ -415,7 +415,7 @@ export class PlayerEngine implements OnDestroy {
       cancelAnimationFrame(this.typingRaf);
       this.typingRaf = null;
     }
-    this.composerTyping.set(null);
+    this.messageBarTyping.set(null);
   }
 
   private clearTimers(): void {

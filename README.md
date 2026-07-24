@@ -66,7 +66,7 @@ All views refer to the same workspace, `greetbot/language-choice` scenario and
 In the Playground, select one of the four Telegram inline language actions. The
 reply text changes in place, its version increments, an “edited” marker appears,
 and a matching `editMessageText` event is added to the trace rail. User messages
-can also be sent through the composer. Hover a trace event for formatted JSON or
+can also be sent through the message bar. Hover a trace event for formatted JSON or
 click it to open the correlated full inspector; message events open directly in
 the rendered representation tab. Reset returns the run to the English v1 state.
 

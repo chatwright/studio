@@ -15,7 +15,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import hljs from 'highlight.js/lib/core';
 import json from 'highlight.js/lib/languages/json';
 
-import { ChatComposerComponent } from '../../components/chat-composer/chat-composer.component';
+import { MessageBarComponent } from '../../components/message-bar/message-bar.component';
 import { PrototypeBannerComponent } from '../../components/prototype-banner/prototype-banner.component';
 import { DemoLanguage, DemoStore, TraceEvent } from '../../demo.store';
 
@@ -59,8 +59,8 @@ interface SentChatMessage {
   imports: [
     AvatarModule,
     ButtonModule,
-    ChatComposerComponent,
     InputTextModule,
+    MessageBarComponent,
     PrototypeBannerComponent,
     RouterLink,
     TagModule,
@@ -73,7 +73,7 @@ interface SentChatMessage {
 export class EmulatorPage {
   readonly store: DemoStore;
   readonly messageCanvas = viewChild<ElementRef<HTMLElement>>('messageCanvas');
-  readonly composer = viewChild(ChatComposerComponent);
+  readonly messageBar = viewChild(MessageBarComponent);
   readonly activeChat = signal<ChatID>('alice-greeter');
   readonly platformPickerOpen = signal(false);
   readonly platformSelectionNotice = signal<string | null>(null);
@@ -270,7 +270,7 @@ export class EmulatorPage {
     this.activeChat.set('alice-greeter');
     this.sentMessages.set({ 'alice-greeter': [], 'bob-reminder': [], 'launch-crew': [] });
     this.sentMessageSequence.set(0);
-    this.composer()?.clear();
+    this.messageBar()?.clear();
     this.platformPickerOpen.set(false);
     this.platformSelectionNotice.set(null);
     this.tracePreview.set(null);

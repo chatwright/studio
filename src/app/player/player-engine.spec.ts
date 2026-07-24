@@ -57,7 +57,7 @@ describe('PlayerEngine — signal-driven transport (no timers)', () => {
     engine.next();
     engine.next();
     expect(engine.animatingIndex()).toBeNull();
-    expect(engine.composerTyping()).toBeNull();
+    expect(engine.messageBarTyping()).toBeNull();
     engine.seekTo(engine.lastIndex());
     expect(engine.animatingIndex()).toBeNull();
     engine.prev();
