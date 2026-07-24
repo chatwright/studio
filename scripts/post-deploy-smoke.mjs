@@ -72,6 +72,11 @@ if (pricingBody.slice(tierGridStart, tierGridEnd).includes('sneat.work/team/#pri
   throw new Error('/pricing tier cards still link out to the sneat.work pricing page');
 }
 
+const billingResponse = await fetchOK('/billing');
+if (!(await billingResponse.text()).includes('id="billing-page"')) {
+  throw new Error('/billing is not the billing holding page');
+}
+
 const checkoutReturnResponse = await fetchOK('/pricing/return');
 const checkoutReturnBody = await checkoutReturnResponse.text();
 if (!checkoutReturnBody.includes('id="checkout-return"')) {
