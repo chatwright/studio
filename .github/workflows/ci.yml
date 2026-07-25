@@ -1,0 +1,68 @@
+name: CI
+
+# Gates pull requests against main: install, unit tests, typecheck and a
+# production build must all pass before a PR is trustworthy to merge.
+# Deliberately does NOT trigger on push to main — deploy.yml already owns
+# that trigger (and deploys), so adding one here would duplicate minutes
+# without adding signal.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Test and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: "11.9.0"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Vendors @chatwright/runtime (scripts/vendor-runtime.mjs) and the
+      # PrimeUI licence stub (scripts/prepare-local-config.mjs). This runner
+      # has no local runtime-ts checkout, so vendor-runtime.mjs falls
+      # through to its shallow clone of chatwright/runtime-ts at the pinned
+      # commit SHA — see that script for why the SHA is pinned rather than
+      # resolved from the branch head at build time.
+      - name: Prepare local config
+        env:
+          PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
+        run: pnpm run prepare:config
+
+      - name: Run unit tests
+        run: pnpm run test
+
+      - name: Typecheck
+        env:
+          PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
+        run: pnpm run typecheck
+
+      # Production build. Note: src/app/pages/emulator/emulator.page.scss
+      # exceeds the anyComponentStyle budget by ~1KB — a pre-existing
+      # warning (present on main too), not an error, so it does not fail
+      # this step. Out of scope to fix here.
+      - name: Production build
+        env:
+          PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
+        run: pnpm run build
