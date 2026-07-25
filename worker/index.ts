@@ -12,6 +12,7 @@ import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
 import { chatwrightMdV1PageDocument } from './formats/chatwright-md/v1/page';
 import chatwrightMdV1Schema from './formats/chatwright-md/v1/schema.json';
+import { quickstartPageDocument } from './quickstart/page';
 import { recipesPageDocument } from './recipes/page';
 import { pricingPageDocument } from './pricing/page';
 import { pricingReturnPageDocument } from './pricing/return-page';
@@ -55,6 +56,11 @@ const runBundleV1SchemaDocument = `${JSON.stringify(runBundleV1Schema, null, 2)}
 const chatwrightMdV1FormatPath = '/formats/chatwright-md/v1';
 const chatwrightMdV1SchemaPath = '/formats/chatwright-md/v1/schema.json';
 const chatwrightMdV1SchemaDocument = `${JSON.stringify(chatwrightMdV1Schema, null, 2)}\n`;
+
+// The /quickstart page — a command walkthrough for `chatwright run`, not a
+// wire-format page (no accompanying schema.json — see
+// worker/quickstart/page.ts's own header comment for why).
+const quickstartPath = '/quickstart';
 
 // The /recipes page — the Chatwright knowledge graph (Jobs, Recipes,
 // Implementations and the federation registry) rendered from a hand-embedded
@@ -166,6 +172,15 @@ export default {
       return new Response(request.method === 'HEAD' ? null : chatwrightMdV1SchemaDocument, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'public, max-age=300'
+        }
+      });
+    }
+
+    if (incomingURL.pathname === quickstartPath || incomingURL.pathname === `${quickstartPath}/`) {
+      return new Response(request.method === 'HEAD' ? null : quickstartPageDocument, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300'
         }
       });
