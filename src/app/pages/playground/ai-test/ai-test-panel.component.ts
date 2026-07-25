@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
@@ -26,7 +28,10 @@ import {
   DEFAULT_SERVER_ADDRESS,
   buildByokProvider,
   buildLocalProvider,
+  byokModelsUrl,
   detectLocalServer,
+  fetchModels,
+  localModelsUrl,
   withStopSignal,
   type ServerHealth
 } from './provider-source';
@@ -34,6 +39,8 @@ import { resolveManifestRun } from './scenario-manifest';
 
 type ScenarioSource = 'greetbot' | 'document';
 type ServerCheckState = 'checking' | 'available' | 'unavailable';
+/** `'idle'` before any fetch attempt; `'empty'`/`'failed'` both mean "keep the free-text field" — split only so Local AI can show an honest "server up, no models" hint BYOK has no equivalent for. */
+type ModelListState = 'idle' | 'loading' | 'loaded' | 'empty' | 'failed';
 
 /**
  * The "AI test" tab's control panel: the provider-mode selector (BYOK /
@@ -54,7 +61,7 @@ type ServerCheckState = 'checking' | 'available' | 'unavailable';
  */
 @Component({
   selector: 'cw-ai-test-panel',
-  imports: [ButtonModule, InputTextModule, ProgressBarModule, TagModule, TooltipModule],
+  imports: [ButtonModule, FormsModule, InputTextModule, ProgressBarModule, SelectModule, TagModule, TooltipModule],
   providers: [AiRunnerService],
   templateUrl: './ai-test-panel.component.html',
   styleUrl: './ai-test-panel.component.scss',
@@ -81,6 +88,17 @@ export class AiTestPanelComponent {
   readonly serverHealth = signal<ServerHealth | null>(null);
   readonly apiKeyVisible = signal(false);
   readonly preflightError = signal<string | null>(null);
+
+  /** Local AI's model list — auto-loaded the moment `serverCheck()` turns `'available'` (see the constructor's effect). */
+  readonly localModelsState = signal<ModelListState>('idle');
+  /** Plain `string[]` (not `readonly`) — PrimeNG's `p-select` `[options]` input is typed `any[]`. */
+  readonly localModels = signal<string[]>([]);
+  /** BYOK's model list — loaded only on demand, via the "Load models" affordance (`loadByokModels()`); never blocks Run. */
+  readonly byokModelsState = signal<ModelListState>('idle');
+  readonly byokModels = signal<string[]>([]);
+
+  readonly showLocalModelDropdown = computed(() => this.localModelsState() === 'loaded' && this.localModels().length > 0);
+  readonly showByokModelDropdown = computed(() => this.byokModelsState() === 'loaded' && this.byokModels().length > 0);
 
   /** The model label attached to the run bundle's provider provenance — set at the moment a run starts, so a later settings edit never rewrites a past run's own report. */
   private lastRunModelLabel = signal<string | null>(null);
@@ -130,6 +148,9 @@ export class AiTestPanelComponent {
 
   onByokBaseURLChange(event: Event): void {
     this.store.setByok({ baseURL: (event.target as HTMLInputElement).value });
+    // A previously-loaded model list belongs to the OLD base URL — never leave it showing against a different endpoint.
+    this.byokModelsState.set('idle');
+    this.byokModels.set([]);
   }
 
   onByokModelChange(event: Event): void {
@@ -140,8 +161,35 @@ export class AiTestPanelComponent {
     this.store.setByok({ apiKey: (event.target as HTMLInputElement).value });
   }
 
+  onByokModelSelected(model: string): void {
+    this.store.setByok({ model });
+  }
+
   onLocalModelChange(event: Event): void {
     this.store.setLocal({ model: (event.target as HTMLInputElement).value });
+  }
+
+  onLocalModelSelected(model: string): void {
+    this.store.setLocal({ model });
+  }
+
+  /** Best-effort, on-demand for BYOK (arbitrary OpenAI-compatible endpoints commonly block CORS on `/models`) — never blocks Run either way. */
+  async loadByokModels(): Promise<void> {
+    const baseURL = this.store.byokBaseURL().trim();
+    if (!baseURL) {
+      this.byokModelsState.set('failed');
+      this.byokModels.set([]);
+      return;
+    }
+    this.byokModelsState.set('loading');
+    const models = await fetchModels(fetch, byokModelsUrl(baseURL));
+    this.byokModels.set(models);
+    this.byokModelsState.set(models.length > 0 ? 'loaded' : 'failed');
+  }
+
+  /** Re-runs Local AI's model discovery against the current server address — the refresh affordance next to the Model field. */
+  refreshLocalModels(): void {
+    void this.loadLocalModels(this.store.serverAddress());
   }
 
   onServerAddressChange(event: Event): void {
@@ -262,9 +310,23 @@ export class AiTestPanelComponent {
 
   private async checkServer(address: string): Promise<void> {
     this.serverCheck.set('checking');
+    // A model list fetched for a DIFFERENT address (or a server that has since gone away) must not linger.
+    this.localModelsState.set('idle');
+    this.localModels.set([]);
     const health = await detectLocalServer(fetch, address);
     this.serverHealth.set(health);
     this.serverCheck.set(health ? 'available' : 'unavailable');
+    if (health) {
+      await this.loadLocalModels(address);
+    }
+  }
+
+  /** Local AI's model discovery — called automatically once the companion server is detected (see `checkServer`), and again by `refreshLocalModels()`. */
+  private async loadLocalModels(serverAddress: string): Promise<void> {
+    this.localModelsState.set('loading');
+    const models = await fetchModels(fetch, localModelsUrl(serverAddress));
+    this.localModels.set(models);
+    this.localModelsState.set(models.length > 0 ? 'loaded' : 'empty');
   }
 
   private resolveProvider(): { ok: true; provider: Provider; modelLabel: string } | { ok: false; error: string } {

@@ -23,6 +23,15 @@
  * **Cloud** is a fast-follow stub: `CloudPendingProvider` is a clearly-
  * labelled placeholder, never a real hosted backend — it throws if ever
  * actually asked to propose (the panel keeps Run disabled for this mode).
+ *
+ * **Model discovery** (`fetchModels` + its two URL helpers) is the same
+ * "detect, never assume" posture as `detectLocalServer`: the companion
+ * server's `GET {serverAddress}/v1/models` and a BYOK endpoint's `GET
+ * {baseURL}/models` (the OpenAI-compatible list-models contract both speak,
+ * `{"object":"list","data":[{"id":"…"}]}`) are both best-effort — any
+ * network/CORS failure or unexpected body shape yields an empty list rather
+ * than throwing, so the panel can always fall back to the free-text Model
+ * field.
  */
 
 import { OpenAIProvider, type FetchLike, type Prompt, type Provider, type ProposeResult } from '@chatwright/runtime';
@@ -116,6 +125,45 @@ export function buildLocalProvider(serverAddress: string, model: string, fetchIm
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** The companion server's `GET {serverAddress}/v1/models` URL — the same `/v1` proxy prefix `buildLocalProvider` builds its `baseURL` from. */
+export function localModelsUrl(serverAddress: string): string {
+  return `${normaliseBase(serverAddress)}/v1/models`;
+}
+
+/** A BYOK OpenAI-compatible endpoint's `GET {baseURL}/models` URL — `baseURL` is expected to already end in `/v1`, same convention as `buildByokProvider`'s own `baseURL`. */
+export function byokModelsUrl(baseURL: string): string {
+  return `${baseURL.trim().replace(/\/+$/, '')}/models`;
+}
+
+/**
+ * GETs `url` and parses an OpenAI-compatible `{"data":[{"id":"…"}, …]}` model
+ * list, returning just the ids. Never throws: a network/CORS failure, a
+ * non-2xx response, or a body missing the expected shape all yield `[]` —
+ * model discovery is a convenience the run UI falls back away from, never a
+ * hard requirement (mirrors `detectLocalServer`'s own tolerance).
+ */
+export async function fetchModels(fetchImpl: DetectFetch, url: string): Promise<string[]> {
+  try {
+    const response = await fetchImpl(url);
+    if (!response.ok) {
+      return [];
+    }
+    const body = await response.json();
+    if (typeof body !== 'object' || body === null) {
+      return [];
+    }
+    const data = (body as Record<string, unknown>)['data'];
+    if (!Array.isArray(data)) {
+      return [];
+    }
+    return data
+      .map((entry) => (typeof entry === 'object' && entry !== null ? (entry as Record<string, unknown>)['id'] : undefined))
+      .filter((id): id is string => typeof id === 'string');
+  } catch {
+    return [];
   }
 }
 

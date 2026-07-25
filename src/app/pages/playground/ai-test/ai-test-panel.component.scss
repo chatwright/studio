@@ -93,6 +93,35 @@
   }
 }
 
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.model-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 0;
+  background: transparent;
+  color: var(--cw-muted-strong);
+  font: 650 0.66rem/1 var(--cw-sans);
+  text-transform: none;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+
+  &:hover:not(:disabled) {
+    color: var(--cw-text);
+  }
+
+  &:disabled {
+    color: var(--cw-muted);
+    cursor: default;
+  }
+}
+
 .key-field {
   position: relative;
   display: flex;

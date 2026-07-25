@@ -21,8 +21,27 @@
             <input pInputText [value]="store.byokBaseURL()" (input)="onByokBaseURLChange($event)" placeholder="https://api.openai.com/v1" autocomplete="off" />
           </label>
           <label class="field">
-            <span>Model</span>
-            <input pInputText [value]="store.byokModel()" (input)="onByokModelChange($event)" placeholder="gpt-4o-mini" autocomplete="off" />
+            <div class="field-header">
+              <span>Model</span>
+              <button
+                type="button"
+                class="model-action"
+                [disabled]="byokModelsState() === 'loading' || !store.byokBaseURL().trim()"
+                (click)="loadByokModels()"
+              >
+                <i class="pi" [class.pi-spin]="byokModelsState() === 'loading'" [class.pi-spinner]="byokModelsState() === 'loading'" [class.pi-search]="byokModelsState() !== 'loading'" aria-hidden="true"></i>
+                Load models
+              </button>
+            </div>
+            @if (showByokModelDropdown()) {
+              <p-select [options]="byokModels()" [ngModel]="store.byokModel()" (ngModelChange)="onByokModelSelected($event)" [filter]="true" appendTo="body" placeholder="Choose a model" />
+              <p class="quiet small">{{ byokModels().length }} model{{ byokModels().length === 1 ? '' : 's' }} available</p>
+            } @else {
+              <input pInputText [value]="store.byokModel()" (input)="onByokModelChange($event)" placeholder="gpt-4o-mini" autocomplete="off" />
+              @if (byokModelsState() === 'failed') {
+                <p class="quiet small">Couldn't load a model list from this endpoint — enter a model id above.</p>
+              }
+            }
           </label>
           <label class="field">
             <span>API key</span>
@@ -58,8 +77,23 @@
             <input pInputText [value]="store.serverAddress()" (input)="onServerAddressChange($event)" [placeholder]="defaultServerAddress" autocomplete="off" />
           </label>
           <label class="field">
-            <span>Model</span>
-            <input pInputText [value]="store.localModel()" (input)="onLocalModelChange($event)" placeholder="qwen2.5" autocomplete="off" />
+            <div class="field-header">
+              <span>Model</span>
+              <button type="button" class="model-action" [disabled]="localModelsState() === 'loading'" (click)="refreshLocalModels()" aria-label="Refresh model list">
+                <i class="pi pi-refresh" [class.pi-spin]="localModelsState() === 'loading'" aria-hidden="true"></i>
+              </button>
+            </div>
+            @if (showLocalModelDropdown()) {
+              <p-select [options]="localModels()" [ngModel]="store.localModel()" (ngModelChange)="onLocalModelSelected($event)" [filter]="true" appendTo="body" placeholder="Choose a model" />
+              <p class="quiet small">{{ localModels().length }} model{{ localModels().length === 1 ? '' : 's' }} available</p>
+            } @else {
+              <input pInputText [value]="store.localModel()" (input)="onLocalModelChange($event)" placeholder="qwen2.5" autocomplete="off" />
+              @if (localModelsState() === 'loading') {
+                <p class="quiet small"><i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Loading models…</p>
+              } @else if (localModelsState() === 'empty') {
+                <p class="quiet small">No models reported by the server — enter a model id manually.</p>
+              }
+            }
           </label>
 
           @switch (serverCheck()) {
