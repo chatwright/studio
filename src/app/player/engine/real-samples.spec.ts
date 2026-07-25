@@ -77,6 +77,20 @@ describe('real sample: debt-two-chat.chatwright.json — multi-chat auto-follow'
     expect(seen.has(101)).toBe(true);
     expect(seen.has(202)).toBe(true);
   });
+
+  // This sample was written before the click-validation outcome was renamed
+  // from "verdict" to "freshness" on the wire (its acknowledge part's first
+  // loop event carries `"validation": {"checked": true, "verdict": "fresh", ...}`
+  // with no "freshness" key at all) — an unmodified, real pre-rename
+  // artefact, not a synthetic fixture. Reading `.freshness` off it proves the
+  // player still renders an existing recording after the rename.
+  it('backfills freshness on a real pre-rename recording that only carries "verdict"', () => {
+    const run = firstRun(bundle);
+    const aiPart = run.parts?.find((p) => p.kind === 'ai-goal');
+    const events = aiPart?.aiGoal?.events ?? [];
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0]?.validation.freshness).toBe('fresh');
+  });
 });
 
 describe('real sample: greetbot-three-part.chatwright.json — observed by two AI parts', () => {

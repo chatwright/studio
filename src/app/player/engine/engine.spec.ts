@@ -69,6 +69,81 @@ describe('parseBundle', () => {
     }
   });
 
+  // The click-validation outcome (fresh/stale) was renamed from "verdict" to
+  // "freshness" on the wire — "verdict" is now reserved for the AI-judged-
+  // assertion outcome (chatwright/chatwright glossary). A runtime pre-dating
+  // that rename still writes "verdict"; these two cases prove the player
+  // reads both, so an existing recording (this repository's own bundled
+  // samples and golden fixtures included) keeps rendering unchanged.
+  function bundleWithOneValidation(validation: Record<string, unknown>): string {
+    return JSON.stringify({
+      format: 'https://chatwright.dev/formats/run-bundle/v1',
+      metadata: { createdAt: '2026-01-01T00:00:00Z' },
+      runs: [
+        {
+          id: 'r1',
+          platform: 'telegram',
+          endpointProfile: 'platform-emulated',
+          actors: [],
+          chats: [],
+          parts: [
+            {
+              id: 'p1',
+              kind: 'ai-goal',
+              journalBoundary: { chats: [] },
+              aiGoal: {
+                goal: { id: 'g1', title: '', description: '', tasks: [], constraints: null, budgets: {} },
+                actorId: 'a1',
+                events: [
+                  {
+                    index: 0,
+                    at: '2026-01-01T00:00:00Z',
+                    taskId: 't1',
+                    observationSequence: 1,
+                    proposal: { kind: 'click', text: '', actionId: 'a', observationSequence: 1, rationale: '' },
+                    usage: { model: '', inputTokens: 0, outputTokens: 0, latencyNanoseconds: 0 },
+                    validation,
+                    action: { kind: 'skipped-invalid', detail: '' }
+                  }
+                ],
+                observations: [],
+                report: {
+                  schemaVersion: 1,
+                  goalId: 'g1',
+                  goalTitle: '',
+                  stopReason: '',
+                  steps: 1,
+                  elapsedNanoseconds: 0,
+                  tasks: [],
+                  findings: [],
+                  usage: { inputTokens: 0, outputTokens: 0, callCount: 0 }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    });
+  }
+
+  it('backfills freshness from a pre-rename bundle whose validation only carries "verdict"', () => {
+    const result = parseBundleText(bundleWithOneValidation({ checked: true, verdict: 'stale', reason: 'no longer available' }));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const validation = firstRun(result.bundle).parts?.[0]?.aiGoal?.events?.[0]?.validation;
+      expect(validation?.freshness).toBe('stale');
+    }
+  });
+
+  it('reads freshness directly from a bundle already using the current wire name', () => {
+    const result = parseBundleText(bundleWithOneValidation({ checked: true, freshness: 'fresh', reason: 'action is currently available' }));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const validation = firstRun(result.bundle).parts?.[0]?.aiGoal?.events?.[0]?.validation;
+      expect(validation?.freshness).toBe('fresh');
+    }
+  });
+
   it('rejects a legacy PascalCase (pre-normalisation) bundle with an actionable message', () => {
     const legacy = {
       format: 'https://chatwright.dev/formats/run-bundle/v1',

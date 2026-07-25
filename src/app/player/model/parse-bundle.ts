@@ -1,4 +1,4 @@
-import { Bundle, BundleRun, RUN_BUNDLE_FORMAT_V1 } from './bundle.types';
+import { ActorLoopEvent, Bundle, BundleRun, RUN_BUNDLE_FORMAT_V1 } from './bundle.types';
 
 /**
  * Result of attempting to read a run bundle from raw text or a parsed value.
@@ -90,6 +90,7 @@ export function parseBundleValue(value: unknown): ParseResult {
   if (runs.length === 0) {
     warnings.push('This bundle contains no runs — there is nothing to play.');
   }
+  backfillFreshness(runs);
 
   const bundle: Bundle = {
     format,
@@ -101,6 +102,29 @@ export function parseBundleValue(value: unknown): ParseResult {
   };
 
   return { ok: true, bundle, warnings };
+}
+
+/**
+ * Normalises every loop event's validation outcome in place so
+ * {@link ActorValidationOutcome.freshness} is always readable, regardless of
+ * which wire name the bundle was written with. A bundle predating the
+ * verdict → freshness rename carries the click-validation outcome under
+ * `verdict`; a current bundle carries it under `freshness`. Both are read
+ * here — `freshness` wins when a (hypothetical, never produced today) bundle
+ * somehow carries both — so every other part of the player only ever reads
+ * `freshness`.
+ */
+function backfillFreshness(runs: BundleRun[]): void {
+  for (const run of runs) {
+    for (const part of run.parts ?? []) {
+      for (const event of part.aiGoal?.events ?? []) {
+        const validation: ActorLoopEvent['validation'] | undefined = event.validation;
+        if (validation && validation.freshness === undefined && validation.verdict !== undefined) {
+          validation.freshness = validation.verdict;
+        }
+      }
+    }
+  }
 }
 
 /**

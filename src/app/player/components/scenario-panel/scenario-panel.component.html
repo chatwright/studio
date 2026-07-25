@@ -78,7 +78,7 @@
                     <div class="beat-row">
                       <span class="beat-label">Validated</span>
                       <span class="beat-value">
-                        <p-tag [value]="event.validation.verdict || 'unchecked'" [severity]="verdictSeverity(event.validation.verdict)" />
+                        <p-tag [value]="event.validation.freshness || 'unchecked'" [severity]="freshnessSeverity(event.validation.freshness)" />
                         @if (event.validation.reason) { <span class="reason">{{ event.validation.reason }}</span> }
                       </span>
                     </div>

@@ -159,7 +159,19 @@ export type ActionOutcomeKind =
   | 'task-completed'
   | 'task-given-up'
   | string;
-export type Verdict = '' | 'fresh' | 'stale' | string;
+/**
+ * The click-validation outcome: is a proposed action still present,
+ * unchanged, in the runtime's current projection? A validity check against
+ * the engine's own state, not a judgement against a criterion — distinct
+ * from the AI-judged-assertion "verdict" (`passed`/`failed`/`inconclusive`/
+ * `unavailable`), which this type is never used for.
+ *
+ * Wire field history: bundles written before the freshness rename carry this
+ * under the key `verdict`; {@link parseBundleValue} normalises `freshness`
+ * from `verdict` at parse time when only the old key is present, so
+ * consumers can always read {@link ActorValidationOutcome.freshness}.
+ */
+export type Freshness = '' | 'fresh' | 'stale' | string;
 
 export interface ActorLoopEvent {
   index: number;
@@ -191,7 +203,15 @@ export interface ActorUsage {
 
 export interface ActorValidationOutcome {
   checked: boolean;
-  verdict: Verdict;
+  /**
+   * Present on a bundle written by a runtime that has landed the freshness
+   * rename. Absent on an older bundle — read via {@link freshnessOf} (or
+   * rely on {@link parseBundleValue} having already backfilled it from
+   * `verdict`) rather than this field directly.
+   */
+  freshness?: Freshness;
+  /** @deprecated Pre-rename wire name for {@link freshness}. Still read for backward compatibility; never written by a current build. */
+  verdict?: Freshness;
   reason: string;
 }
 
