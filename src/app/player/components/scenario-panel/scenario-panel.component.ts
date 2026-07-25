@@ -167,9 +167,9 @@ export class ScenarioPanelComponent {
     }
   }
 
-  verdictSeverity(verdict: string): 'success' | 'warn' | 'secondary' {
-    if (verdict === 'fresh') return 'success';
-    if (verdict === 'stale') return 'warn';
+  freshnessSeverity(freshness: string | undefined): 'success' | 'warn' | 'secondary' {
+    if (freshness === 'fresh') return 'success';
+    if (freshness === 'stale') return 'warn';
     return 'secondary';
   }
 
