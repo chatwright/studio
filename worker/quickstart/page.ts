@@ -5,10 +5,13 @@
 // scenario-document/v1 format itself is not yet published at its own
 // chatwright.dev/formats URL — see the "Learn more" section below, which
 // links out to its specification in chatwright/chatwright instead of
-// implying a page that doesn't exist yet. Every command, flag, output line
-// and install path here was run and verified against chatwright/cli v0.3.0
-// (over chatwright.dev/runtime v0.4.0) before this file was written — see
-// this repository's PR description for the transcripts.
+// implying a page that doesn't exist yet. Every command, flag and output
+// line here was run and verified against chatwright/cli v0.4.0 (over
+// chatwright.dev/runtime v0.4.0) before this file was written — see this
+// repository's PR description for the transcripts, including
+// `chatwright run example` from a stripped environment (env -i
+// PATH=/usr/bin:/bin) and the cassette-cache-miss failure mode a reader
+// hits by editing the written example's goal and re-running.
 import { renderHeader, renderFooter, chromeStyles, themeInitScript } from '../chrome';
 
 export const quickstartPageDocument = String.raw`<!doctype html>
@@ -18,18 +21,18 @@ export const quickstartPageDocument = String.raw`<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
     ${themeInitScript}
-    <meta name="description" content="chatwright run DOCUMENT [--out DIR]: execute a self-contained scenario document — a bot, an AI goal, its tasks and budgets — with no manifest and no Go code, and write a replayable run bundle.">
+    <meta name="description" content="chatwright run example: run the CLI's built-in worked example with no files, no network and no API key, then write and edit it with chatwright run DOCUMENT [--out DIR].">
     <title>Run a scenario document — Chatwright</title>
     <link rel="canonical" href="https://chatwright.dev/quickstart">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111827'/%3E%3Crect x='14' y='16' width='36' height='24' rx='7' fill='%230f766e'/%3E%3Cpath d='M22 40 L22 48 L30 40 Z' fill='%230f766e'/%3E%3C/svg%3E">
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="Chatwright">
     <meta property="og:title" content="Run a scenario document — Chatwright">
-    <meta property="og:description" content="chatwright run DOCUMENT [--out DIR]: execute a self-contained scenario document — a bot, an AI goal, its tasks and budgets — with no manifest and no Go code, and write a replayable run bundle.">
+    <meta property="og:description" content="chatwright run example: run the CLI's built-in worked example with no files, no network and no API key, then write and edit it with chatwright run DOCUMENT [--out DIR].">
     <meta property="og:url" content="https://chatwright.dev/quickstart">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Run a scenario document — Chatwright">
-    <meta name="twitter:description" content="chatwright run DOCUMENT [--out DIR]: execute a self-contained scenario document with no manifest and no Go code, and write a replayable run bundle.">
+    <meta name="twitter:description" content="chatwright run example: run the CLI's built-in worked example with no files, no network and no API key, then write and edit it with chatwright run DOCUMENT.">
     <style>
       :root { color-scheme: light; --ink:#111827; --soft:#566477; --faint:#8290a4; --line:#e5eaf0; --canvas:#fcfcfd; --card:#ffffff; --card-soft:#f7f9fb; --blue:#2c6dcc; --code-bg:#eef2f6; --code-ink:#1a2740; --accent:#0f766e; --accent-hover:#115e59; --accent-ink:#0d9488; --accent-tint-bg:#f0fdfa; --accent-tint-border:#99f6e4; --accent-tint-ink:#115e59; --nav-bg:rgba(252,252,253,.9); --nav-border:rgba(229,234,240,.9); --nav-hover-bg:#f2f5f8; font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
       * { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; color:var(--ink); background:var(--canvas); } a { color:inherit; }
@@ -55,6 +58,7 @@ export const quickstartPageDocument = String.raw`<!doctype html>
       pre code { padding:0; border-radius:0; background:none; color:inherit; font:inherit; }
       figure { margin:0; } figcaption { margin:.4rem 0 0; color:var(--faint); font-size:.75rem; letter-spacing:.01em; }
       .note { margin:.85rem 0; padding:.75rem .95rem; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:0 .45rem .45rem 0; background:var(--card); color:var(--soft); font-size:.9rem; line-height:1.6; } .note strong { color:var(--ink); }
+      .warn { border-left-color:#d97706; }
       aside.toc { position:sticky; top:5.5rem; align-self:start; }
       aside.toc p { margin:0 0 .6rem; color:var(--faint); font:700 .68rem/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.1em; text-transform:uppercase; }
       aside.toc ol { margin:0; padding:0; list-style:none; display:grid; gap:.45rem; border-left:1px solid var(--line); }
@@ -70,8 +74,8 @@ export const quickstartPageDocument = String.raw`<!doctype html>
       <article>
         <p class="eyebrow">CLI · chatwright run</p>
         <h1>Run a scenario document</h1>
-        <p class="lede"><code>chatwright run DOCUMENT [--out DIR]</code> executes one self-contained scenario file — a bot, an AI goal, its tasks and budgets — and writes a replayable <code>*.chatwright.json</code> run bundle. No manifest. No Go scenario to register or rebuild.</p>
-        <div class="note"><strong>Go CLI, today.</strong> <code>chatwright run</code> ships in <a href="https://github.com/chatwright/cli">chatwright/cli</a> v0.3.0, over <code>chatwright.dev/runtime</code> v0.4.0. It is not available in the browser runtime or Chatwright Studio's Playground yet — see <a href="#today">What's true today</a> before you point it at a bot of your own.</div>
+        <p class="lede"><code>chatwright run</code> executes a self-contained scenario file — a bot, an AI goal, its tasks and budgets — and writes a replayable <code>*.chatwright.json</code> run bundle. No manifest. No Go scenario to register or rebuild. The fastest way in is <code>chatwright run example</code>: a worked example embedded in the binary itself, so there's something real to run the moment you install it.</p>
+        <div class="note"><strong>Go CLI, today.</strong> <code>chatwright run</code> ships in <a href="https://github.com/chatwright/cli">chatwright/cli</a> v0.4.0, over <code>chatwright.dev/runtime</code> v0.4.0. It is not available in the browser runtime or Chatwright Studio's Playground yet — see <a href="#today">What's true today</a> before you point it at a bot of your own.</div>
 
         <h2 id="install">Install the CLI</h2>
         <p>Canonical, macOS/Linux:</p>
@@ -80,12 +84,30 @@ export const quickstartPageDocument = String.raw`<!doctype html>
         <figure><pre><code>curl -fsSL https://chatwright.dev/install.sh | BINDIR="$HOME/.local/bin" sh</code></pre></figure>
         <p>Alternatives — Homebrew (macOS) or Go-native, either always resolves to the latest tag:</p>
         <figure><pre><code>brew install --cask chatwright/tap/chatwright
-go install chatwright.dev/cli/cmd/chatwright@v0.3.0</code></pre></figure>
+go install chatwright.dev/cli/cmd/chatwright@v0.4.0</code></pre></figure>
         <p>Confirm it landed:</p>
         <figure><pre><code>chatwright version</code></pre></figure>
 
-        <h2 id="the-document">The document</h2>
-        <p>A scenario document is one committed JSON file — format <code>https://chatwright.dev/formats/scenario-document/v1</code> — declaring a bot endpoint, the cast, and one or more parts (an <code>ai-goal</code> part carries the goal's tasks and budgets). Below is the runtime's own conformance fixture: the greetbot scenario — send <code>/start</code>, click the action labelled "English", wait for the greeting to be edited in place, then acknowledge it — expressed with nothing compiled into Go.</p>
+        <h2 id="run-it">Run it</h2>
+        <p>Run the CLI's own built-in worked example — no files of your own, no network call, no API key:</p>
+        <figure><pre><code>chatwright run example</code></pre></figure>
+        <p>Real, unedited output (from a stripped environment — <code>env -i PATH=/usr/bin:/bin chatwright run example</code> — to prove nothing beyond <code>PATH</code> is needed):</p>
+        <figure><pre><code>chatwright run: warning: no run-level ceiling is declared; only each part's own budgets bind (no-run-ceiling)
+greetbot-language-onboarding: part status=completed, outcome=verified: started, clicked English, acknowledged — all journal-verified
+wrote greetbot-language-onboarding.chatwright.json</code></pre></figure>
+        <p><code>example</code> runs GreetBot's language-onboarding scenario: send <code>/start</code>, click the action labelled "English", wait for the greeting to be edited in place, then acknowledge it. It's embedded in the binary itself (Go's <code>go:embed</code>), copied verbatim from the runtime's own conformance fixture. The bot is <code>exampleBot:greetbot</code> — compiled into the runtime, no URL — and the one AI actor replays a checked-in cassette rather than calling a live model, so nothing about running it ever leaves the process; it leaves only the run bundle behind. A real file named exactly <code>example</code> in your working directory always wins over the built-in — <code>chatwright run</code> never shadows a document you actually have.</p>
+        <p>The first output line is a validation warning, not a failure: this document declares no run-level <code>ceiling</code>, so only each part's own <code>budgets</code> bind — reported so an unbounded aggregate is a visible authoring choice, never a silent one. The second line is the command's own one-line summary: the last part's status, then the outcome. <strong>Verified</strong> means the document declared a <code>verify</code> block and every journal expectation in it matched, independently of whatever the AI actor itself claimed; a document with no <code>verify</code> block is always reported <strong>judged</strong> instead, never verified. <code>--out</code> defaults to <code>.</code> and controls where the bundle lands; the filename is always <code>&lt;document id&gt;.chatwright.json</code>. The bundle is written either way — a failed or incomplete run still leaves evidence — and the process exits non-zero only when the final part didn't complete, so <code>chatwright run</code> composes with a CI step that gates on the exit code alone.</p>
+
+        <h2 id="replay">Replay it</h2>
+        <p>Drop the <code>*.chatwright.json</code> file this just wrote onto <a href="/studio/player">the Studio player</a> — it replays entirely client-side; nothing is uploaded. Its full shape is documented at <a href="/formats/run-bundle/v1">run-bundle format v1</a>.</p>
+
+        <h2 id="edit-it">Get the document, and edit it</h2>
+        <p>To read the format, or change the scenario, write the example's document and its cassette to disk instead of running them — still no network call, byte-identical to what <code>chatwright run example</code> executes internally:</p>
+        <figure><pre><code>chatwright run example --write</code></pre></figure>
+        <figure><pre><code>wrote greetbot-language-onboarding.json
+wrote cassettes/greetbot-language-onboarding.json
+edit the goal, then run: chatwright run greetbot-language-onboarding.json</code></pre></figure>
+        <p><code>--write</code> only makes sense with <code>DOCUMENT</code> set to <code>example</code>; <code>--out</code> controls where it writes, defaulting to <code>.</code> as before. Format <code>https://chatwright.dev/formats/scenario-document/v1</code> — declaring a bot endpoint, the cast, and one or more parts (an <code>ai-goal</code> part carries the goal's tasks and budgets):</p>
         <figure><pre><code>{
   "format": "https://chatwright.dev/formats/scenario-document/v1",
   "schemaVersion": 1,
@@ -154,27 +176,9 @@ go install chatwright.dev/cli/cmd/chatwright@v0.3.0</code></pre></figure>
       ]}
     ]
   }
-}</code></pre><figcaption>Elided for readability — the real file also carries <code>description</code>, task <code>title</code>s and a <code>verifies</code> acceptance-criterion binding. The full, unedited fixture is linked below.</figcaption></figure>
+}</code></pre><figcaption>Elided for readability — the real file also carries <code>description</code>, a task <code>title</code> and a <code>verifies</code> acceptance-criterion binding.</figcaption></figure>
         <p>Note what is <em>not</em> here: no bot token, no API key. <code>bot.exampleBot</code> names a bot the runtime itself ships — no authorable URL needed — and <code>cast[0].provider</code> is a <code>cassette</code> replaying a checked-in recording rather than calling a live model. Point the document at a bot of your own by replacing <code>bot</code> with a <code>url</code> and a <code>transport</code> instead — see <a href="#today">What's true today</a> for what that costs.</p>
-
-        <h2 id="run-it">Run it</h2>
-        <p>Fetch the fixture above together with its checked-in cassette from <code>chatwright/runtime-go</code>'s own test data, then run it — no account, no API key:</p>
-        <figure><pre><code>mkdir -p greetbot-quickstart/cassettes &amp;&amp; cd greetbot-quickstart
-
-curl -fsSL -o greetbot-language-onboarding.json \
-  https://raw.githubusercontent.com/chatwright/runtime-go/main/scenario/testdata/greetbot-language-onboarding.json
-curl -fsSL -o cassettes/greetbot-language-onboarding.json \
-  https://raw.githubusercontent.com/chatwright/runtime-go/main/scenario/testdata/cassettes/greetbot-language-onboarding.json
-
-chatwright run greetbot-language-onboarding.json --out .</code></pre></figure>
-        <p>Real, unedited output:</p>
-        <figure><pre><code>chatwright run: warning: no run-level ceiling is declared; only each part's own budgets bind (no-run-ceiling)
-greetbot-language-onboarding: part status=completed, outcome=verified: started, clicked English, acknowledged — all journal-verified
-wrote greetbot-language-onboarding.chatwright.json</code></pre></figure>
-        <p>The first line is a validation warning, not a failure: this document declares no run-level <code>ceiling</code>, so only each part's own <code>budgets</code> bind — reported so an unbounded aggregate is a visible authoring choice, never a silent one. The second line is the command's own one-line summary: the last part's status, then the outcome. <strong>Verified</strong> means the document declared a <code>verify</code> block and every journal expectation in it matched, independently of whatever the AI actor itself claimed; a document with no <code>verify</code> block is always reported <strong>judged</strong> instead, never verified. <code>--out</code> defaults to <code>.</code>; the bundle filename is always <code>&lt;document id&gt;.chatwright.json</code>. The bundle is written either way — a failed or incomplete run still leaves evidence — and the process exits non-zero only when the final part didn't complete, so <code>chatwright run</code> composes with a CI step that gates on the exit code alone.</p>
-
-        <h2 id="replay">Replay it</h2>
-        <p>Drop the <code>*.chatwright.json</code> file this just wrote onto <a href="/studio/player">the Studio player</a> — it replays entirely client-side; nothing is uploaded. Its full shape is documented at <a href="/formats/run-bundle/v1">run-bundle format v1</a>.</p>
+        <div class="note warn"><strong>Editing the goal breaks the cassette.</strong> The cassette above is a fixed recording keyed by a hash that includes the goal's own text. Change <code>successCriteria</code> (or anything else in <code>goal</code>) and re-running with <code>chatwright run greetbot-language-onboarding.json</code> will usually fail with a cassette cache miss: the part comes back <code>status=failed</code>, and the outcome reads <code>not verified: journal evidence incomplete: …</code> — not a crash, just an AI actor with nothing recorded left to replay against a prompt that no longer matches. Running the document back <em>unchanged</em> (no edits at all) always works — that's the round trip <code>--write</code> exists to prove. To edit the goal for real, point <code>cast[0].provider</code> at a live model provider (<code>{"kind": "model", "providerId": …, "model": …, "apiKey": {"secretRef": …}}</code>) instead of the cassette.</div>
 
         <h2 id="today">What's true today</h2>
         <p><code>chatwright run</code> ships in the Go CLI only. <code>runtime-ts</code> — the browser runtime behind Chatwright Studio's Playground — does not yet execute a scenario document or drive an AI-goal actor loop; that gap is tracked openly in <a href="https://github.com/chatwright/chatwright/blob/main/docs/runtime-parity.md">the runtime parity register</a>, not shipped. Studio remains the replay surface for the run bundle this command writes — dropping a bundle onto the player is not the same as running the document that produced it.</p>
@@ -182,19 +186,19 @@ wrote greetbot-language-onboarding.chatwright.json</code></pre></figure>
 
         <h2 id="learn-more">Learn more</h2>
         <ul>
-          <li><code>chatwright run help</code> prints the command's own usage text.</li>
+          <li><code>chatwright run --help</code> prints the command's own description, usage and worked examples.</li>
           <li>The scenario-document format's full specification — secrets handling, budgets, independent verification, the cast and its providers — lives in <a href="https://github.com/chatwright/chatwright/blob/main/spec/features/chatwright/scenario-authoring/portable-scenario-documents/self-contained-scenario-documents/README.md">chatwright/chatwright's spec tree</a>. A dedicated <code>chatwright.dev/formats</code> page for it, matching <a href="/formats/run-bundle/v1">run-bundle</a> and <a href="/formats/chatwright-md/v1">CHATWRIGHT.md</a>, is not published yet.</li>
           <li>The bundle this command writes: <a href="/formats/run-bundle/v1">run-bundle format v1</a>.</li>
-          <li>The unedited fixture used above: <a href="https://github.com/chatwright/runtime-go/blob/main/scenario/testdata/greetbot-language-onboarding.json">document</a> and <a href="https://github.com/chatwright/runtime-go/blob/main/scenario/testdata/cassettes/greetbot-language-onboarding.json">cassette</a>.</li>
+          <li>The example embedded in the CLI is copied verbatim, never re-authored, from <code>chatwright/runtime-go</code>'s own conformance fixture: <a href="https://github.com/chatwright/runtime-go/blob/main/scenario/testdata/greetbot-language-onboarding.json">document</a> and <a href="https://github.com/chatwright/runtime-go/blob/main/scenario/testdata/cassettes/greetbot-language-onboarding.json">cassette</a>.</li>
         </ul>
       </article>
       <aside class="toc" aria-label="On this page">
         <p>On this page</p>
         <ol>
           <li><a href="#install">Install the CLI</a></li>
-          <li><a href="#the-document">The document</a></li>
           <li><a href="#run-it">Run it</a></li>
           <li><a href="#replay">Replay it</a></li>
+          <li><a href="#edit-it">Get the document, and edit it</a></li>
           <li><a href="#today">What's true today</a></li>
           <li><a href="#learn-more">Learn more</a></li>
         </ol>
