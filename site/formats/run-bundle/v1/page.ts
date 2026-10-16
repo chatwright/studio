@@ -1,6 +1,6 @@
 // Human-readable documentation for the run-bundle format v1, served at
 // exactly https://chatwright.dev/formats/run-bundle/v1 (and its trailing-
-// slash variant) — see ../../../index.ts. Content is sourced from
+// slash variant) — see ../../../pages.ts. Content is sourced from
 // chatwright/chatwright's bundle package godocs, docs/glossary.md's "Run
 // bundles and playback" section and bundle/testdata/bundle_golden.json; see
 // ./README.md for how schema.json alongside this file is kept in sync.

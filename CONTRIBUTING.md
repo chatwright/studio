@@ -1,7 +1,7 @@
 # Contributing to Chatwright Studio
 
 Thank you for interest in contributing to Chatwright Studio. This repository
-hosts the Angular Studio application and the chatwright.dev landing page worker.
+hosts the Angular Studio application and the static chatwright.dev site (`site/`).
 
 ## Build and run
 

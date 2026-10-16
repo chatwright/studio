@@ -2,7 +2,7 @@
 
 `schema.json` in this directory is served verbatim at
 `https://chatwright.dev/formats/chatwright-md/v1/schema.json` (see
-`../../../index.ts`, which imports it and re-serves it byte-for-byte with
+`../../../pages.ts`, which imports it; the build writes it byte-for-byte to the static site, served with
 `Content-Type: application/json`).
 
 **Canonical source:** `formats/chatwright-md/v1/schema.json` and

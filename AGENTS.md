@@ -9,7 +9,7 @@ Studio-specific notes:
 
 - Build/run: `pnpm install`, `pnpm start`, `pnpm build` (PRIMEUI_LICENSE
   optional — builds compile without it). See [CONTRIBUTING.md](CONTRIBUTING.md).
-- The landing page (`worker/landing.ts`) is a live public surface: every claim
+- The landing page (`site/landing.ts`) is a live public surface: every claim
   on it must be true today or explicitly labelled as planned ("fidelity is
   declared" applies to marketing too).
 - Product/spec discussion belongs in github.com/chatwright/chatwright; this

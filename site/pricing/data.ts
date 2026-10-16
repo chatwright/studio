@@ -1,5 +1,5 @@
 // Hand-embedded pricing data for the /pricing page (see ./page.ts and
-// ../index.ts). This is NOT generated: numbers and wording were read
+// ../pages.ts). This is NOT generated: numbers and wording were read
 // directly out of two sources and copied in by hand —
 //
 //   1. /sneat-astro/src/data/pricing.ts — the `sneatWorkPricing` dataset
@@ -16,7 +16,7 @@
 // There is no build step, CI job or fetch that keeps this file in sync with
 // either source — it silently drifts whenever sneat.work pricing or the
 // Chatwright quota design changes; a human has to notice and re-sync it,
-// same disclaimer as worker/recipes/data.ts.
+// same disclaimer as site/recipes/data.ts.
 
 export type PricingUnit = 'account' | 'seat';
 

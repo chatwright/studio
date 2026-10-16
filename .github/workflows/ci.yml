@@ -62,7 +62,9 @@ jobs:
       # exceeds the anyComponentStyle budget by ~1KB — a pre-existing
       # warning (present on main too), not an error, so it does not fail
       # this step. Out of scope to fix here.
+      # The exact build deploy.yml ships: Angular with the /studio/ base href
+      # plus scripts/build-site.mjs assembling the static site in dist/site/.
       - name: Production build
         env:
           PRIMEUI_LICENSE: ${{ secrets.PRIMEUI_LICENSE }}
-        run: pnpm run build
+        run: pnpm run build:cloudflare

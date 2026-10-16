@@ -1,6 +1,6 @@
 // The embedded-checkout return page — served at exactly
 // https://chatwright.dev/pricing/return (and its trailing-slash variant); see
-// ../index.ts. Stripe's embedded checkout on /pricing (./page.ts) sends the
+// ../pages.ts. Stripe's embedded checkout on /pricing (./page.ts) sends the
 // buyer here with a ?session_id=cs_... query; client JS asks the central
 // checkout service (./checkout-config.ts) for the session's status and shows
 // exactly one of four states: checking (initial), complete (success panel),
