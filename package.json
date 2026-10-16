@@ -16,7 +16,7 @@
     "build:ui-zip": "node scripts/build-ui-zip.mjs",
     "smoke:prototype": "node scripts/post-deploy-smoke.mjs https://chatwright.dev/studio/",
     "typecheck": "pnpm prepare:config && ng build --configuration development",
-    "test": "vitest run",
+    "test": "node scripts/vendor-runtime.mjs && vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
