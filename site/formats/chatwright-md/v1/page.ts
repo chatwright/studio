@@ -1,6 +1,6 @@
 // Human-readable documentation for the CHATWRIGHT.md manifest format v1,
 // served at exactly https://chatwright.dev/formats/chatwright-md/v1 (and its
-// trailing-slash variant) — see ../../../index.ts. Content adapts
+// trailing-slash variant) — see ../../../pages.ts. Content adapts
 // chatwright/chatwright's formats/chatwright-md/v1/README.md and decision
 // 0013-chatwright-md-federation.md; see ./README.md for how schema.json
 // alongside this file is kept in sync.

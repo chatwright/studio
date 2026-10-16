@@ -32,7 +32,8 @@ confirmed vulnerability before any public disclosure.
 This policy covers the Chatwright Studio user interface in this repository:
 
 - The Angular 22 Studio application component and dependencies.
-- The chatwright.dev landing page worker that hosts and serves the Studio.
+- The static chatwright.dev site (`site/`) and the assets-only Cloudflare Worker
+  that hosts it and the Studio.
 
 It does not cover the separately operated **Chatwright Cloud** service or the
 Chatwright runtime, CLI, and Platform Emulators — those are maintained in the
@@ -46,8 +47,8 @@ say so and we will route it appropriately.
   workflow or the bridge between local Studio and the CLI runtime.
 - Client-side vulnerabilities in the Angular application that could affect
   developer workflows (e.g., sensitive data exposure, XSS).
-- Issues with the Cloudflare Worker hosting the landing page and Studio,
-  including routing or authentication concerns.
+- Issues with the Cloudflare static-assets hosting of the landing page and
+  Studio, including routing (`_redirects`/`_headers`) concerns.
 - Any way fixture data, recorded runs, or workspace state could be exposed
   beyond the developer's local machine without explicit action.
 

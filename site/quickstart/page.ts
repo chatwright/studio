@@ -1,7 +1,7 @@
 // Human-readable quickstart for `chatwright run`, served at exactly
 // https://chatwright.dev/quickstart (and its trailing-slash variant) — see
-// ../index.ts. This is a command walkthrough, not a format page: it has no
-// accompanying schema.json (unlike worker/formats/*/v1) because the
+// ../pages.ts. This is a command walkthrough, not a format page: it has no
+// accompanying schema.json (unlike site/formats/*/v1) because the
 // scenario-document/v1 format itself is not yet published at its own
 // chatwright.dev/formats URL — see the "Learn more" section below, which
 // links out to its specification in chatwright/chatwright instead of

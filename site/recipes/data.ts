@@ -1,5 +1,5 @@
 // Hand-embedded snapshot of chatwright/recipes content for the /recipes page
-// (see ./page.ts and ../index.ts). This is NOT generated: every value below
+// (see ./page.ts and ../pages.ts). This is NOT generated: every value below
 // was read directly out of chatwright/recipes' jobs/*.md front matter,
 // recipes/*/README.md front matter, recipes/*/implementations/*.md front
 // matter, recipes/*/snippets/*.md front matter and registry/registry.json,

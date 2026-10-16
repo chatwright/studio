@@ -2,11 +2,11 @@ const baseURL = new URL(process.argv[2] ?? 'https://chatwright.dev/prototype/');
 
 async function fetchOK(pathname) {
   const url = new URL(pathname, baseURL);
-  // Worker pages are edge-cached (Cache-Control: public, max-age=300) and the
-  // smoke runs within a second of `wrangler deploy` — without a unique query
-  // the edge can serve the PREVIOUS deploy's HTML and fail assertions about
-  // markup that is in fact live (run 30090757271). Route handlers match on
-  // pathname only, so the parameter is invisible to the worker.
+  // The smoke runs within a second of `wrangler deploy` — without a unique
+  // query an edge cache can serve the PREVIOUS deploy's HTML and fail
+  // assertions about markup that is in fact live (run 30090757271). Static
+  // assets and `_redirects` match on pathname only, so the parameter is
+  // invisible to routing.
   url.searchParams.set('smokebust', String(Date.now()));
   let response;
 
@@ -109,8 +109,20 @@ await fetchOK('emulator');
 await fetchOK('/studio/playground');
 await fetchOK('/studio/player');
 
-// The legacy /prototype/ mount (worker-level 308, unrelated to the Angular
+// The legacy /prototype/ mount (a `_redirects` 308, unrelated to the Angular
 // routes above) still has to resolve too.
 await fetchOK('/prototype/emulator');
+
+// Go vanity import paths are static pages behind `_redirects` rewrites; `go
+// get` reads the go-import meta from any package path below a module root.
+const vanityBody = await (await fetchOK('/cli/cmd/chatwright?go-get=1')).text();
+if (!vanityBody.includes('<meta name="go-import" content="chatwright.dev/cli git https://github.com/chatwright/cli">')) {
+  throw new Error('/cli/cmd/chatwright?go-get=1 is missing the chatwright.dev/cli go-import meta');
+}
+
+const installResponse = await fetchOK('/install.sh');
+if (!(await installResponse.text()).startsWith('#!/bin/sh')) {
+  throw new Error('/install.sh is not the CLI installer script');
+}
 
 console.log(`Chatwright Studio smoke passed at ${baseURL}`);

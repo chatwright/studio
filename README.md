@@ -35,6 +35,15 @@ builds with `/studio/` as its base href. `chatwright-dev` owns the domain as a
 Cloudflare Custom Domain; the former `/prototype/` path remains as a redirect for
 existing links.
 
+The site is fully static: `chatwright-dev` is an assets-only Worker (no `main`,
+so no request runs Worker code). `pnpm build:cloudflare` builds the Studio and
+then `scripts/build-site.mjs` assembles `dist/site/` — the pages in `site/`
+prerendered from `site/pages.ts`, the Studio under `studio/`, the CLI installers,
+and the `_redirects`/`_headers` rules (Studio deep links, `/try/github/*`, the
+Go vanity import paths `chatwright.dev/{sdk,runtime,cli,vanity-proof}`). A new
+Studio route needs an entry in `site/studio-deep-links.ts`; the unit tests fail
+until it has one.
+
 ```bash
 pnpm deploy:dry-run
 pnpm deploy:cloudflare

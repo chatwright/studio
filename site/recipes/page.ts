@@ -1,9 +1,9 @@
 // Human-readable rendering of the Chatwright knowledge graph — Jobs, Recipes,
 // Implementations and the federation registry — served at exactly
 // https://chatwright.dev/recipes (and its trailing-slash variant); see
-// ../index.ts. Content comes from ./data.ts, a hand-embedded snapshot of
+// ../pages.ts. Content comes from ./data.ts, a hand-embedded snapshot of
 // chatwright/recipes (see that file's header comment for the sync
-// disclaimer and worker/formats/*/v1/page.ts for the inline-HTML doc-page
+// disclaimer and site/formats/*/v1/page.ts for the inline-HTML doc-page
 // pattern this follows: shared nav/footer styling, a single exported
 // String.raw document).
 import { jobs, recipes, registryEntries, recipesSourceCommit, type ImplementationTier, type Recipe } from './data';

@@ -1,5 +1,5 @@
 // The "Try in Chatwright" README badge, served at https://chatwright.dev/badge.svg
-// (see ./index.ts). Hand-authored, dependency-free SVG — no image libraries,
+// (see ./pages.ts). Hand-authored, dependency-free SVG — no image libraries,
 // no build step. Colours are the site's own accent pair (see the :root
 // custom properties in ./landing.ts): --ink for the brand segment (left,
 // unchanged), --accent (#0f766e) with white text for the call-to-action

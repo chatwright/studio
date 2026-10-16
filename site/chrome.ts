@@ -1,6 +1,6 @@
-// Shared header and footer for every worker-rendered chatwright.dev page —
-// worker/landing.ts, worker/pricing/page.ts, worker/recipes/page.ts,
-// worker/formats/*/v1/page.ts and worker/try-github.ts. One nav, one footer,
+// Shared header and footer for every prerendered chatwright.dev page —
+// site/landing.ts, site/pricing/page.ts, site/recipes/page.ts,
+// site/formats/*/v1/page.ts and site/try-github.ts. One nav, one footer,
 // one CSS block: dedupe the bespoke per-page copies these pages used to
 // carry so a nav change lands once instead of six times. The Angular app
 // under /studio/ is out of scope — it renders its own chrome.
@@ -90,7 +90,7 @@ function renderThemeToggle(compact: boolean): string {
 }
 
 /**
- * Renders the shared `<header class="nav">` for every worker-rendered page.
+ * Renders the shared `<header class="nav">` for every prerendered page.
  *
  * `current` marks which nav item is "this page" — bold + underline in the
  * full nav, an accent dot under its icon in the ≤720px compact nav, and
@@ -136,7 +136,7 @@ export function renderHeader(current: ChromeCurrentPage): string {
 // the theme wiring shipped on a given page.
 // GA4 (property "Chatwright" 546962698, Sneat account; registry:
 // sneat-ops/data/ga-properties.json). Shipped by renderFooter on every
-// worker page, like themeToggleScript.
+// prerendered page, like themeToggleScript.
 const gaScript = `<script async src="https://www.googletagmanager.com/gtag/js?id=G-LCJ3HXGPBZ"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-LCJ3HXGPBZ');</script>`;
 
 const themeToggleScript = `<script>(function(){
@@ -161,7 +161,7 @@ const themeToggleScript = `<script>(function(){
 })();</script>`;
 
 /**
- * Renders the shared `<footer>` for every worker-rendered page — the
+ * Renders the shared `<footer>` for every prerendered page — the
  * landing page's footer links (Pricing, chatwright/recipes,
  * chatwright/runtime-ts, SpecScore, sneat.dev). Pages that need extra
  * footer content of their own (e.g. /recipes' provenance note) pass it as

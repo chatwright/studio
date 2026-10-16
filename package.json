@@ -9,7 +9,7 @@
     "prepare:config": "node scripts/prepare-local-config.mjs && node scripts/vendor-runtime.mjs",
     "start": "pnpm prepare:config && ng serve --host 127.0.0.1",
     "build": "pnpm prepare:config && ng build",
-    "build:cloudflare": "pnpm prepare:config && ng build --configuration production --base-href /studio/",
+    "build:cloudflare": "pnpm prepare:config && ng build --configuration production --base-href /studio/ && node scripts/build-site.mjs",
     "build:dev": "pnpm prepare:config && ng build --configuration development",
     "deploy:cloudflare": "pnpm build:cloudflare && wrangler deploy",
     "deploy:dry-run": "pnpm build:cloudflare && wrangler deploy --dry-run",
@@ -41,6 +41,7 @@
     "@angular/compiler-cli": "22.0.7",
     "@types/archiver": "^8.0.0",
     "archiver": "^8.0.0",
+    "esbuild": "0.28.1",
     "typescript": "~6.0.3",
     "vitest": "^3.2.7",
     "wrangler": "^4.112.0"

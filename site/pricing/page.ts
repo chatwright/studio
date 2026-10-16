@@ -1,5 +1,5 @@
 // Human-readable pricing page — served at exactly https://chatwright.dev/pricing
-// (and its trailing-slash variant); see ../index.ts. What's sold is still the
+// (and its trailing-slash variant); see ../pages.ts. What's sold is still the
 // sneat.work subscription bundle (the pricing/quota numbers come from
 // ./data.ts — see that file's header comment for the two-source provenance
 // disclaimer), but buying happens right here: paid tiers render as `buy`
@@ -8,8 +8,8 @@
 // not configured yet, buy clicks show an on-site fallback panel instead —
 // this page never bounces buyers to another pricing page. After payment
 // Stripe returns the visitor to /pricing/return (./return-page.ts). Follows
-// the same inline-HTML doc-page pattern as worker/formats/*/v1/page.ts and
-// worker/recipes/page.ts: shared nav/footer styling, a single exported
+// the same inline-HTML doc-page pattern as site/formats/*/v1/page.ts and
+// site/recipes/page.ts: shared nav/footer styling, a single exported
 // String.raw document.
 import {
   pricingTiers,
