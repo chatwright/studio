@@ -251,6 +251,234 @@ function twoChatBundle(): Bundle {
   return { format: 'https://chatwright.dev/formats/run-bundle/v1', metadata: { createdAt: '' }, runs: [run] };
 }
 
+describe('PlayerEngine — shared presentation transport (barriers and caller-owned waits)', () => {
+  function configuredEngine(barrierIndex = 2): PlayerEngine {
+    const engine = new PlayerEngine();
+    engine.load(loadSample(), 0);
+    engine.setReducedMotion(true);
+    engine.setPresentationPlan({
+      segments: [{ id: 'brief', startIndex: 0, endIndex: engine.lastIndex() }],
+      barriers: [{ id: 'result', segmentId: 'brief', atIndex: barrierIndex }]
+    });
+    return engine;
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('stops playback at a declared barrier and keeps waiting while idle', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.play();
+
+    vi.advanceTimersByTime(20_000);
+    expect(engine.stepIndex()).toBe(2);
+    expect(engine.waiting()).toBe(true);
+    expect(engine.isPlaying()).toBe(true);
+    const ticket = engine.wait();
+    expect(ticket?.barrierId).toBe('result');
+
+    // Nothing else may advance presentation, however long the host waits.
+    vi.advanceTimersByTime(60_000);
+    expect(engine.stepIndex()).toBe(2);
+    expect(engine.wait()).toBe(ticket);
+  });
+
+  it('a validated release resumes running playback exactly once inside the segment', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    const ticket = engine.wait()!;
+
+    expect(engine.releasePresentationWait(ticket)).toBe(true);
+    expect(engine.wait()).toBeNull();
+    expect(engine.releasePresentationWait(ticket)).toBe(false);
+
+    vi.advanceTimersByTime(2_000);
+    expect(engine.stepIndex()).toBeGreaterThan(2);
+    expect(engine.wait()).toBeNull();
+    expect(engine.isPlaying()).toBe(true);
+  });
+
+  it('pause while waiting retains the ticket, and a paused release does not restart playback', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    const ticket = engine.wait()!;
+    engine.pause();
+
+    expect(engine.wait()).toBe(ticket);
+    expect(engine.isPlaying()).toBe(false);
+
+    expect(engine.releasePresentationWait(ticket)).toBe(true);
+    expect(engine.releasePresentationWait(ticket)).toBe(false);
+    expect(engine.wait()).toBeNull();
+    expect(engine.isPlaying()).toBe(false);
+
+    vi.advanceTimersByTime(60_000);
+    expect(engine.stepIndex()).toBe(2, 'release while paused advances nothing');
+
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    expect(engine.stepIndex()).toBeGreaterThan(2);
+  });
+
+  it('seek revokes the open ticket and a cancelled callback delivered later cannot move the state', () => {
+    const engine = configuredEngine();
+    const callbacks: Array<() => void> = [];
+    const spy = vi
+      .spyOn(globalThis, 'setTimeout')
+      .mockImplementation(((callback: () => void) => {
+        callbacks.push(callback);
+        return 4242 as unknown as ReturnType<typeof setTimeout>;
+      }) as typeof setTimeout);
+
+    try {
+      engine.play();
+      expect(callbacks).toHaveLength(1);
+      engine.seekTo(4);
+      expect(engine.wait()).toBeNull();
+      expect(engine.stepIndex()).toBe(4);
+
+      callbacks[0]();
+      expect(engine.stepIndex()).toBe(4, 'late callback did not advance');
+      expect(engine.wait()).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('a seek ahead then Play still consults the first open barrier', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.seekTo(5);
+    expect(engine.wait()).toBeNull();
+
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    expect(engine.stepIndex()).toBe(2);
+    expect(engine.waiting()).toBe(true);
+  });
+
+  it('manual Next cannot substitute for validation, and Next/Skip-style stepping stays at the barrier', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    const ticket = engine.wait()!;
+
+    engine.next();
+    expect(engine.stepIndex()).toBe(2);
+    expect(engine.wait()).toBe(ticket);
+
+    engine.prev();
+    expect(engine.wait()).toBeNull();
+    expect(engine.stepIndex()).toBe(1);
+  });
+
+  it('a changed load or context revokes the previous ticket', () => {
+    vi.useFakeTimers();
+    const engine = configuredEngine();
+    engine.play();
+    vi.advanceTimersByTime(20_000);
+    const ticket = engine.wait()!;
+
+    engine.setPresentationPlan(null);
+    expect(engine.wait()).toBeNull();
+    expect(engine.releasePresentationWait(ticket)).toBe(false);
+
+    engine.next();
+    expect(engine.stepIndex()).toBe(0, 'ordinary unsegmented playback is unaffected');
+  });
+
+  it('segment end awaits an explicit outer Next and never changes segment implicitly', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+    engine.load(loadSample(), 0);
+    engine.setReducedMotion(true);
+    engine.setPresentationPlan({
+      segments: [
+        { id: 'one', startIndex: 0, endIndex: 3 },
+        { id: 'two', startIndex: 4, endIndex: engine.lastIndex() }
+      ],
+      barriers: []
+    });
+
+    engine.play();
+    vi.advanceTimersByTime(60_000);
+    expect(engine.stepIndex()).toBe(3);
+    expect(engine.isPlaying()).toBe(false);
+
+    engine.next();
+    expect(engine.stepIndex()).toBe(3);
+
+    engine.enterPresentationSegment('two');
+    expect(engine.stepIndex()).toBe(4);
+    expect(engine.isPlaying()).toBe(false);
+    engine.play();
+    vi.advanceTimersByTime(5_000);
+    expect(engine.stepIndex()).toBeGreaterThan(4);
+  });
+
+  it('keeps host-owned typing frames and their cancellation while using the shared transport', () => {
+    vi.useFakeTimers();
+    const frames: FrameRequestCallback[] = [];
+    const cancelled: number[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => {
+      cancelled.push(id);
+    });
+
+    try {
+      const engine = new PlayerEngine();
+      engine.load(loadSample(), 0);
+      engine.play();
+      vi.advanceTimersByTime(1_000);
+      expect(engine.stepIndex()).toBe(0);
+      expect(engine.animatingIndex()).toBe(0);
+      expect(engine.messageBarTyping()?.chars).toBe(0);
+      expect(frames).toHaveLength(1);
+
+      engine.pause();
+      expect(engine.messageBarTyping()).toBeNull();
+      expect(cancelled).toContain(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps empty-barrier and ordinary transport behaviour intact', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+    engine.load(loadSample(), 0);
+    engine.setReducedMotion(true);
+    engine.setPresentationPlan({
+      segments: [{ id: 'all', startIndex: 0, endIndex: engine.lastIndex() }],
+      barriers: []
+    });
+
+    engine.next();
+    expect(engine.stepIndex()).toBe(0);
+    engine.prev();
+    expect(engine.stepIndex()).toBe(-1);
+    engine.play();
+    vi.advanceTimersByTime(60_000);
+    expect(engine.isPlaying()).toBe(false);
+    expect(engine.stepIndex()).toBe(engine.lastIndex());
+
+    engine.restart();
+    expect(engine.stepIndex()).toBe(-1);
+    engine.seekTo(engine.lastIndex());
+    expect(engine.settled().messageCount).toBeGreaterThan(0);
+  });
+});
+
 describe('PlayerEngine — multi-chat auto-follow and pin (round 2, item 2)', () => {
   it('interleaves both chats by timestamp and follows the active chat', () => {
     const engine = new PlayerEngine();

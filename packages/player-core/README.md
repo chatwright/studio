@@ -1,8 +1,9 @@
 # @chatwright/player-core
 
 The framework-free playback core for [Chatwright](https://chatwright.dev) run
-bundles. It turns a run bundle into a deterministic, ordered timeline and folds
-that timeline into settled transcript state at any step index.
+bundles. It turns a run bundle into a deterministic, ordered timeline, folds
+that timeline into settled transcript state at any step index, and carries a
+timer-free presentation cursor with caller-gated external waits.
 
 This package is the single implementation used by Chatwright Studio's Player. It
 is also the reusable surface for other run-bundle consumers that need to replay a
@@ -113,6 +114,40 @@ never thrown.
 - `aiCursorAt(timeline, index)` — the active part, last revealed event/beat and
   revealed event indexes at a step index.
 
+### Presentation transport and external waits
+
+- `PresentationTransport` — a pure cursor over the timeline with caller-declared
+  `PresentationSegment` ranges and `PresentationBarrier` step bindings.
+- `PresentationState`, `PresentationStatus`, `PresentationWaitTicket` — the
+  current cursor, status, active segment and opaque ticket.
+
+`advance()` moves one step or stops at an unreleased barrier with a live ticket.
+Doing nothing keeps it waiting. `releaseWait(ticket)` accepts only the exact
+current ticket object, once; it marks the wait satisfied but never advances,
+schedules a frame or restarts playback. `seek()` is a watch operation: it may
+preview anywhere, revokes any open ticket and never opens one. `enterSegment()`
+is the explicit outer Next at a segment end. `reset()` and `dispose()` revoke
+the current lifetime.
+
+The caller owns validation. It constructs and matches its own context and
+envelope, then releases the ticket only after accepting a matching complete
+whole-challenge pass. The package never sees a project, attempt, checkpoint
+payload, outcome, SQL, evidence or transcript, and keeps no completion registry.
+
+```ts
+import { PresentationTransport } from '@chatwright/player-core';
+
+const transport = new PresentationTransport(timeline.length, {
+  segments: [{ id: 'brief', startIndex: 0, endIndex: 3 }],
+  barriers: [{ id: 'result', segmentId: 'brief', atIndex: 2 }]
+});
+
+const state = transport.advance(); // … eventually: status 'waiting'
+if (state.wait && callerAcceptedItsOwnResult) {
+  transport.releaseWait(state.wait); // exactly once, no automatic resume
+}
+```
+
 ## What is deliberately not here
 
 - Angular services, signals, components, templates and styles.
@@ -120,6 +155,9 @@ never thrown.
 - Native timers, `requestAnimationFrame`, DOM measurement or event handling.
 - Bundle parsing/validation policy, scenario execution, grading, wire-format
   changes or a training/navigation manifest.
+- Checkpoint envelope parsing, outcome interpretation, completion registries or
+  learner progress. A wait ticket is an opaque presentation capability; the
+  caller decides what it means.
 - Any DataTug workflow or chapter ownership. `walkthrough.json` remains
   DataTug's sole chapter/navigation owner; this package has no second manifest.
 
@@ -137,14 +175,23 @@ The canonical design note, boundaries and proof record live in
 
 ## Proof
 
-Two independent checks exercise the public contract:
+Three independent checks exercise the public contract:
 
 - `pnpm --filter @chatwright/player-core test` builds the package and runs
-  `node --test` against the compiled `dist/` exports.
+  `node --test` against the compiled `dist/` exports, including the transport's
+  barrier, ticket, seek, reset and disposal semantics.
 - `pnpm prove:player-core` (from the Studio repository root) builds and packs the
   package, inspects the tarball, installs it into a fresh temporary consumer
-  outside the repository, then runs a runtime proof and a TypeScript declaration
-  proof against that tarball alone.
+  outside the repository, then runs a runtime proof (including caller-owned
+  envelope fencing) and a TypeScript declaration proof against that tarball
+  alone.
+- `pnpm prove:player-core-browser` builds, packs and installs the same way,
+  serves only the consumer's files on an ephemeral loopback port and drives a
+  real Chromium browser through Play, waiting, assisted pass, stale result,
+  Watch/seek, explicit Next, stored-completion revisit and duplicate release.
+  Assertions read the settled transcript and effect/credit counters. The
+  browser proof is a synthetic caller-side fencing proof, not a production
+  DataTug adapter or grading claim.
 
 ## Licence
 

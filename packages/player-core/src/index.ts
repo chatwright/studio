@@ -113,3 +113,14 @@ export type {
 /* --------------------------------------------------------- AI mind cursor */
 export { aiCursorAt } from './ai-cursor.js';
 export type { AiCursor } from './ai-cursor.js';
+
+/* -------------------------------------------- presentation transport/wait */
+export { PresentationTransport } from './transport.js';
+export type {
+  PresentationBarrier,
+  PresentationPlan,
+  PresentationSegment,
+  PresentationState,
+  PresentationStatus,
+  PresentationWaitTicket
+} from './transport.js';

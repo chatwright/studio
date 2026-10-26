@@ -17,6 +17,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
+  copyFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -260,6 +261,16 @@ try {
   const golden = JSON.parse(readFileSync(goldenPath, 'utf8'));
   writeFileSync(join(consumerDir, 'golden.chatwright.json'), JSON.stringify(golden, null, 2) + '\n');
 
+  // The caller-owned fencing harness travels with the proof, not the package.
+  copyFileSync(
+    join(repoRoot, 'scripts', 'player-core-proof', 'adapter.mjs'),
+    join(consumerDir, 'adapter.mjs')
+  );
+  copyFileSync(
+    join(repoRoot, 'scripts', 'player-core-proof', 'transport-checks.mjs'),
+    join(consumerDir, 'transport-checks.mjs')
+  );
+
   writeFileSync(
     join(consumerDir, 'verify-runtime.mjs'),
     `import assert from 'node:assert/strict';
@@ -271,6 +282,7 @@ import {
   chaptersOf,
   settledStateAt
 } from '${packageName}';
+import { TRANSPORT_CHECKS } from './transport-checks.mjs';
 
 const bundle = JSON.parse(readFileSync(new URL('./golden.chatwright.json', import.meta.url), 'utf8'));
 const run = bundle.runs[0];
@@ -371,6 +383,10 @@ check('declared deletion yields zero visible messages but keeps the entry', () =
   assert.equal(message.text, 'keep?');
 });
 
+for (const item of TRANSPORT_CHECKS) {
+  check(item.name, item.run);
+}
+
 console.log(JSON.stringify({ outcomes, finalMessageCount: final.messageCount }, null, 2));
 `
   );
@@ -389,6 +405,7 @@ console.log(JSON.stringify({ outcomes, finalMessageCount: final.messageCount }, 
   writeFileSync(
     join(consumerDir, 'verify-types.ts'),
     `import {
+  PresentationTransport,
   buildTimeline,
   chaptersOf,
   settledStateAt,
@@ -396,6 +413,12 @@ console.log(JSON.stringify({ outcomes, finalMessageCount: final.messageCount }, 
   type BundleRun,
   type Chapter,
   type PlatformJournalEntry,
+  type PresentationBarrier,
+  type PresentationPlan,
+  type PresentationSegment,
+  type PresentationState,
+  type PresentationStatus,
+  type PresentationWaitTicket,
   type SettledState,
   type Step
 } from '${packageName}';
@@ -440,8 +463,24 @@ const chapters: Chapter[] = chaptersOf(timeline);
 const state: SettledState = settledStateAt(timeline, timeline.length - 1);
 const messageCount: number = state.messageCount;
 
+const segments: PresentationSegment[] = [{ id: 'only', startIndex: 0, endIndex: timeline.length - 1 }];
+const barriers: PresentationBarrier[] = [{ id: 'result', segmentId: 'only', atIndex: 0 }];
+const plan: PresentationPlan = { segments, barriers };
+const transport = new PresentationTransport(timeline.length, plan);
+const opening: PresentationState = transport.advance();
+const openingStatus: PresentationStatus = opening.status;
+const ticket: PresentationWaitTicket | null = opening.wait;
+if (ticket !== null) {
+  const released: boolean = transport.releaseWait(ticket);
+  void released;
+}
+const afterRelease: PresentationState = transport.state;
+const canAdvance: boolean = afterRelease.canAdvance;
+
 void chapters;
 void messageCount;
+void openingStatus;
+void canAdvance;
 `
   );
 
