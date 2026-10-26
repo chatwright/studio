@@ -135,6 +135,10 @@ function shortGitSha() {
 }
 
 async function main() {
+  // Compile the workspace playback dependency so a fresh release checkout can
+  // resolve its public JavaScript and declaration exports before Angular builds.
+  run('pnpm', ['build:player-core']);
+
   // 1. Regenerate the two build-time inputs `ng build` needs (untracked by
   //    design — see .gitignore): the PrimeUI licence stub and the vendored
   //    @chatwright/runtime source. Same two steps as the `prepare:config`
