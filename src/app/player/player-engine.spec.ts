@@ -548,9 +548,31 @@ describe('PlayerEngine — final-index waits, retained plan bindings and atomic 
     vi.advanceTimersByTime(60_000);
     expect(engine.stepIndex()).toBe(cursor, 'release while paused schedules nothing');
 
-    // Ordinary no-wait replay-at-end behaviour is preserved for an explicit Play.
+    // Finishing the released wait stays in this segment, including on Play.
+    engine.play();
+    expect(engine.stepIndex()).toBe(cursor);
+    vi.advanceTimersByTime(60_000);
+    expect(engine.stepIndex()).toBe(cursor);
+    expect(engine.wait()).toBeNull();
+    expect(engine.isPlaying()).toBe(false);
+
+    engine.play();
+    expect(engine.stepIndex()).toBe(cursor, 'Play cannot enter another segment');
+    expect(engine.isPlaying()).toBe(false);
+  });
+
+  it('ordinary unsegmented playback still restarts at the physical end', () => {
+    vi.useFakeTimers();
+    const engine = new PlayerEngine();
+    engine.load(loadSample(), 0);
+    engine.setReducedMotion(true);
+    engine.seekTo(engine.lastIndex());
+
     engine.play();
     expect(engine.stepIndex()).toBe(-1);
+    vi.advanceTimersByTime(60_000);
+    expect(engine.stepIndex()).toBe(engine.lastIndex());
+    expect(engine.isPlaying()).toBe(false);
   });
 
   it('Play after seeking to a segment end beyond an unresolved barrier still waits', () => {

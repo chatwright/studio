@@ -330,9 +330,10 @@ export class PlayerEngine implements OnDestroy {
       return;
     }
     this.pendingPlay = false;
-    // A live wait at the final index is not an ordinary end-of-run: keep the
-    // cursor and the exact ticket. Only a wait-free end restarts the run.
-    if (this.atEnd() && this.transport.state.wait === null) {
+    // Only ordinary unsegmented playback restarts at the physical end.
+    // A released final wait must finish its segment, and segment changes
+    // remain owned by the caller's explicit navigation.
+    if (this.atEnd() && this.transport.state.segmentId === null) {
       this.applyCursor(this.transport.seek(-1));
       this.clearTransient();
     }
