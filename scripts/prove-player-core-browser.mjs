@@ -93,7 +93,7 @@ function check(name, condition, detail) {
 }
 
 function describe(snapshot) {
-  return `${snapshot.status} at cursor ${snapshot.cursor}, ${snapshot.messages.length} visible message(s), ticket ${snapshot.waiting ? `#${snapshot.ticketId}` : 'none'}, credits ${snapshot.counters.credits}, validation consumptions ${snapshot.counters.validationConsumptions}, external actions ${snapshot.counters.externalActions}, submissions ${snapshot.counters.submissions}`;
+  return `${snapshot.status} at cursor ${snapshot.cursor}, ${snapshot.messages.length} visible message(s), ticket ${snapshot.waiting ? `#${snapshot.ticketId}` : 'none'}, accepted results ${snapshot.counters.acceptedResults}, credits ${snapshot.counters.credits}, validation consumptions ${snapshot.counters.validationConsumptions}, capacity rejections ${snapshot.counters.capacityRejections}, external actions ${snapshot.counters.externalActions}, submissions ${snapshot.counters.submissions}`;
 }
 
 /**
@@ -218,9 +218,11 @@ const zeroCounters = {
   externalActions: 0,
   submissions: 0,
   validationConsumptions: 0,
+  acceptedResults: 0,
   credits: 0,
   staleRejections: 0,
   duplicateRejections: 0,
+  capacityRejections: 0,
   revisitReleases: 0
 };
 
@@ -310,7 +312,7 @@ try {
   await waitForStatus(page, 'segment-end');
   state = await snapshot(page);
   check('validated assisted pass resumes exactly one segment', state.cursor === 3 && state.messages.length === 4);
-  check('assisted pass grants one credit and one validation consumption', state.counters.credits === 1 && state.counters.validationConsumptions === 1);
+  check('assisted pass accepts one result and grants one credit and one validation consumption', state.counters.acceptedResults === 1 && state.counters.credits === 1 && state.counters.validationConsumptions === 1);
   check('release performs no external action or submission', state.counters.externalActions === 0 && state.counters.submissions === 0);
   check('segment end requires explicit Next', state.status === 'segment-end' && state.waiting === false);
   await capture(page, '04-resumed-segment-end.png', 'assisted pass releases once, playback resumes within the brief segment and stops at its end');
@@ -339,52 +341,105 @@ try {
   check('explicit Next enters the discussion segment at its first step', state.cursor === 4 && state.segmentId === 'discussion' && state.status === 'idle');
   check('entering a segment changes no credit', JSON.stringify(state.counters) === JSON.stringify(beforeWatch.counters));
 
-  /* ------------------------------------ attempt A: pass and stored record */
+  /* ------------------- recreated wait must reject the consumed identity */
   await page.click('#attempt-a-button');
   await waitForStatus(page, 'waiting');
-  await page.click('#release-pass-button');
-  await waitForStatus(page, 'segment-end');
+  const recreated = await snapshot(page);
+  check(
+    'recreating a wait under unchanged scalar context opens a fresh presentation ticket',
+    recreated.waiting === true && recreated.cursor === 2 && recreated.ticketId !== null
+  );
+  const recreatedTicket = recreated.ticketId || null;
+  await page.click('#replay-consumed-button');
   state = await snapshot(page);
-  check('attempt A records a second credit with the same fresh-envelope path', state.counters.credits === 2 && state.counters.validationConsumptions === 2);
-  await capture(page, '07-attempt-a-complete.png', 'attempt A completes once and stores an execution-owned completion outside the envelope');
+  check(
+    'replaying the structurally cloned consumed envelope leaves the recreated wait open',
+    state.waiting === true && state.cursor === 2 && state.ticketId === recreatedTicket && state.status === 'waiting'
+  );
+  check(
+    'replayed consumed envelope creates no second consumption, acceptance, credit or resume',
+    state.counters.validationConsumptions === 1 &&
+      state.counters.acceptedResults === 1 &&
+      state.counters.credits === 1
+  );
+  check('replayed consumed envelope is recorded as a duplicate rejection', state.counters.duplicateRejections === 1);
+  await capture(page, '07-replay-rejected.png', 'recreating the wait and replaying a structural clone of the consumed attempt-A envelope is rejected with the wait still open, one consumption and one credit');
 
-  /* --------------------------- attempt B: stale rejection and stored revisit */
+  /* --------------------- fresh attempt B: stale rejection, then acceptance */
   await page.click('#attempt-b-button');
   await waitForStatus(page, 'waiting');
   const attemptB = await snapshot(page);
-  check('attempt B starts at the barrier with no new credit', attemptB.cursor === 2 && attemptB.counters.credits === 2);
+  check('fresh attempt B starts at the barrier without accepting or crediting again', attemptB.cursor === 2 && attemptB.counters.acceptedResults === 1 && attemptB.counters.credits === 1);
 
   // A preview seek revokes the B ticket; Play must consult the barrier again.
   const revokedTicket = attemptB.ticketId;
   await page.click('#watch-barrier-button');
   state = await snapshot(page);
-  check('seek revoked attempt B ticket', state.waiting === false && state.status === 'preview');
+  check('seek revoked the fresh attempt B ticket', state.waiting === false && state.status === 'preview');
   await page.click('#play-button');
   await waitForStatus(page, 'waiting');
   state = await snapshot(page);
   check('Play after preview still waits at the first open barrier', state.cursor === 2 && state.waiting === true);
   check('the reopened ticket is a new lifetime ticket', state.ticketId !== revokedTicket, `${revokedTicket} → ${state.ticketId}`);
-  check('preview plus Play grants no credit', state.counters.credits === 2);
+  check('preview plus Play accepts and consumes nothing', state.counters.acceptedResults === 1 && state.counters.validationConsumptions === 1 && state.counters.credits === 1);
 
   const beforeStale = state;
   await page.click('#stale-button');
   state = await snapshot(page);
-  check('stale attempt-A result is rejected while waiting for B', state.waiting === true && state.cursor === 2);
-  check('stale rejection advances nothing and grants nothing', JSON.stringify(state.counters) === JSON.stringify({ ...beforeStale.counters, staleRejections: beforeStale.counters.staleRejections + 1 }));
-  await capture(page, '08-stale-rejected.png', 'a stale attempt-A result is rejected under attempt B without advancing or granting credit');
+  check('stale attempt-A result is rejected while waiting for fresh attempt B', state.waiting === true && state.cursor === 2);
+  check(
+    'stale rejection advances nothing and consumes nothing',
+    JSON.stringify(state.counters) ===
+      JSON.stringify({ ...beforeStale.counters, staleRejections: beforeStale.counters.staleRejections + 1 })
+  );
+  await capture(page, '08-stale-rejected.png', 'a stale attempt-A result is rejected under fresh attempt B without advancing, consuming or granting credit');
+
+  await page.click('#release-pass-button');
+  await waitForStatus(page, 'segment-end');
+  state = await snapshot(page);
+  check('fresh attempt B is accepted as a second result', state.cursor === 3 && state.counters.acceptedResults === 2 && state.counters.validationConsumptions === 2);
+  check('the same context/checkpoint mapping remains one idempotent credit', state.counters.credits === 1);
+  await capture(page, '09-fresh-second-result.png', 'fresh attempt B is accepted and resumes, counting two accepted results while the same checkpoint mapping still has one credit');
+
+  /* ---------------------- finite ledger capacity fails closed, then revisit */
+  await page.click('#attempt-c-button');
+  await waitForStatus(page, 'waiting');
+  await page.click('#release-pass-button');
+  await page.waitForTimeout(150);
+  state = await snapshot(page);
+  check('exhausting the declared ledger capacity keeps the current wait open', state.waiting === true && state.cursor === 2 && state.status === 'waiting');
+  check(
+    'capacity exhaustion consumes nothing, accepts nothing and grants no credit',
+    state.counters.validationConsumptions === 2 &&
+      state.counters.acceptedResults === 2 &&
+      state.counters.credits === 1 &&
+      state.counters.capacityRejections === 1
+  );
+  await capture(page, '10-capacity-exhausted.png', 'a third fresh result cannot be consumed after the declared capacity is exhausted: the wait stays open with no acceptance, consumption or credit');
 
   await page.click('#release-stored-button');
   await waitForStatus(page, 'segment-end');
   state = await snapshot(page);
-  check('stored completion A releases only the current B presentation ticket', state.cursor === 3 && state.counters.revisitReleases === 1);
-  check('stored revisit invents no new result, effect, submission or credit', state.counters.credits === 2 && state.counters.validationConsumptions === 2 && state.counters.externalActions === 0 && state.counters.submissions === 0);
-  await capture(page, '09-stored-revisit.png', 'stored completion A releases the current B ticket and resumes presentation without a new result or effect');
+  check('stored completion A releases the current C presentation ticket', state.cursor === 3 && state.counters.revisitReleases === 1);
+  check(
+    'stored revisit invents no new result, consumption, credit, effect or submission',
+    state.counters.acceptedResults === 2 &&
+      state.counters.validationConsumptions === 2 &&
+      state.counters.credits === 1 &&
+      state.counters.externalActions === 0 &&
+      state.counters.submissions === 0
+  );
+  await capture(page, '11-stored-revisit.png', 'stored completion A releases the current C ticket and resumes presentation without a new result, consumption or credit');
 
   await page.click('#duplicate-button');
   state = await snapshot(page);
-  check('duplicate release is rejected once', state.counters.duplicateRejections === 1);
-  check('duplicate release grants no extra credit', state.counters.credits === 2);
-  await capture(page, '10-duplicate-rejected.png', 'a duplicate release of the consumed ticket is rejected with no extra credit');
+  check('duplicate release is rejected once after the stored revisit', state.counters.duplicateRejections === 2);
+  check('duplicate release grants no extra credit', state.counters.acceptedResults === 2 && state.counters.credits === 1);
+  check(
+    'caller bookkeeping stays bounded by the declared small fixture inventory',
+    state.ledger.size === 2 && state.ledger.capacity === 2 && state.ledger.creditMappings === 1
+  );
+  await capture(page, '12-duplicate-rejected.png', 'a duplicate release of the stored-revisited ticket is rejected with no extra acceptance or credit and a bounded caller ledger');
 
   /* ------------------------------------------------------------ hygiene */
   check('no uncaught page errors', pageErrors.length === 0, pageErrors.join('; '));

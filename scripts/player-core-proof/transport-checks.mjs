@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 
 import {
   PresentationTransport,
+  TYPING_MS_PER_CHAR,
   buildTimeline,
   frameDelayMs,
   settledStateAt
@@ -14,6 +15,7 @@ import {
   admitEnvelope,
   createConsumptionLedger,
   createContext,
+  createCreditLedger,
   createEnvelope,
   createExecutionOwner,
   createObservation,
@@ -75,20 +77,92 @@ function verifyPinnedCatalogueBytes(pin, candidateBytes = pin.bytes) {
   return candidateBytes;
 }
 
+/**
+ * A narrow synthetic run whose only variable is the verified catalogue message
+ * text. It enters the real public `buildTimeline`/`settledStateAt` APIs, so the
+ * settled transcript and the declared typing duration depend on the resolved
+ * message rather than on a marker string in the proof.
+ */
+function localeRun(text) {
+  return {
+    id: 'locale-resolution-proof',
+    platform: 'telegram',
+    endpointProfile: 'platform-emulated',
+    actors: [
+      { id: 'learner', type: 'human', platformIdentities: { telegram: { userId: 7 } } }
+    ],
+    chats: [
+      {
+        chatId: 7,
+        entries: [
+          {
+            direction: 'user',
+            kind: 'message',
+            messageId: 1,
+            refMessageId: 0,
+            version: 0,
+            text,
+            actions: null,
+            method: '',
+            at: '2026-01-01T10:00:00.000Z',
+            fromId: 7
+          }
+        ]
+      }
+    ],
+    parts: [
+      {
+        id: 'retry',
+        title: 'Retry',
+        kind: 'deterministic',
+        journalBoundary: { chats: [{ chatId: 7, firstEntry: 0, entryCount: 1 }] }
+      }
+    ]
+  };
+}
+
+function localePresentation(text) {
+  const timeline = buildTimeline(localeRun(text));
+  const final = settledStateAt(timeline, timeline.length - 1);
+  const message = final.chats[0].items.find((item) => item.kind === 'message').message;
+  const step = timeline.find((candidate) => candidate.kind === 'journal');
+  return { timeline, final, text: message.text, animation: step.animation };
+}
+
+/**
+ * The same assertion used for the green path and for the deliberate bypass.
+ * Passing raw key text instead of the resolved message must break it.
+ */
+function assertResolvedPresentation(locale, entryText, expectedText) {
+  const observed = localePresentation(entryText);
+  assert.equal(observed.final.messageCount, 1, `${locale}: one settled message`);
+  assert.equal(observed.text, expectedText, `${locale}: settled text must be the resolved message`);
+  assert.equal(observed.animation.primitive, 'compose-and-send', `${locale}: typing primitive`);
+  assert.equal(observed.animation.typedText, expectedText, `${locale}: typed text must be resolved`);
+  return observed;
+}
+
 function createCounters() {
   return {
     externalActions: 0,
     submissions: 0,
     validationConsumptions: 0,
+    acceptedResults: 0,
     credits: 0,
     staleRejections: 0,
     duplicateRejections: 0,
+    capacityRejections: 0,
     revisitReleases: 0
   };
 }
 
-/** The caller-side release path: admit, enforce once-only consumption, release. */
-function admitAndRelease(transport, context, envelope, observations, counters, ledger) {
+/**
+ * The caller-side release path: validate the trusted result and exact current
+ * wait, preflight bounded consumption, release once, then commit consumption
+ * and the idempotent mapping credit. A stale result or failed release consumes
+ * nothing, so the valid fresh result remains available.
+ */
+function admitAndRelease(transport, context, envelope, observations, counters, ledger, creditLedger) {
   const admitted = admitEnvelope(context, envelope);
   if (!admitted.accepted) {
     counters.staleRejections += 1;
@@ -99,23 +173,39 @@ function admitAndRelease(transport, context, envelope, observations, counters, l
     counters.staleRejections += 1;
     return false;
   }
-  if (transport.state.wait === null) {
+  const ticket = transport.state.wait;
+  if (ticket === null) {
     counters.duplicateRejections += 1;
     return false;
   }
-  const consumption = ledger.consume(context, envelope);
-  if (!consumption.consumed) {
+  const consumption = ledger.precheck(context, envelope);
+  if (!consumption.ok) {
+    if (consumption.reason === 'capacity-exhausted') {
+      counters.capacityRejections += 1;
+    } else {
+      counters.duplicateRejections += 1;
+    }
+    return false;
+  }
+  if (!creditLedger.has(context) && creditLedger.size >= creditLedger.capacity) {
+    counters.capacityRejections += 1;
+    return false;
+  }
+  if (!transport.releaseWait(ticket)) {
     counters.duplicateRejections += 1;
     return false;
   }
-  const released = transport.releaseWait(transport.state.wait);
-  if (released) {
-    counters.validationConsumptions += 1;
+  const committed = ledger.consume(context, envelope);
+  if (!committed.consumed) {
+    counters.duplicateRejections += 1;
+    return false;
+  }
+  counters.validationConsumptions += 1;
+  counters.acceptedResults += 1;
+  if (creditLedger.credit(context).credited) {
     counters.credits += 1;
-  } else {
-    counters.duplicateRejections += 1;
   }
-  return released;
+  return true;
 }
 
 /** Every required named part observed as passed in this exact context. */
@@ -197,12 +287,22 @@ export const TRANSPORT_CHECKS = [
       assert.equal(transport.advance().cursor, 2, 'doing nothing keeps waiting');
 
       const ticket = transport.state.wait;
-      const ledger = createConsumptionLedger();
+      const ledger = createConsumptionLedger({ capacity: 2 });
+      const creditLedger = createCreditLedger({ capacity: 2 });
       const result = createPositiveResult(context, { assisted: false });
       assert.equal(
-        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        admitAndRelease(
+          transport,
+          context,
+          result.envelope,
+          result.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
         true
       );
+      assert.equal(counters.acceptedResults, 1);
       assert.equal(counters.credits, 1);
       assert.equal(transport.releaseWait(ticket), false);
       counters.duplicateRejections += 1;
@@ -389,33 +489,58 @@ export const TRANSPORT_CHECKS = [
     }
   },
   {
-    name: 'a recreated wait cannot consume the same attempt/submission identity twice',
+    name: 'a recreated wait rejects a structurally cloned identity but accepts a fresh generation as a new result',
     run() {
       const context = createContext();
       const transport = new PresentationTransport(8, plan());
       const counters = createCounters();
-      const ledger = createConsumptionLedger();
+      const ledger = createConsumptionLedger({ capacity: 3 });
+      const creditLedger = createCreditLedger({ capacity: 2 });
       const result = createPositiveResult(context);
 
       waitAtBarrier(transport);
       assert.equal(
-        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        admitAndRelease(
+          transport,
+          context,
+          result.envelope,
+          result.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
         true
       );
       assert.equal(counters.validationConsumptions, 1);
+      assert.equal(counters.acceptedResults, 1);
       assert.equal(counters.credits, 1);
+      assert.equal(ledger.size, 1);
+      assert.equal(creditLedger.size, 1);
 
-      // Recreate the presentation wait with the same result identity and replay
-      // the old envelope: no second consumption or credit.
+      // Recreate the presentation wait under unchanged scalar context and replay
+      // a structural clone. Object identity is not the fence: the caller-owned
+      // consumed result identity is, so the ticket stays open.
       transport.reset();
       waitAtBarrier(transport);
       const recreated = transport.state.wait;
+      const envelopeClone = JSON.parse(JSON.stringify(result.envelope));
+      const observationsClone = JSON.parse(JSON.stringify(result.observations));
+      assert.notEqual(envelopeClone, result.envelope, 'the replay really is a structural clone');
       assert.equal(
-        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        admitAndRelease(
+          transport,
+          context,
+          envelopeClone,
+          observationsClone,
+          counters,
+          ledger,
+          creditLedger
+        ),
         false
       );
       assert.equal(transport.state.wait, recreated, 'the rejected replay leaves the current ticket open');
       assert.equal(counters.validationConsumptions, 1);
+      assert.equal(counters.acceptedResults, 1);
       assert.equal(counters.credits, 1);
       assert.equal(counters.duplicateRejections, 1);
       assert.equal(ledger.size, 1, 'bookkeeping is bounded by consumed identities, not tickets');
@@ -424,11 +549,151 @@ export const TRANSPORT_CHECKS = [
       const freshContext = createContext({ attemptId: 'attempt-b', submissionGeneration: 2 });
       const fresh = createPositiveResult(freshContext);
       assert.equal(
-        admitAndRelease(transport, freshContext, fresh.envelope, fresh.observations, counters, ledger),
+        admitAndRelease(
+          transport,
+          freshContext,
+          fresh.envelope,
+          fresh.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
         true
       );
-      assert.equal(counters.credits, 2);
+      assert.equal(counters.acceptedResults, 2, 'fresh generation is a second accepted result');
+      assert.equal(counters.credits, 1, 'the same context/checkpoint mapping stays one credit');
       assert.equal(ledger.size, 2);
+      assert.equal(creditLedger.size, 1);
+    }
+  },
+  {
+    name: 'a stale or failed release does not consume a valid fresh result',
+    run() {
+      const context = createContext();
+      const transport = new PresentationTransport(8, plan());
+      const counters = createCounters();
+      const ledger = createConsumptionLedger({ capacity: 2 });
+      const creditLedger = createCreditLedger({ capacity: 2 });
+      const result = createPositiveResult(context);
+
+      // No current wait: release cannot happen, so nothing may be consumed.
+      assert.equal(
+        admitAndRelease(
+          transport,
+          context,
+          result.envelope,
+          result.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
+        false
+      );
+      assert.equal(ledger.size, 0);
+      assert.equal(ledger.has(context), false);
+      assert.equal(counters.duplicateRejections, 1);
+      assert.equal(counters.acceptedResults, 0);
+      assert.equal(counters.credits, 0);
+
+      // A revoked ticket behaves the same: the valid fresh result stays available.
+      waitAtBarrier(transport);
+      transport.seek(0);
+      assert.equal(transport.releaseWait(Object.freeze({ id: 999 })), false);
+      assert.equal(ledger.size, 0);
+
+      waitAtBarrier(transport);
+      assert.equal(
+        admitAndRelease(
+          transport,
+          context,
+          result.envelope,
+          result.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
+        true
+      );
+      assert.equal(ledger.size, 1);
+      assert.equal(counters.validationConsumptions, 1);
+      assert.equal(counters.acceptedResults, 1);
+      assert.equal(counters.credits, 1);
+    }
+  },
+  {
+    name: 'finite ledger capacity fails closed and keeps the old consumed replay rejected',
+    run() {
+      const transport = new PresentationTransport(8, plan());
+      const counters = createCounters();
+      const ledger = createConsumptionLedger({ capacity: 2 });
+      const creditLedger = createCreditLedger({ capacity: 2 });
+
+      for (const [attemptId, submissionGeneration] of [
+        ['attempt-a', 1],
+        ['attempt-b', 2]
+      ]) {
+        const context = createContext({ attemptId, submissionGeneration });
+        const result = createPositiveResult(context);
+        waitAtBarrier(transport);
+        assert.equal(
+          admitAndRelease(
+            transport,
+            context,
+            result.envelope,
+            result.observations,
+            counters,
+            ledger,
+            creditLedger
+          ),
+          true
+        );
+        transport.reset();
+      }
+      assert.equal(ledger.size, 2, 'capacity is exactly the declared small fixture inventory');
+      assert.equal(creditLedger.size, 1);
+
+      const thirdContext = createContext({ attemptId: 'attempt-c', submissionGeneration: 3 });
+      const third = createPositiveResult(thirdContext);
+      waitAtBarrier(transport);
+      const thirdTicket = transport.state.wait;
+      assert.equal(
+        admitAndRelease(
+          transport,
+          thirdContext,
+          third.envelope,
+          third.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
+        false
+      );
+      assert.equal(transport.state.wait, thirdTicket, 'capacity exhaustion leaves the wait open');
+      assert.equal(counters.capacityRejections, 1);
+      assert.equal(counters.acceptedResults, 2);
+      assert.equal(counters.validationConsumptions, 2);
+      assert.equal(counters.credits, 1);
+      assert.equal(ledger.size, 2, 'exhaustion never evicts a consumed identity');
+
+      // The original identity is still remembered, not evicted to make room.
+      const firstContext = createContext({ attemptId: 'attempt-a', submissionGeneration: 1 });
+      const first = createPositiveResult(firstContext);
+      assert.equal(
+        admitAndRelease(
+          transport,
+          firstContext,
+          first.envelope,
+          first.observations,
+          counters,
+          ledger,
+          creditLedger
+        ),
+        false
+      );
+      assert.equal(ledger.has(firstContext), true);
+      assert.equal(counters.duplicateRejections, 1, 'the old replay is rejected as already consumed');
+      assert.equal(counters.acceptedResults, 2);
+      assert.equal(transport.state.wait, thirdTicket);
     }
   },
   {
@@ -470,7 +735,8 @@ export const TRANSPORT_CHECKS = [
     run() {
       const owner = createExecutionOwner();
       const counters = createCounters();
-      const ledger = createConsumptionLedger();
+      const ledger = createConsumptionLedger({ capacity: 2 });
+      const creditLedger = createCreditLedger({ capacity: 2 });
       const contextA = createContext();
       const transport = new PresentationTransport(8, plan());
       waitAtBarrier(transport);
@@ -482,7 +748,8 @@ export const TRANSPORT_CHECKS = [
           resultA.envelope,
           resultA.observations,
           counters,
-          ledger
+          ledger,
+          creditLedger
         ),
         true
       );
@@ -508,8 +775,9 @@ export const TRANSPORT_CHECKS = [
       assert.equal(storedCompletionEligible(contextB, stored), true);
       assert.equal(transport.releaseWait(currentTicket), true);
       counters.revisitReleases += 1;
-      counters.credits += 0;
-      assert.equal(counters.credits, 1);
+      assert.equal(counters.acceptedResults, 1, 'the revisit invents no second result');
+      assert.equal(counters.credits, 1, 'the revisit grants no second credit');
+      assert.equal(ledger.size, 1, 'the revisit consumes no new identity');
 
       const changedAuthority = createContext({ authorityGeneration: 2 });
       assert.equal(owner.completionFor(changedAuthority), null);
@@ -555,11 +823,29 @@ export const TRANSPORT_CHECKS = [
       const english = resolveCatalogue(catalogues, 'en', 'en');
       const french = resolveCatalogue(catalogues, 'en', 'fr-FR');
       const fallback = resolveCatalogue(catalogues, 'en', 'de-DE');
-      assert.equal(english('retry.explanation'), 'Repeated requests need an idempotency key.');
-      assert.equal(french('retry.explanation'), 'Les requêtes répétées ont besoin d’une clé.');
-      assert.equal(fallback('retry.explanation'), english('retry.explanation'), 'stable-key fallback');
-      assert.notEqual(english('retry.explanation'), french('retry.explanation'));
-      order.push('timing');
+      const englishText = english('retry.explanation');
+      const frenchText = french('retry.explanation');
+      assert.equal(englishText, 'Repeated requests need an idempotency key.');
+      assert.equal(frenchText, 'Les requêtes répétées ont besoin d’une clé.');
+      assert.equal(fallback('retry.explanation'), englishText, 'stable-key fallback');
+      assert.notEqual(englishText, frenchText);
+
+      // Resolved text enters the real public timeline, settled-state and
+      // animation APIs: the transcript and typing duration follow the message.
+      order.push('buildTimeline+settled+animation');
+      const englishPresentation = assertResolvedPresentation('en', englishText, englishText);
+      const frenchPresentation = assertResolvedPresentation('fr-FR', frenchText, frenchText);
+      assert.notEqual(englishText.length, frenchText.length, 'fixture message lengths differ');
+      assert.ok(
+        frenchPresentation.animation.baseDurationMs > englishPresentation.animation.baseDurationMs,
+        'the longer French message types for longer'
+      );
+      assert.equal(
+        frenchPresentation.animation.baseDurationMs - englishPresentation.animation.baseDurationMs,
+        (frenchText.length - englishText.length) * TYPING_MS_PER_CHAR,
+        'typed duration changes exactly by the resolved character-length delta'
+      );
+      // The virtual-clock pacing function is unchanged, still finite and positive.
       assert.ok(frameDelayMs(800, 1) > 0);
       assert.deepEqual(order, [
         'verify:en',
@@ -567,8 +853,22 @@ export const TRANSPORT_CHECKS = [
         'verify:fr',
         'parse:fr',
         'resolve',
-        'timing'
+        'buildTimeline+settled+animation'
       ]);
+
+      // Bypassing resolution leaves key text in the transcript and a shorter
+      // typing duration, which breaks the same presentation assertion.
+      assert.throws(
+        () => assertResolvedPresentation('en', 'retry.explanation', englishText),
+        /settled text must be the resolved message/
+      );
+      const bypassed = localePresentation('retry.explanation');
+      assert.equal(bypassed.text, 'retry.explanation');
+      assert.notEqual(bypassed.animation.baseDurationMs, englishPresentation.animation.baseDurationMs);
+      assert.throws(
+        () => assert.equal(bypassed.animation.baseDurationMs, englishPresentation.animation.baseDurationMs),
+        /strictly equal/
+      );
 
       // Same length, changed byte: the raw digest, not the parsed value, rejects.
       const changedByte = PINNED_CATALOGUES.en.bytes.replace('Repeated', 'Repeatex');
@@ -596,11 +896,26 @@ export const TRANSPORT_CHECKS = [
         /byte length/
       );
 
-      // Identity and grading fields are untouched by locale resolution.
+      // Identity, event order and grading fields are untouched by locale.
       assert.equal(context.challengeId, 'retry-query');
       assert.equal(context.challengeRevision, 1);
       assert.equal(context.checkpointId, 'result');
       assert.equal(context.stepId, 'solve');
+      assert.deepEqual(
+        englishPresentation.timeline.map((step) => [step.index, step.partId, step.kind, step.at]),
+        frenchPresentation.timeline.map((step) => [step.index, step.partId, step.kind, step.at])
+      );
+      const envelope = createObservedEnvelope(context, passingObservations(context));
+      for (const field of [
+        'walkthroughId',
+        'chapterId',
+        'stepId',
+        'challengeId',
+        'challengeRevision',
+        'checkpointId'
+      ]) {
+        assert.equal(envelope[field], context[field], `grading identity field ${field} unchanged`);
+      }
       assert.throws(() => english('missing.key'), /missing pinned message key/);
     }
   },

@@ -3,7 +3,9 @@ import { PresentationTransport, buildTimeline, settledStateAt } from '@chatwrigh
 import {
   REQUIRED_PARTS,
   admitEnvelope,
+  createConsumptionLedger,
   createContext,
+  createCreditLedger,
   createExecutionOwner,
   createObservation,
   createObservedEnvelope,
@@ -61,6 +63,13 @@ const plan = {
 
 const transport = new PresentationTransport(timeline.length, plan);
 const owner = createExecutionOwner();
+/**
+ * Declared small fixture inventory. The two ledgers are caller-owned proof
+ * state, bounded and non-evicting; they are never part of the package API.
+ */
+const LEDGER_CAPACITY = 2;
+const consumptionLedger = createConsumptionLedger({ capacity: LEDGER_CAPACITY });
+const creditLedger = createCreditLedger({ capacity: LEDGER_CAPACITY });
 
 let context = createContext();
 let playing = false;
@@ -78,9 +87,11 @@ const counters = {
   externalActions: 0,
   submissions: 0,
   validationConsumptions: 0,
+  acceptedResults: 0,
   credits: 0,
   staleRejections: 0,
   duplicateRejections: 0,
+  capacityRejections: 0,
   revisitReleases: 0
 };
 
@@ -211,7 +222,7 @@ function startAttempt(overrides) {
   play();
 }
 
-function releaseFreshEnvelope(observations, label, overrides = {}) {
+function releaseFreshEnvelope(observations, label, overrides = {}, envelopeOverride = null) {
   if (transport.state.wait === null) {
     counters.duplicateRejections += 1;
     logLine = `${label}: no current ticket`;
@@ -225,7 +236,10 @@ function releaseFreshEnvelope(observations, label, overrides = {}) {
     render();
     return false;
   }
-  const envelope = createObservedEnvelope(context, observations, overrides);
+  const envelope =
+    envelopeOverride === null
+      ? createObservedEnvelope(context, observations, overrides)
+      : envelopeOverride;
   const admitted = admitEnvelope(context, envelope);
   if (!admitted.accepted) {
     counters.staleRejections += 1;
@@ -233,15 +247,45 @@ function releaseFreshEnvelope(observations, label, overrides = {}) {
     render();
     return false;
   }
+  // The exact current ticket is the trusted presentation capability. Check
+  // bounded caller bookkeeping before release so a failed release or an
+  // exhausted ledger leaves this valid result unconsumed and the wait open.
   const ticket = transport.state.wait;
+  const consumption = consumptionLedger.precheck(context, envelope);
+  if (!consumption.ok) {
+    if (consumption.reason === 'capacity-exhausted') {
+      counters.capacityRejections += 1;
+    } else {
+      counters.duplicateRejections += 1;
+    }
+    logLine = `${label}: not consumed (${consumption.reason}); wait stays open`;
+    render();
+    return false;
+  }
+  if (!creditLedger.has(context) && creditLedger.size >= creditLedger.capacity) {
+    counters.capacityRejections += 1;
+    logLine = `${label}: credit mapping inventory exhausted; wait stays open`;
+    render();
+    return false;
+  }
   if (!transport.releaseWait(ticket)) {
     counters.duplicateRejections += 1;
     logLine = `${label}: ticket already consumed`;
     render();
     return false;
   }
+  const committed = consumptionLedger.consume(context, envelope);
+  if (!committed.consumed) {
+    counters.duplicateRejections += 1;
+    logLine = `${label}: consumption was not committed (${committed.reason})`;
+    render();
+    return false;
+  }
   counters.validationConsumptions += 1;
-  counters.credits += 1;
+  counters.acceptedResults += 1;
+  if (creditLedger.credit(context).credited) {
+    counters.credits += 1;
+  }
   lastReleasedTicket = ticket;
   if (context.attemptId === 'attempt-a') {
     completedEnvelopeA = envelope;
@@ -254,6 +298,24 @@ function releaseFreshEnvelope(observations, label, overrides = {}) {
   }
   render();
   return true;
+}
+
+/**
+ * Replay the exact result identity after recreating the presentation wait under
+ * the same scalar context. The structural clone proves object identity is not
+ * what fences a replay: the caller's consumed-identity ledger must reject it
+ * without releasing the current ticket, resuming playback or granting credit.
+ */
+function replayConsumed() {
+  if (completedEnvelopeA === null || completedObservationsA === null) {
+    counters.duplicateRejections += 1;
+    logLine = 'replay: no prior accepted attempt-A result';
+    render();
+    return;
+  }
+  const envelopeClone = JSON.parse(JSON.stringify(completedEnvelopeA));
+  const observationsClone = JSON.parse(JSON.stringify(completedObservationsA));
+  releaseFreshEnvelope(observationsClone, 'replayed consumed attempt-A envelope', {}, envelopeClone);
 }
 
 function releaseAssistedPass() {
@@ -321,6 +383,7 @@ function releaseDuplicate() {
     return;
   }
   if (transport.releaseWait(lastReleasedTicket)) {
+    counters.acceptedResults += 1;
     counters.credits += 1;
     logLine = 'duplicate unexpectedly accepted';
   } else {
@@ -355,6 +418,8 @@ const actions = {
   next: nextSegment,
   attemptA: () => startAttempt({ attemptId: 'attempt-a', submissionGeneration: 1 }),
   attemptB: () => startAttempt({ attemptId: 'attempt-b', submissionGeneration: 2 }),
+  attemptC: () => startAttempt({ attemptId: 'attempt-c', submissionGeneration: 3 }),
+  replay: replayConsumed,
   store: releaseStoredCompletion
 };
 
@@ -369,6 +434,8 @@ for (const [id, action] of Object.entries({
   'next-segment-button': actions.next,
   'attempt-a-button': actions.attemptA,
   'attempt-b-button': actions.attemptB,
+  'attempt-c-button': actions.attemptC,
+  'replay-consumed-button': actions.replay,
   'release-stored-button': actions.store
 })) {
   document.getElementById(id).addEventListener('click', action);
@@ -392,6 +459,8 @@ document.addEventListener('keydown', (event) => {
     n: actions.next,
     a: actions.attemptA,
     b: actions.attemptB,
+    c: actions.attemptC,
+    p: actions.replay,
     v: actions.store
   };
   if (byKey[key]) {
@@ -414,6 +483,12 @@ window.__proof = {
       canAdvance: transport.state.canAdvance,
       messages: visibleMessages(),
       counters: { ...counters },
+      ledger: {
+        size: consumptionLedger.size,
+        capacity: consumptionLedger.capacity,
+        creditMappings: creditLedger.size,
+        creditCapacity: creditLedger.capacity
+      },
       context: {
         attemptId: context.attemptId,
         submissionGeneration: context.submissionGeneration,

@@ -297,44 +297,67 @@ export function createExecutionOwner() {
   };
 }
 
+/** Identity fields for a progress credit: pins/checkpoint, never attempt lifetime. */
+const MAPPING_FIELDS = Object.freeze(
+  CONTEXT_FIELDS.filter((field) => field !== 'attemptId' && field !== 'submissionGeneration')
+);
+
+function identityKey(fields, context) {
+  return JSON.stringify(fields.map((field) => context[field]));
+}
+
+function boundedCapacity(capacity, label) {
+  if (!Number.isInteger(capacity) || capacity < 1) {
+    throw new TypeError(`${label} capacity must be a positive integer`);
+  }
+  return capacity;
+}
+
 /**
  * Caller-owned once-only consumption across presentation waits. The key is the
- * result identity (including attempt and submission generation), not a ticket:
- * recreating a presentation wait with unchanged identity cannot consume or
- * credit the same result twice, while a genuinely new attempt/generation can.
- * Bounded by the number of consumed identities; it keeps no ticket history.
+ * full immutable result identity (including attempt and submission
+ * generation), not a ticket or an object reference: recreating a presentation
+ * wait with unchanged identity cannot consume or credit the same result twice,
+ * while a genuinely new attempt/generation can.
+ *
+ * Capacity is finite and never evicts. Exhaustion fails closed with
+ * `capacity-exhausted`, so old consumed identities remain rejected rather than
+ * being forgotten to make room for a new result. Bookkeeping is bounded by the
+ * declared caller inventory, keeps no ticket history and is never package
+ * state.
  */
-export function createConsumptionLedger() {
+export function createConsumptionLedger({ capacity = 8 } = {}) {
+  const limit = boundedCapacity(capacity, 'consumption ledger');
   const consumed = new Set();
-  const key = (context) =>
-    JSON.stringify([
-      context.project,
-      context.authorityGeneration,
-      context.contentPin,
-      context.declarationSha256,
-      context.narrativeSha256,
-      context.trainingPackageSha256,
-      context.walkthroughId,
-      context.chapterId,
-      context.stepId,
-      context.challengeId,
-      context.challengeRevision,
-      context.checkpointId,
-      context.attemptId,
-      context.submissionGeneration
-    ]);
+  const key = (context) => identityKey(CONTEXT_FIELDS, context);
+
+  function precheck(context, envelope) {
+    const rejection = envelopeRejection(context, envelope);
+    if (rejection !== null) {
+      return { ok: false, reason: rejection };
+    }
+    if (consumed.has(key(context))) {
+      return { ok: false, reason: 'already-consumed' };
+    }
+    if (consumed.size >= limit) {
+      return { ok: false, reason: 'capacity-exhausted' };
+    }
+    return { ok: true, reason: null };
+  }
 
   return Object.freeze({
+    /**
+     * Non-mutating admission check. A caller that must release a presentation
+     * ticket first runs this before release, so a failed release leaves the
+     * valid result unconsumed and still available.
+     */
+    precheck,
     consume(context, envelope) {
-      const rejection = envelopeRejection(context, envelope);
-      if (rejection !== null) {
-        return { consumed: false, reason: rejection };
+      const pre = precheck(context, envelope);
+      if (!pre.ok) {
+        return { consumed: false, reason: pre.reason };
       }
-      const identity = key(context);
-      if (consumed.has(identity)) {
-        return { consumed: false, reason: 'already-consumed' };
-      }
-      consumed.add(identity);
+      consumed.add(key(context));
       return { consumed: true, reason: null };
     },
     has(context) {
@@ -342,6 +365,45 @@ export function createConsumptionLedger() {
     },
     get size() {
       return consumed.size;
+    },
+    get capacity() {
+      return limit;
+    }
+  });
+}
+
+/**
+ * Caller-owned progress credit, idempotent per immutable context/checkpoint
+ * mapping. A fresh attempt/submission generation can be accepted as a new
+ * result (`acceptedResults`), but it does not create a second credit for the
+ * same pins, challenge revision and checkpoint. Capacity is finite, never
+ * evicts and fails closed.
+ */
+export function createCreditLedger({ capacity = 8 } = {}) {
+  const limit = boundedCapacity(capacity, 'credit ledger');
+  const credited = new Set();
+  const key = (context) => identityKey(MAPPING_FIELDS, context);
+
+  return Object.freeze({
+    credit(context) {
+      const identity = key(context);
+      if (credited.has(identity)) {
+        return { credited: false, duplicate: true, reason: 'already-credited-mapping' };
+      }
+      if (credited.size >= limit) {
+        return { credited: false, duplicate: false, reason: 'capacity-exhausted' };
+      }
+      credited.add(identity);
+      return { credited: true, duplicate: false, reason: null };
+    },
+    has(context) {
+      return credited.has(key(context));
+    },
+    get size() {
+      return credited.size;
+    },
+    get capacity() {
+      return limit;
     }
   });
 }

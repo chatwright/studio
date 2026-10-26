@@ -142,6 +142,14 @@ envelope, then releases the ticket only after accepting a matching complete
 whole-challenge pass. The package never sees a project, attempt, checkpoint
 payload, outcome, SQL, evidence or transcript, and keeps no completion registry.
 
+The package also keeps no consumption ledger. A host that needs once-only
+acceptance across presentation-wait recreation keeps its own finite,
+non-evicting set keyed by the full immutable result identity (including attempt
+and submission generation), plus an optional idempotent credit mapping keyed by
+context/checkpoint when it reports learner progress. The proof harness
+demonstrates both caller-owned structures, including fail-closed capacity
+exhaustion; neither is exported by the package.
+
 ```ts
 import { PresentationTransport } from '@chatwright/player-core';
 
@@ -183,7 +191,7 @@ The canonical design note, boundaries and proof record live in
 
 ## Proof
 
-Three independent checks exercise the public contract:
+Four independent checks exercise the public contract:
 
 - `pnpm --filter @chatwright/player-core test` builds the package and runs
   `node --test` against the compiled `dist/` exports, including the transport's
@@ -191,15 +199,24 @@ Three independent checks exercise the public contract:
   transition semantics.
 - `pnpm prove:player-core` (from the Studio repository root) builds and packs the
   package, inspects the tarball, installs it into a fresh temporary consumer
-  outside the repository, then runs a runtime proof (caller-owned envelope and
-  required-part fencing, recreated-wait consumption, raw catalogue length/SHA
-  pins) and a TypeScript declaration proof against that tarball alone.
+  outside the repository, then runs a 25-check runtime proof and a TypeScript
+  declaration proof against that tarball alone. The runtime proof covers
+  caller-owned envelope and required-part fencing, structural-clone replay
+  rejection across a recreated wait, fail-closed finite-capacity consumption,
+  a stale/failed release leaving a valid result unconsumed, fresh-generation
+  acceptance versus one idempotent checkpoint credit, raw catalogue byte
+  length/SHA-256 pins, and verified English/French fixture messages entering
+  `buildTimeline`, `settledStateAt` and the animation specification with the
+  locale text and typing duration changing while grading identities do not.
 - `pnpm prove:player-core-browser` builds, packs and installs the same way,
   serves only the consumer's files on an ephemeral loopback port and drives a
-  real Chromium browser through Play, waiting, assisted pass, stale result,
-  Watch/seek, explicit Next, stored-completion revisit and duplicate release.
-  Assertions read the settled transcript and effect/credit counters. SIGINT and
-  SIGTERM use the same idempotent awaited shutdown as the normal `finally`.
+  real Chromium browser through 47 checks and 12 screenshots: Play, waiting,
+  assisted pass, recreated-wait structural-clone replay rejection, fresh
+  attempt acceptance, stale result, ledger capacity exhaustion, Watch/seek,
+  explicit Next, stored-completion revisit and duplicate release. Assertions
+  read the settled transcript and caller-owned effect/acceptance/consumption/
+  credit counters. SIGINT and SIGTERM use the same idempotent awaited shutdown
+  as the normal `finally`.
 - `node --test scripts/player-core-proof/browser-lifecycle.test.mjs` proves
   interrupted, repeated and partially failing shutdown in child processes,
   including that the owned loopback port is gone.
