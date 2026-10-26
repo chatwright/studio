@@ -1,4 +1,4 @@
-import { PlatformJournalEntry } from '../model/bundle.types';
+import { PlatformJournalEntry } from './bundle.types.js';
 
 /**
  * The animation layer is a first-class part of the playback engine, not a

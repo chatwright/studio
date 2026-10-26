@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, viewC
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { Marker } from '../../engine/derive';
+import { Marker } from '@chatwright/player-core';
 import { PlayerEngine, SPEED_STOPS, Speed } from '../../player-engine';
 
 /**

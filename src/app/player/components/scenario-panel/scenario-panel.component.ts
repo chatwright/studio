@@ -10,8 +10,8 @@ import {
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { ActorLoopEvent, BundlePart } from '../../model/bundle.types';
-import { findingSeverity } from '../../engine/derive';
+import { ActorLoopEvent, BundlePart } from '@chatwright/player-core';
+import { findingSeverity } from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
 import { RawJsonComponent } from '../raw-json/raw-json.component';

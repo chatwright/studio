@@ -3,10 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import {
+  Bundle,
+  BundleRun,
+  buildTimeline,
+  chaptersOf,
+  observedByParts
+} from '@chatwright/player-core';
 import { parseBundleText } from '../model/parse-bundle';
-import { Bundle, BundleRun } from '../model/bundle.types';
-import { buildTimeline, chaptersOf } from './timeline';
-import { observedByParts } from './derive';
 import { PlayerEngine } from '../player-engine';
 
 const samplesDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../public/samples');

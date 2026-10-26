@@ -1,21 +1,28 @@
 import { Injectable, OnDestroy, computed, signal } from '@angular/core';
 
-import { Bundle, BundleRun } from './model/bundle.types';
-import { AiCursor, aiCursorAt } from './engine/ai-cursor';
 import {
+  AiCursor,
   AnnotationPin,
   AnnotationThread,
+  BASE_TEMPO,
+  Bundle,
+  BundleRun,
+  Chapter,
   Marker,
+  SettledState,
+  Step,
+  aiCursorAt,
+  buildTimeline,
+  chaptersOf,
   deriveMarkers,
+  frameDelayMs,
   resolveAnnotations,
+  settledStateAt,
   threadAnnotations
-} from './engine/derive';
-import { SettledState, settledStateAt } from './engine/settled';
-import { BASE_TEMPO, frameDelayMs } from './engine/tempo';
-import { Chapter, Step, buildTimeline, chaptersOf } from './engine/timeline';
+} from '@chatwright/player-core';
 
 /** Preset speed stops (0.2× / 0.5× / 1× / 2× / 4×). Rebased in round 2 so 1×
- *  is a calmer, at-least-2×-slower pace — see engine/tempo.ts. */
+ *  is a calmer, at-least-2×-slower pace — see @chatwright/player-core's tempo. */
 export const SPEED_STOPS = [0.2, 0.5, 1, 2, 4] as const;
 export type Speed = (typeof SPEED_STOPS)[number];
 

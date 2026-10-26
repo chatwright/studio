@@ -4,7 +4,11 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { AnnotationPin, AnnotationThread, resolveAnchorMessageKey } from '../../engine/derive';
+import {
+  AnnotationPin,
+  AnnotationThread,
+  resolveAnchorMessageKey
+} from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
 

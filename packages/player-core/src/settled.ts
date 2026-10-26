@@ -1,6 +1,6 @@
-import { JournalDirection, PlatformAction } from '../model/bundle.types';
-import { messageKey } from './animation';
-import { Step } from './timeline';
+import { JournalDirection, PlatformAction } from './bundle.types.js';
+import { messageKey } from './animation.js';
+import { Step } from './timeline.js';
 
 /**
  * Settled state is the fully-committed transcript at a given step index —

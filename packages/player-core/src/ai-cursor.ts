@@ -1,4 +1,4 @@
-import { BeatKind, Step } from './timeline';
+import { BeatKind, Step } from './timeline.js';
 
 /**
  * The mind panel is synchronised to playback: at any step index we need the

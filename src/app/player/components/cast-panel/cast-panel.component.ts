@@ -3,8 +3,8 @@ import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { ActorStats, actorStats } from '../../engine/derive';
-import { BundleActor } from '../../model/bundle.types';
+import { ActorStats, actorStats } from '@chatwright/player-core';
+import { BundleActor } from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 
 /**

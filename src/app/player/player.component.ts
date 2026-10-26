@@ -12,7 +12,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { Bundle } from './model/bundle.types';
+import { Bundle } from '@chatwright/player-core';
 import { PlayerEngine } from './player-engine';
 import { PlayerUiState } from './player-ui';
 import { TransportBarComponent } from './components/transport-bar/transport-bar.component';

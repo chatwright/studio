@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { Bundle } from '../../player/model/bundle.types';
+import { Bundle } from '@chatwright/player-core';
 import { parseBundleText } from '../../player/model/parse-bundle';
 import { EmbedParams, parseEmbedParams } from '../../player/embed-params';
 import { PlayerComponent } from '../../player/player.component';

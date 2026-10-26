@@ -6,9 +6,9 @@ import {
   CampaignFinding,
   PlatformAction,
   PlatformJournalEntry
-} from '../model/bundle.types';
-import { messageKey } from './animation';
-import { Step } from './timeline';
+} from './bundle.types.js';
+import { messageKey } from './animation.js';
+import { Step } from './timeline.js';
 
 /**
  * Pure derivations over the *whole* run (independent of the playhead):
