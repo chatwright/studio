@@ -1,12 +1,14 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
-import { BundleAnchor, BundleAnnotation, BundleRun } from './model/bundle.types';
 import {
+  BundleAnchor,
+  BundleAnnotation,
+  BundleRun,
   MessageLineage,
   ObservedByRow,
   messageLineage,
   observedByParts
-} from './engine/derive';
+} from '@chatwright/player-core';
 import { PlayerEngine } from './player-engine';
 
 /** What the provenance inspector is currently focused on. */

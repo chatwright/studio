@@ -3,10 +3,17 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import {
+  BASE_TEMPO,
+  Bundle,
+  BundleRun,
+  MAX_GAP_MS,
+  MIN_GAP_MS,
+  actorStats,
+  frameDelayMs,
+  observedByParts
+} from '@chatwright/player-core';
 import { parseBundleText } from '../model/parse-bundle';
-import { Bundle, BundleRun } from '../model/bundle.types';
-import { BASE_TEMPO, MAX_GAP_MS, MIN_GAP_MS, frameDelayMs } from './tempo';
-import { actorStats, observedByParts } from './derive';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const samplePath = resolve(here, '../testdata/golden.chatwright.json');

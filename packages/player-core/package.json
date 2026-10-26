@@ -1,0 +1,41 @@
+{
+  "name": "@chatwright/player-core",
+  "version": "0.1.0",
+  "description": "Framework-free deterministic playback core for Chatwright run bundles: ordered timeline, settled transcript state and playhead-independent derivations.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build && node --test test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20.11"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chatwright/studio.git",
+    "directory": "packages/player-core"
+  },
+  "homepage": "https://github.com/chatwright/chatwright/blob/main/spec/features/chatwright/playground/playback-core/README.md",
+  "bugs": {
+    "url": "https://github.com/chatwright/studio/issues"
+  }
+}

@@ -11,11 +11,15 @@ import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { AnnotationThread, attribution, resolveAnchorMessageKey } from '../../engine/derive';
-import { SettledMessage } from '../../engine/settled';
+import {
+  AnnotationThread,
+  PlatformAction,
+  SettledMessage,
+  attribution,
+  resolveAnchorMessageKey
+} from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
-import { PlatformAction } from '../../model/bundle.types';
 
 /**
  * The animated conversation canvas. Renders settled transcript state and, only

@@ -3,9 +3,13 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { messageKey } from '../../engine/animation';
-import { AnnotationThread, ObservedByRow, resolveAnchorMessageKey } from '../../engine/derive';
-import { PlatformJournalEntry } from '../../model/bundle.types';
+import {
+  AnnotationThread,
+  ObservedByRow,
+  PlatformJournalEntry,
+  messageKey,
+  resolveAnchorMessageKey
+} from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
 import { RawJsonComponent } from '../raw-json/raw-json.component';

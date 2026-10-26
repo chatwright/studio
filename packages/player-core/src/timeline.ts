@@ -2,8 +2,8 @@ import {
   ActorLoopEvent,
   BundleRun,
   PlatformJournalEntry
-} from '../model/bundle.types';
-import { AnimationSpec, animationForBeat, animationForJournalEntry } from './animation';
+} from './bundle.types.js';
+import { AnimationSpec, animationForBeat, animationForJournalEntry } from './animation.js';
 
 /**
  * A run flattened into a single ordered list of discrete playback steps.

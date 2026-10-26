@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { attribution } from '../../engine/derive';
+import { attribution } from '@chatwright/player-core';
 import { PlayerEngine } from '../../player-engine';
 import { PlayerUiState } from '../../player-ui';
 

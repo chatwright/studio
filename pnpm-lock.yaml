@@ -29,6 +29,9 @@ importers:
       '@angular/router':
         specifier: 22.0.7
         version: 22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(@angular/platform-browser@22.0.7(@angular/common@22.0.7(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.0.7(@angular/compiler@22.0.7)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@chatwright/player-core':
+        specifier: workspace:*
+        version: link:packages/player-core
       '@primeuix/themes':
         specifier: 3.0.0
         version: 3.0.0
@@ -78,6 +81,8 @@ importers:
       wrangler:
         specifier: ^4.112.0
         version: 4.112.0
+
+  packages/player-core: {}
 
 packages:
 

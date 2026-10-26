@@ -3,8 +3,8 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { Bundle, BundleRun, PlatformJournalEntry } from '@chatwright/player-core';
 import { parseBundleText } from './model/parse-bundle';
-import { Bundle, BundleRun, PlatformJournalEntry } from './model/bundle.types';
 import { PlayerEngine, SPEED_STOPS } from './player-engine';
 
 const here = dirname(fileURLToPath(import.meta.url));

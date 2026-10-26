@@ -1,4 +1,9 @@
-import { ActorLoopEvent, Bundle, BundleRun, RUN_BUNDLE_FORMAT_V1 } from './bundle.types';
+import {
+  ActorLoopEvent,
+  Bundle,
+  BundleRun,
+  RUN_BUNDLE_FORMAT_V1
+} from '@chatwright/player-core';
 
 /**
  * Result of attempting to read a run bundle from raw text or a parsed value.

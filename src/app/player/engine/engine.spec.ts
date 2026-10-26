@@ -3,19 +3,21 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { parseBundleText } from '../model/parse-bundle';
-import { Bundle, BundleRun } from '../model/bundle.types';
-import { buildTimeline, chaptersOf } from './timeline';
-import { settledStateAt } from './settled';
-import { aiCursorAt } from './ai-cursor';
 import {
+  Bundle,
+  BundleRun,
+  aiCursorAt,
   attribution,
+  buildTimeline,
+  chaptersOf,
   deriveMarkers,
   loopEventForBotMessage,
   messageLineage,
   resolveAnnotations,
+  settledStateAt,
   threadAnnotations
-} from './derive';
+} from '@chatwright/player-core';
+import { parseBundleText } from '../model/parse-bundle';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const samplePath = resolve(here, '../testdata/golden.chatwright.json');
