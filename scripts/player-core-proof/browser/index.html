@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>player-core packed browser proof</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "@chatwright/player-core": "/node_modules/@chatwright/player-core/dist/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Synthetic replay transport proof</h1>
+        <p class="subtitle">
+          Packed <code>@chatwright/player-core</code> installed outside the repository. Presentation
+          only: no SQL editor, no DataTug adapter, no production grading.
+        </p>
+        <p class="resolved">resolved: <code id="resolved"></code></p>
+      </header>
+
+      <section class="panel" aria-labelledby="status-heading">
+        <h2 id="status-heading">Transport</h2>
+        <p id="status" class="status" data-status="idle">ready</p>
+        <p class="meta">
+          cursor <span id="cursor">-1</span> · segment <span id="segment">—</span> · ticket
+          <span id="ticket">—</span>
+        </p>
+        <div class="controls" role="group" aria-label="Presentation transport">
+          <button id="play-button" type="button">Play</button>
+          <button id="pause-button" type="button">Pause</button>
+          <button id="watch-button" type="button">Watch / seek 5 (no credit)</button>
+          <button id="watch-barrier-button" type="button">Seek 2 (preview barrier)</button>
+          <button id="next-segment-button" type="button">Next segment</button>
+        </div>
+        <div class="controls" role="group" aria-label="Caller-owned results">
+          <button id="release-pass-button" type="button">Release matching assisted pass</button>
+          <button id="stale-button" type="button">Deliver stale attempt-A result</button>
+          <button id="duplicate-button" type="button">Duplicate last release</button>
+          <button id="attempt-a-button" type="button">Recreate attempt A wait</button>
+          <button id="attempt-b-button" type="button">Start attempt B (fresh generation)</button>
+          <button id="attempt-c-button" type="button">Start attempt C (fresh generation)</button>
+          <button id="replay-consumed-button" type="button">Replay consumed attempt-A envelope (structural clone)</button>
+          <button id="release-stored-button" type="button">Release stored completion A for the current ticket</button>
+        </div>
+        <p class="keys">
+          Keys: Space play/pause · R assisted pass · X stale · S watch · N next segment · A recreate
+          attempt A · B attempt B · C attempt C · P replay consumed A · V stored revisit
+        </p>
+      </section>
+
+      <section class="panel" aria-labelledby="transcript-heading">
+        <h2 id="transcript-heading">Settled transcript</h2>
+        <ol id="transcript" data-count="0"></ol>
+      </section>
+
+      <section class="panel" aria-labelledby="counters-heading">
+        <h2 id="counters-heading">Effect and credit counters</h2>
+        <dl id="counters"></dl>
+        <p class="log" id="log" aria-live="polite">no external action performed</p>
+      </section>
+    </main>
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

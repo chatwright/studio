@@ -9,6 +9,10 @@ import {
   BundleRun,
   Chapter,
   Marker,
+  PresentationPlan,
+  PresentationState,
+  PresentationTransport,
+  PresentationWaitTicket,
   SettledState,
   Step,
   aiCursorAt,
@@ -78,8 +82,21 @@ export class PlayerEngine implements OnDestroy {
   /** Live message bar typing for a compose-and-send primitive (or null). */
   readonly messageBarTyping = signal<MessageBarTyping | null>(null);
 
+  /**
+   * The current caller-bound presentation wait, if any. The ticket is opaque:
+   * only `releasePresentationWait` accepts it, and only the exact current
+   * ticket is accepted, once. No result, grading or attempt data lives here.
+   */
+  readonly wait = signal<PresentationWaitTicket | null>(null);
+  readonly waiting = computed(() => this.wait() !== null);
+
+  private transport = new PresentationTransport(0);
+  private plan: PresentationPlan | null = null;
+
   private frameTimer: ReturnType<typeof setTimeout> | null = null;
   private typingRaf: number | null = null;
+  /** Invalidates already-queued frame callbacks even if a host delivers late. */
+  private frameGeneration = 0;
 
   readonly bundle = this._bundle.asReadonly();
   readonly runIndex = this._runIndex.asReadonly();
@@ -142,25 +159,65 @@ export class PlayerEngine implements OnDestroy {
   /* ------------------------------------------------------------ loading */
 
   load(bundle: Bundle, runIndex = 0): void {
-    this.stop();
-    this._bundle.set(bundle);
-    this.selectRun(runIndex);
+    // Prepare (and validate) the whole next context before publishing any of
+    // it. If the new timeline cannot carry the retained plan, the call fails
+    // with the prior bundle, timeline, transport, cursor and wait untouched.
+    const prepared = this.prepareRunContext(bundle, runIndex, -1);
+    this.commitRunContext(bundle, runIndex, prepared, true);
+    this.reanchorPendingPlay();
   }
 
   selectRun(runIndex: number): void {
-    this.stop();
-    this._runIndex.set(runIndex);
     const bundle = this._bundle();
-    const run = bundle?.runs?.[runIndex] ?? null;
-    this._timeline.set(buildTimeline(run));
-    this.stepIndex.set(-1);
-    this._pinnedChatId.set(null);
-    this._activeChatId.set(run?.chats?.[0]?.chatId ?? null);
-    // Re-anchor a play() that arrived before this timeline did.
-    if (this.pendingPlay && this._timeline().length > 0) {
-      this.pendingPlay = false;
-      this.play();
+    const prepared = this.prepareRunContext(bundle, runIndex, -1);
+    this.commitRunContext(bundle, runIndex, prepared, false);
+    this.reanchorPendingPlay();
+  }
+
+  /**
+   * Declare caller-owned presentation bindings (segments and barriers). A
+   * barrier only pauses presentation: the caller decides whether an external
+   * result matches and then releases the ticket. Passing `null` restores
+   * ordinary unsegmented Studio playback.
+   *
+   * This is a context change: any open wait and scheduled advance are revoked.
+   */
+  setPresentationPlan(plan: PresentationPlan | null): void {
+    const next = new PresentationTransport(this._timeline().length, plan);
+    this.pause();
+    this.transport.dispose();
+    this.transport = next;
+    // Retain the transport's validated snapshot, never the caller's mutable
+    // arrays/records: a later selectRun/patchRun rebuild must not see edits.
+    this.plan = next.bindings;
+    this.applyCursor(next.seek(-1));
+  }
+
+  /**
+   * Explicit outer Next across a declared segment boundary. The presentation
+   * opens the segment's first step and stays paused until Play.
+   */
+  enterPresentationSegment(segmentId: string): void {
+    this.pause();
+    this.applyCursor(this.transport.enterSegment(segmentId));
+  }
+
+  /**
+   * Release the exact current presentation ticket. The caller has already
+   * validated its own external result; the engine only resumes playback that
+   * was running when the wait opened. Release while paused marks the wait
+   * satisfied and schedules nothing.
+   */
+  releasePresentationWait(ticket: PresentationWaitTicket): boolean {
+    const accepted = this.transport.releaseWait(ticket);
+    if (!accepted) {
+      return false;
     }
+    this.wait.set(null);
+    if (this.isPlaying()) {
+      this.scheduleNextFrame();
+    }
+    return true;
   }
 
   /* ------------------------------------------------------------- chats */
@@ -229,15 +286,29 @@ export class PlayerEngine implements OnDestroy {
     if (!bundle || !bundle.runs) {
       return;
     }
+    const wasPlaying = this.isPlaying();
+    const cursor = this.stepIndex();
     const runs = [...bundle.runs];
     runs[this._runIndex()] = next;
-    this._bundle.set({ ...bundle, runs });
-    this._timeline.set(buildTimeline(next));
+    const nextBundle = { ...bundle, runs };
+    // Validate the replacement context before publishing any of it.
+    const prepared = this.prepareRunContext(nextBundle, this._runIndex(), cursor);
+    this.clearTimers();
+    this._bundle.set(nextBundle);
+    this._timeline.set(prepared.timeline);
+    // A new timeline is a context change: revoke the open wait, keep the
+    // presentation position (clamped) and re-arm playback only if it was live.
+    this.adoptTransport(prepared.transport);
+    this.clearTransient();
+    if (wasPlaying) {
+      this.scheduleNextFrame();
+    }
   }
 
   ngOnDestroy(): void {
     this.clearTimers();
     this.stopTyping();
+    this.transport.dispose();
   }
 
   setReducedMotion(value: boolean): void {
@@ -259,8 +330,12 @@ export class PlayerEngine implements OnDestroy {
       return;
     }
     this.pendingPlay = false;
-    if (this.atEnd()) {
-      this.stepIndex.set(-1);
+    // Only ordinary unsegmented playback restarts at the physical end.
+    // A released final wait must finish its segment, and segment changes
+    // remain owned by the caller's explicit navigation.
+    if (this.atEnd() && this.transport.state.segmentId === null) {
+      this.applyCursor(this.transport.seek(-1));
+      this.clearTransient();
     }
     this.isPlaying.set(true);
     this.scheduleNextFrame();
@@ -271,6 +346,8 @@ export class PlayerEngine implements OnDestroy {
     this.isPlaying.set(false);
     this.clearTimers();
     this.clearTransient();
+    // A live ticket survives pause on purpose: pausing must not discard a
+    // valid external wait, and a later release still requires explicit Play.
   }
 
   toggle(): void {
@@ -289,7 +366,9 @@ export class PlayerEngine implements OnDestroy {
 
   next(): void {
     this.pause();
-    this.seekTo(this.stepIndex() + 1);
+    // advance() is barrier-aware: manual stepping cannot substitute for a
+    // caller release or for an explicit segment change.
+    this.applyCursor(this.transport.advance());
   }
 
   prev(): void {
@@ -302,12 +381,16 @@ export class PlayerEngine implements OnDestroy {
     this.seekTo(-1);
   }
 
-  /** Seek to an exact step index. Always lands on settled state instantly. */
+  /**
+   * Seek to an exact step index. Always lands on settled state instantly.
+   *
+   * A seek is a watch operation: it revokes any scheduled advance and any open
+   * wait ticket, never opens one and never grants credit. Playback is paused so
+   * an old clock tick cannot keep moving from the new position.
+   */
   seekTo(index: number): void {
-    const clamped = Math.max(-1, Math.min(index, this.lastIndex()));
-    this.clearTransient();
-    this.stepIndex.set(clamped);
-    this.syncActiveChat();
+    this.pause();
+    this.applyCursor(this.transport.seek(index));
   }
 
   jumpToMarker(marker: Marker): void {
@@ -337,35 +420,109 @@ export class PlayerEngine implements OnDestroy {
 
   private scheduleNextFrame(): void {
     this.clearTimers();
-    const from = this.stepIndex();
-    const to = from + 1;
-    if (to > this.lastIndex()) {
+    if (!this.isPlaying()) {
+      return;
+    }
+    const state = this.transport.state;
+    if (state.status === 'waiting') {
+      // Keep isPlaying true: the wait was reached during playback, so a valid
+      // release resumes it. Doing nothing keeps waiting indefinitely.
+      return;
+    }
+    if (state.status === 'segment-end' || state.status === 'ended' || state.status === 'disposed') {
       this.isPlaying.set(false);
       this.clearTransient();
       return;
     }
-    const delay = this.frameDelay(to);
+    const generation = this.frameGeneration;
+    const delay = this.frameDelay(state.cursor + 1);
     this.frameTimer = setTimeout(() => {
-      this.advanceTo(to);
+      this.frameTimer = null;
+      // A callback delivered after cancel (seek/load/pause/plan change) is
+      // inert: it must not advance reconstructed state or reopen a wait.
+      if (generation !== this.frameGeneration || !this.isPlaying()) {
+        return;
+      }
+      this.applyState(this.transport.advance(), true);
       if (this.isPlaying()) {
         this.scheduleNextFrame();
       }
     }, delay);
   }
 
-  private advanceTo(index: number): void {
-    this.stepIndex.set(index);
-    this.syncActiveChat();
-    if (this.reducedMotion()) {
+  private applyState(state: PresentationState, animate: boolean): void {
+    this.applyCursor(state);
+    if (!animate || state.cursor < 0 || this.reducedMotion()) {
       this.clearTransient();
       return;
     }
+    const index = state.cursor;
     this.animatingIndex.set(index);
     const step = this._timeline()[index];
     if (step && step.kind === 'journal' && step.animation.primitive === 'compose-and-send') {
       this.runMessageBarTyping(step, index);
     } else {
       this.stopTyping();
+    }
+  }
+
+  private applyCursor(state: PresentationState): void {
+    this.stepIndex.set(state.cursor);
+    this.wait.set(state.wait);
+    this.syncActiveChat();
+  }
+
+  /**
+   * Build and validate a run context without touching any published signal or
+   * the live transport. Throws before the caller publishes anything if the
+   * timeline cannot carry the retained plan.
+   */
+  private prepareRunContext(
+    bundle: Bundle | null,
+    runIndex: number,
+    cursor: number
+  ): { run: BundleRun | null; timeline: Step[]; transport: PresentationTransport } {
+    const run = bundle?.runs?.[runIndex] ?? null;
+    const timeline = buildTimeline(run);
+    const transport = new PresentationTransport(timeline.length, this.plan);
+    transport.seek(cursor);
+    return { run, timeline, transport };
+  }
+
+  /**
+   * Publish a prepared context atomically: no signal is written until every
+   * fallible step has already succeeded.
+   */
+  private commitRunContext(
+    bundle: Bundle | null,
+    runIndex: number,
+    prepared: { run: BundleRun | null; timeline: Step[]; transport: PresentationTransport },
+    publishBundle: boolean
+  ): void {
+    this.stop();
+    if (publishBundle) {
+      this._bundle.set(bundle);
+    }
+    this._runIndex.set(runIndex);
+    this._timeline.set(prepared.timeline);
+    this.adoptTransport(prepared.transport);
+    this._pinnedChatId.set(null);
+    this._activeChatId.set(prepared.run?.chats?.[0]?.chatId ?? null);
+  }
+
+  /** Replace the live transport, revoking the previous lifetime's ticket. */
+  private adoptTransport(next: PresentationTransport): void {
+    this.transport.dispose();
+    this.transport = next;
+    this.wait.set(null);
+    this.applyCursor(next.state);
+  }
+
+  private reanchorPendingPlay(): void {
+    // Re-anchor a play() that arrived before this timeline did.
+    if (this.pendingPlay && this._timeline().length > 0) {
+      this.pendingPlay = false;
+      this.play();
     }
   }
 
@@ -426,6 +583,7 @@ export class PlayerEngine implements OnDestroy {
   }
 
   private clearTimers(): void {
+    this.frameGeneration += 1;
     if (this.frameTimer !== null) {
       clearTimeout(this.frameTimer);
       this.frameTimer = null;

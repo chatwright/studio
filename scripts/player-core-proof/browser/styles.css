@@ -1,0 +1,153 @@
+:root {
+  color-scheme: dark;
+  --bg: #101317;
+  --panel: #171c22;
+  --line: #2b333d;
+  --text: #e8edf2;
+  --muted: #93a1b0;
+  --accent: #74d3a5;
+  --wait: #f0b86e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+h2 {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.subtitle,
+.meta,
+.keys,
+.resolved {
+  color: var(--muted);
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+code {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.status {
+  font-size: 20px;
+  font-weight: 650;
+  margin: 0 0 6px;
+}
+
+.status[data-status='waiting'] {
+  color: var(--wait);
+}
+
+.status[data-status='running'],
+.status[data-status='idle'] {
+  color: var(--accent);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: #222a33;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+#transcript {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+#transcript li {
+  border-left: 3px solid var(--line);
+  padding: 6px 10px;
+  background: #12171c;
+  border-radius: 6px;
+}
+
+#transcript li[data-from='bot'] {
+  border-left-color: var(--accent);
+}
+
+#counters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+#counters div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+#counters dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#counters dd {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.log {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 12px 0 0;
+}
