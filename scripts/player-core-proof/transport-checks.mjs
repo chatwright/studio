@@ -1,14 +1,24 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
-import { PresentationTransport, buildTimeline, settledStateAt } from '@chatwright/player-core';
+import {
+  PresentationTransport,
+  buildTimeline,
+  frameDelayMs,
+  settledStateAt
+} from '@chatwright/player-core';
 
 import {
   ENVELOPE_FIELDS,
+  REQUIRED_PARTS,
   admitEnvelope,
+  createConsumptionLedger,
   createContext,
   createEnvelope,
   createExecutionOwner,
+  createObservation,
+  createObservedEnvelope,
+  observationRejection,
   resolveCatalogue,
   storedCompletionEligible
 } from './adapter.mjs';
@@ -29,6 +39,42 @@ function plan(barrierIndex = 2) {
   };
 }
 
+/**
+ * Raw pinned consumer fixtures. The declared byte length and SHA-256 are part
+ * of the pin: a locale claim is verified against the exact bytes before the
+ * JSON is parsed, keys are resolved or any timing decision is made.
+ */
+const PINNED_CATALOGUES = Object.freeze({
+  en: Object.freeze({
+    bytes:
+      '{"schemaVersion":1,"locale":"en","messages":{"retry.explanation":"Repeated requests need an idempotency key."}}',
+    byteLength: 111,
+    sha256: 'e83f6779ddf7d2da312c67ba2ba9288af96b73e2afe891fefcfb348d3a9ef827'
+  }),
+  fr: Object.freeze({
+    bytes:
+      '{"schemaVersion":1,"locale":"fr","messages":{"retry.explanation":"Les requêtes répétées ont besoin d’une clé."}}',
+    byteLength: 119,
+    sha256: '2d8f5f62b4077487fb918ff7a626dc454845e8cdda9259d70c458b9b07476572'
+  })
+});
+
+function verifyPinnedCatalogueBytes(pin, candidateBytes = pin.bytes) {
+  const byteLength = Buffer.byteLength(candidateBytes, 'utf8');
+  if (byteLength !== pin.byteLength) {
+    throw new RangeError(
+      `pinned catalogue byte length mismatch: expected ${pin.byteLength}, observed ${byteLength}`
+    );
+  }
+  const digest = createHash('sha256').update(candidateBytes, 'utf8').digest('hex');
+  if (digest !== pin.sha256) {
+    throw new RangeError(
+      `pinned catalogue sha256 mismatch: expected ${pin.sha256}, observed ${digest}`
+    );
+  }
+  return candidateBytes;
+}
+
 function createCounters() {
   return {
     externalActions: 0,
@@ -41,11 +87,25 @@ function createCounters() {
   };
 }
 
-/** The caller-side release path: admit first, then release the exact ticket. */
-function admitAndRelease(transport, context, envelope, counters) {
+/** The caller-side release path: admit, enforce once-only consumption, release. */
+function admitAndRelease(transport, context, envelope, observations, counters, ledger) {
   const admitted = admitEnvelope(context, envelope);
   if (!admitted.accepted) {
     counters.staleRejections += 1;
+    return false;
+  }
+  const observed = observationRejection(context, observations);
+  if (observed !== null) {
+    counters.staleRejections += 1;
+    return false;
+  }
+  if (transport.state.wait === null) {
+    counters.duplicateRejections += 1;
+    return false;
+  }
+  const consumption = ledger.consume(context, envelope);
+  if (!consumption.consumed) {
+    counters.duplicateRejections += 1;
     return false;
   }
   const released = transport.releaseWait(transport.state.wait);
@@ -56,6 +116,16 @@ function admitAndRelease(transport, context, envelope, counters) {
     counters.duplicateRejections += 1;
   }
   return released;
+}
+
+/** Every required named part observed as passed in this exact context. */
+function passingObservations(context) {
+  return REQUIRED_PARTS.map((part) => createObservation(context, part));
+}
+
+function createPositiveResult(context, overrides = {}) {
+  const observations = passingObservations(context);
+  return { observations, envelope: createObservedEnvelope(context, observations, overrides) };
 }
 
 function waitAtBarrier(transport) {
@@ -127,8 +197,12 @@ export const TRANSPORT_CHECKS = [
       assert.equal(transport.advance().cursor, 2, 'doing nothing keeps waiting');
 
       const ticket = transport.state.wait;
-      const envelope = createEnvelope(context, { assisted: false });
-      assert.equal(admitAndRelease(transport, context, envelope, counters), true);
+      const ledger = createConsumptionLedger();
+      const result = createPositiveResult(context, { assisted: false });
+      assert.equal(
+        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        true
+      );
       assert.equal(counters.credits, 1);
       assert.equal(transport.releaseWait(ticket), false);
       counters.duplicateRejections += 1;
@@ -200,7 +274,7 @@ export const TRANSPORT_CHECKS = [
     name: 'every identity, pin, authority, step, checkpoint, attempt and generation mutation rejects',
     run() {
       const context = createContext();
-      const valid = createEnvelope(context);
+      const valid = createObservedEnvelope(context, passingObservations(context));
       assert.deepEqual(admitEnvelope(context, valid), { accepted: true, reason: null });
 
       const mutations = {
@@ -221,7 +295,11 @@ export const TRANSPORT_CHECKS = [
       };
 
       for (const [field, value] of Object.entries(mutations)) {
-        const mutated = createEnvelope(context, { [field]: value });
+        const mutated = createEnvelope(context, {
+          outcome: 'passed',
+          complete: true,
+          [field]: value
+        });
         const admitted = admitEnvelope(context, mutated);
         assert.equal(admitted.accepted, false, `mutation of ${field} must reject`);
         assert.match(admitted.reason, new RegExp(`mismatch:${field}`));
@@ -234,8 +312,12 @@ export const TRANSPORT_CHECKS = [
     run() {
       const context = createContext();
       for (const assisted of [false, true]) {
-        const envelope = createEnvelope(context, { assisted });
-        assert.equal(admitEnvelope(context, envelope).accepted, true, `assisted=${assisted}`);
+        const result = createPositiveResult(context, { assisted });
+        assert.equal(
+          admitEnvelope(context, result.envelope).accepted,
+          true,
+          `assisted=${assisted}`
+        );
       }
       for (const outcome of ['failed', 'cancelled', 'timed-out', 'error']) {
         assert.equal(admitEnvelope(context, createEnvelope(context, { outcome })).accepted, false, outcome);
@@ -250,6 +332,103 @@ export const TRANSPORT_CHECKS = [
         admitEnvelope(context, createEnvelope(context, { outcome: 'failed', complete: true })).accepted,
         false
       );
+    }
+  },
+  {
+    name: 'completion derives from required named parts in the same context, not a forged summary',
+    run() {
+      const context = createContext();
+      const complete = passingObservations(context);
+
+      // Green: every required part observed as passed, assistance orthogonal.
+      const assistedPass = createObservedEnvelope(context, complete, { assisted: true });
+      assert.equal(admitEnvelope(context, assistedPass).accepted, true);
+      const owner = createExecutionOwner();
+      owner.record(context, assistedPass, complete);
+      const retained = owner.completionFor(context);
+      assert.equal(storedCompletionEligible(context, retained), true);
+      assert.deepEqual(retained.parts.map((part) => part.part), [...REQUIRED_PARTS]);
+
+      // Red: a missing part cannot produce or retain completion.
+      const missing = complete.filter((observation) => observation.part !== 'query');
+      assert.match(observationRejection(context, missing), /missing-part:query/);
+      const missingEnvelope = createObservedEnvelope(context, missing);
+      assert.equal(missingEnvelope.complete, false);
+      assert.equal(missingEnvelope.outcome, 'failed');
+      assert.equal(admitEnvelope(context, missingEnvelope).accepted, false);
+      assert.throws(() => owner.record(context, missingEnvelope, missing), /missing-part:query/);
+      assert.equal(storedCompletionEligible(context, owner.completionFor(context)), true);
+
+      // Red: a failed part cannot produce or retain completion.
+      const failed = complete.map((observation) =>
+        observation.part === 'conclude'
+          ? createObservation(context, 'conclude', { outcome: 'failed' })
+          : observation
+      );
+      assert.match(observationRejection(context, failed), /failed-part:conclude/);
+      assert.throws(
+        () => owner.record(context, createObservedEnvelope(context, failed), failed),
+        /failed-part:conclude/
+      );
+
+      // Red: a forged passed+complete envelope with no complete observation set.
+      const forged = createEnvelope(context, { outcome: 'passed', complete: true });
+      assert.equal(
+        admitEnvelope(context, forged).accepted,
+        true,
+        'envelope-level admission alone cannot detect missing parts'
+      );
+      assert.throws(() => owner.record(context, forged, []), /missing-part:inspect/);
+      assert.throws(() => owner.record(context, forged, missing), /missing-part:query/);
+      assert.equal(storedCompletionEligible(context, owner.completionFor(context)), true);
+
+      // Red: observations from another context (same part names) do not count.
+      const other = createContext({ attemptId: 'attempt-other' });
+      const foreign = [createObservation(other, 'inspect'), ...complete.slice(1)];
+      assert.match(observationRejection(context, foreign), /observation-context-mismatch:attemptId/);
+    }
+  },
+  {
+    name: 'a recreated wait cannot consume the same attempt/submission identity twice',
+    run() {
+      const context = createContext();
+      const transport = new PresentationTransport(8, plan());
+      const counters = createCounters();
+      const ledger = createConsumptionLedger();
+      const result = createPositiveResult(context);
+
+      waitAtBarrier(transport);
+      assert.equal(
+        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        true
+      );
+      assert.equal(counters.validationConsumptions, 1);
+      assert.equal(counters.credits, 1);
+
+      // Recreate the presentation wait with the same result identity and replay
+      // the old envelope: no second consumption or credit.
+      transport.reset();
+      waitAtBarrier(transport);
+      const recreated = transport.state.wait;
+      assert.equal(
+        admitAndRelease(transport, context, result.envelope, result.observations, counters, ledger),
+        false
+      );
+      assert.equal(transport.state.wait, recreated, 'the rejected replay leaves the current ticket open');
+      assert.equal(counters.validationConsumptions, 1);
+      assert.equal(counters.credits, 1);
+      assert.equal(counters.duplicateRejections, 1);
+      assert.equal(ledger.size, 1, 'bookkeeping is bounded by consumed identities, not tickets');
+
+      // A genuinely new result needs a fresh attempt/submission generation.
+      const freshContext = createContext({ attemptId: 'attempt-b', submissionGeneration: 2 });
+      const fresh = createPositiveResult(freshContext);
+      assert.equal(
+        admitAndRelease(transport, freshContext, fresh.envelope, fresh.observations, counters, ledger),
+        true
+      );
+      assert.equal(counters.credits, 2);
+      assert.equal(ledger.size, 2);
     }
   },
   {
@@ -291,12 +470,24 @@ export const TRANSPORT_CHECKS = [
     run() {
       const owner = createExecutionOwner();
       const counters = createCounters();
+      const ledger = createConsumptionLedger();
       const contextA = createContext();
       const transport = new PresentationTransport(8, plan());
       waitAtBarrier(transport);
-      const envelopeA = createEnvelope(contextA, { assisted: true });
-      assert.equal(admitAndRelease(transport, contextA, envelopeA, counters), true);
-      owner.record(contextA, envelopeA);
+      const resultA = createPositiveResult(contextA, { assisted: true });
+      assert.equal(
+        admitAndRelease(
+          transport,
+          contextA,
+          resultA.envelope,
+          resultA.observations,
+          counters,
+          ledger
+        ),
+        true
+      );
+      owner.record(contextA, resultA.envelope, resultA.observations);
+      const envelopeA = resultA.envelope;
 
       const contextB = createContext({ attemptId: 'attempt-b', submissionGeneration: 2 });
       transport.reset();
@@ -348,31 +539,64 @@ export const TRANSPORT_CHECKS = [
     }
   },
   {
-    name: 'localised pinned messages resolve before timing and retain grading identity',
+    name: 'raw catalogue pins verify byte length and SHA-256 before parsing, resolution and timing',
     run() {
-      const pinnedBytes = {
-        en: '{"schemaVersion":1,"locale":"en","messages":{"retry.explanation":"Repeated requests need an idempotency key."}}',
-        fr: '{"schemaVersion":1,"locale":"fr","messages":{"retry.explanation":"Les requêtes répétées ont besoin d’une clé."}}'
-      };
-      const pinnedDigests = {
-        en: 'e83f6779ddf7d2da312c67ba2ba9288af96b73e2afe891fefcfb348d3a9ef827',
-        fr: '2d8f5f62b4077487fb918ff7a626dc454845e8cdda9259d70c458b9b07476572'
-      };
-      for (const [locale, bytes] of Object.entries(pinnedBytes)) {
-        const digest = createHash('sha256').update(bytes).digest('hex');
-        assert.equal(digest, pinnedDigests[locale], `${locale} pinned catalogue bytes`);
+      const order = [];
+      const catalogues = [];
+      for (const locale of ['en', 'fr']) {
+        order.push(`verify:${locale}`);
+        const bytes = verifyPinnedCatalogueBytes(PINNED_CATALOGUES[locale]);
+        order.push(`parse:${locale}`);
+        catalogues.push(JSON.parse(bytes));
       }
 
-      const catalogues = [
-        JSON.parse(pinnedBytes.en),
-        JSON.parse(pinnedBytes.fr)
-      ];
+      order.push('resolve');
       const context = createContext();
       const english = resolveCatalogue(catalogues, 'en', 'en');
       const french = resolveCatalogue(catalogues, 'en', 'fr-FR');
+      const fallback = resolveCatalogue(catalogues, 'en', 'de-DE');
       assert.equal(english('retry.explanation'), 'Repeated requests need an idempotency key.');
       assert.equal(french('retry.explanation'), 'Les requêtes répétées ont besoin d’une clé.');
+      assert.equal(fallback('retry.explanation'), english('retry.explanation'), 'stable-key fallback');
       assert.notEqual(english('retry.explanation'), french('retry.explanation'));
+      order.push('timing');
+      assert.ok(frameDelayMs(800, 1) > 0);
+      assert.deepEqual(order, [
+        'verify:en',
+        'parse:en',
+        'verify:fr',
+        'parse:fr',
+        'resolve',
+        'timing'
+      ]);
+
+      // Same length, changed byte: the raw digest, not the parsed value, rejects.
+      const changedByte = PINNED_CATALOGUES.en.bytes.replace('Repeated', 'Repeatex');
+      assert.equal(Buffer.byteLength(changedByte, 'utf8'), PINNED_CATALOGUES.en.byteLength);
+      assert.throws(
+        () => verifyPinnedCatalogueBytes(PINNED_CATALOGUES.en, changedByte),
+        /sha256/
+      );
+
+      // Equivalent parsed JSON with altered raw bytes still fails the raw pin.
+      const reformatted = JSON.stringify(JSON.parse(PINNED_CATALOGUES.en.bytes), null, 2);
+      assert.deepEqual(JSON.parse(reformatted), JSON.parse(PINNED_CATALOGUES.en.bytes));
+      assert.throws(
+        () => verifyPinnedCatalogueBytes(PINNED_CATALOGUES.en, reformatted),
+        /byte length/
+      );
+
+      // Wrong length is rejected before any parse or resolution.
+      assert.throws(
+        () => verifyPinnedCatalogueBytes(PINNED_CATALOGUES.fr, `${PINNED_CATALOGUES.fr.bytes} `),
+        /byte length/
+      );
+      assert.throws(
+        () => verifyPinnedCatalogueBytes(PINNED_CATALOGUES.fr, PINNED_CATALOGUES.fr.bytes.slice(0, -1)),
+        /byte length/
+      );
+
+      // Identity and grading fields are untouched by locale resolution.
       assert.equal(context.challengeId, 'retry-query');
       assert.equal(context.challengeRevision, 1);
       assert.equal(context.checkpointId, 'result');

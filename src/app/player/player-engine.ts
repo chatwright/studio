@@ -159,25 +159,19 @@ export class PlayerEngine implements OnDestroy {
   /* ------------------------------------------------------------ loading */
 
   load(bundle: Bundle, runIndex = 0): void {
-    this.stop();
-    this._bundle.set(bundle);
-    this.selectRun(runIndex);
+    // Prepare (and validate) the whole next context before publishing any of
+    // it. If the new timeline cannot carry the retained plan, the call fails
+    // with the prior bundle, timeline, transport, cursor and wait untouched.
+    const prepared = this.prepareRunContext(bundle, runIndex, -1);
+    this.commitRunContext(bundle, runIndex, prepared, true);
+    this.reanchorPendingPlay();
   }
 
   selectRun(runIndex: number): void {
-    this.stop();
-    this._runIndex.set(runIndex);
     const bundle = this._bundle();
-    const run = bundle?.runs?.[runIndex] ?? null;
-    this._timeline.set(buildTimeline(run));
-    this.rebuildTransport(-1);
-    this._pinnedChatId.set(null);
-    this._activeChatId.set(run?.chats?.[0]?.chatId ?? null);
-    // Re-anchor a play() that arrived before this timeline did.
-    if (this.pendingPlay && this._timeline().length > 0) {
-      this.pendingPlay = false;
-      this.play();
-    }
+    const prepared = this.prepareRunContext(bundle, runIndex, -1);
+    this.commitRunContext(bundle, runIndex, prepared, false);
+    this.reanchorPendingPlay();
   }
 
   /**
@@ -193,7 +187,9 @@ export class PlayerEngine implements OnDestroy {
     this.pause();
     this.transport.dispose();
     this.transport = next;
-    this.plan = plan;
+    // Retain the transport's validated snapshot, never the caller's mutable
+    // arrays/records: a later selectRun/patchRun rebuild must not see edits.
+    this.plan = next.bindings;
     this.applyCursor(next.seek(-1));
   }
 
@@ -292,14 +288,17 @@ export class PlayerEngine implements OnDestroy {
     }
     const wasPlaying = this.isPlaying();
     const cursor = this.stepIndex();
-    this.clearTimers();
     const runs = [...bundle.runs];
     runs[this._runIndex()] = next;
-    this._bundle.set({ ...bundle, runs });
-    this._timeline.set(buildTimeline(next));
+    const nextBundle = { ...bundle, runs };
+    // Validate the replacement context before publishing any of it.
+    const prepared = this.prepareRunContext(nextBundle, this._runIndex(), cursor);
+    this.clearTimers();
+    this._bundle.set(nextBundle);
+    this._timeline.set(prepared.timeline);
     // A new timeline is a context change: revoke the open wait, keep the
     // presentation position (clamped) and re-arm playback only if it was live.
-    this.rebuildTransport(cursor);
+    this.adoptTransport(prepared.transport);
     this.clearTransient();
     if (wasPlaying) {
       this.scheduleNextFrame();
@@ -331,7 +330,9 @@ export class PlayerEngine implements OnDestroy {
       return;
     }
     this.pendingPlay = false;
-    if (this.atEnd()) {
+    // A live wait at the final index is not an ordinary end-of-run: keep the
+    // cursor and the exact ticket. Only a wait-free end restarts the run.
+    if (this.atEnd() && this.transport.state.wait === null) {
       this.applyCursor(this.transport.seek(-1));
       this.clearTransient();
     }
@@ -471,15 +472,57 @@ export class PlayerEngine implements OnDestroy {
   }
 
   /**
-   * Rebuild the transport against the current timeline and plan, revoking the
-   * previous lifetime's ticket and any queued callback.
+   * Build and validate a run context without touching any published signal or
+   * the live transport. Throws before the caller publishes anything if the
+   * timeline cannot carry the retained plan.
    */
-  private rebuildTransport(cursor: number): void {
-    const next = new PresentationTransport(this._timeline().length, this.plan);
+  private prepareRunContext(
+    bundle: Bundle | null,
+    runIndex: number,
+    cursor: number
+  ): { run: BundleRun | null; timeline: Step[]; transport: PresentationTransport } {
+    const run = bundle?.runs?.[runIndex] ?? null;
+    const timeline = buildTimeline(run);
+    const transport = new PresentationTransport(timeline.length, this.plan);
+    transport.seek(cursor);
+    return { run, timeline, transport };
+  }
+
+  /**
+   * Publish a prepared context atomically: no signal is written until every
+   * fallible step has already succeeded.
+   */
+  private commitRunContext(
+    bundle: Bundle | null,
+    runIndex: number,
+    prepared: { run: BundleRun | null; timeline: Step[]; transport: PresentationTransport },
+    publishBundle: boolean
+  ): void {
+    this.stop();
+    if (publishBundle) {
+      this._bundle.set(bundle);
+    }
+    this._runIndex.set(runIndex);
+    this._timeline.set(prepared.timeline);
+    this.adoptTransport(prepared.transport);
+    this._pinnedChatId.set(null);
+    this._activeChatId.set(prepared.run?.chats?.[0]?.chatId ?? null);
+  }
+
+  /** Replace the live transport, revoking the previous lifetime's ticket. */
+  private adoptTransport(next: PresentationTransport): void {
     this.transport.dispose();
     this.transport = next;
     this.wait.set(null);
-    this.applyCursor(next.seek(cursor));
+    this.applyCursor(next.state);
+  }
+
+  private reanchorPendingPlay(): void {
+    // Re-anchor a play() that arrived before this timeline did.
+    if (this.pendingPlay && this._timeline().length > 0) {
+      this.pendingPlay = false;
+      this.play();
+    }
   }
 
   /** Virtual-clock gap to the next step (ms), rebased and compressed by speed. */

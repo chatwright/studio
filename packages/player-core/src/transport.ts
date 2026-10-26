@@ -88,7 +88,12 @@ export interface PresentationState {
   readonly segmentId: string | null;
   /** The live ticket, or `null` when no wait is open. */
   readonly wait: PresentationWaitTicket | null;
-  /** Whether one forward step is currently possible without caller action. */
+  /**
+   * Whether one forward step is currently possible without caller action.
+   * This includes the tick that opens a wait, clamps back to an unresolved
+   * barrier, or reaches `segment-end`/`ended`, so a host that schedules only
+   * while this is true still reaches every required transition.
+   */
   readonly canAdvance: boolean;
 }
 
@@ -237,6 +242,16 @@ export class PresentationTransport {
   }
 
   /**
+   * The validated, frozen bindings this instance owns. A host that must retain
+   * the plan for a later rebuild should keep this snapshot rather than the
+   * caller's mutable arrays/records, so a later mutation cannot relocate a
+   * barrier or change a segment range.
+   */
+  get bindings(): PresentationPlan {
+    return Object.freeze({ segments: this.segments, barriers: this.barriers });
+  }
+
+  /**
    * Move the presentation cursor to an exact step index. This is a watch/seek
    * operation: it revokes any open ticket, never opens one and never records
    * credit. Finite indices are clamped to `[-1, stepCount - 1]`; a non-integer
@@ -259,7 +274,10 @@ export class PresentationTransport {
   /**
    * Advance one step. Stops at an unreleased barrier (opening its ticket), at
    * the active segment's end (awaiting an explicit outer Next), or at the
-   * physical end of an unsegmented timeline.
+   * physical end of an unsegmented timeline. Landing on the final index keeps
+   * `canAdvance` true; the host's next tick reports `segment-end` or `ended`,
+   * so a host that schedules only while `canAdvance` is never stranded and
+   * needs no undocumented extra tick.
    *
    * If a preview seek moved past an unreleased barrier in the active segment,
    * this clamps back to the earliest such barrier instead of bypassing it.
@@ -303,6 +321,9 @@ export class PresentationTransport {
     }
 
     this.cursor = next;
+    // A landed final step stays `running` for this tick so its entrance
+    // animation can finish; `canAdvance` remains true so the host's next
+    // documented tick reports `segment-end`/`ended` instead of stranding.
     this.status = 'running';
     return this.snapshot();
   }
@@ -368,10 +389,13 @@ export class PresentationTransport {
   private snapshot(): PresentationState {
     const segment = this.segmentAt(this.cursor);
     const wait = this.wait;
+    // Every non-terminal, non-waiting state has at least one documented
+    // forward transition left: move, open/clamp to a wait, or report the
+    // terminal status. `waiting`, `segment-end`, `ended` and `disposed` are
+    // rest states and require caller action instead.
     const canAdvance =
       (this.status === 'idle' || this.status === 'running' || this.status === 'preview') &&
-      this.stepCount > 0 &&
-      this.cursor < (segment === null ? this.stepCount - 1 : segment.endIndex);
+      this.stepCount > 0;
     return Object.freeze({
       cursor: this.cursor,
       status: this.status,

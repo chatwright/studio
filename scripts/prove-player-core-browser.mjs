@@ -33,6 +33,8 @@ import { tmpdir } from 'node:os';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { createShutdown } from './player-core-proof/browser-lifecycle.mjs';
+
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const packageName = '@chatwright/player-core';
 const proofAssets = join(repoRoot, 'scripts', 'player-core-proof');
@@ -76,9 +78,9 @@ const requests = [];
 const pageErrors = [];
 const consoleErrors = [];
 
-let server = null;
-let browser = null;
-let context = null;
+const resources = { context: null, browser: null, server: null };
+const shutdown = createShutdown(resources, closeServer);
+let interruptedSignal = null;
 let cleanupStatus = 'not-needed';
 let proofFailure = null;
 let summary = null;
@@ -92,6 +94,50 @@ function check(name, condition, detail) {
 
 function describe(snapshot) {
   return `${snapshot.status} at cursor ${snapshot.cursor}, ${snapshot.messages.length} visible message(s), ticket ${snapshot.waiting ? `#${snapshot.ticketId}` : 'none'}, credits ${snapshot.counters.credits}, validation consumptions ${snapshot.counters.validationConsumptions}, external actions ${snapshot.counters.externalActions}, submissions ${snapshot.counters.submissions}`;
+}
+
+/**
+ * SIGINT/SIGTERM take the exact same idempotent, awaited shutdown path as the
+ * normal `finally`. The proof reports the signal and every cleanup error, then
+ * exits non-zero without claiming success.
+ */
+async function handleInterruption(signal) {
+  if (interruptedSignal !== null) {
+    return;
+  }
+  interruptedSignal = signal;
+  const result = await shutdown.shutdown();
+  cleanupStatus = `interrupted by ${signal}; ${result.status}`;
+  console.error(cleanupStatus);
+  try {
+    writeFileSync(
+      join(workRoot, 'browser-proof-interrupted.json'),
+      JSON.stringify(
+        {
+          proof: 'player-core packed browser embedding (synthetic caller-side fencing)',
+          interrupted: signal,
+          checks,
+          evidence,
+          cleanupStatus,
+          cleanupErrors: result.errors,
+          steps: steps.map(({ label, command, cwd, exit }) => ({ label, command, cwd, exit }))
+        },
+        null,
+        2
+      ) + '\n'
+    );
+  } catch (reportError) {
+    console.error(
+      `Could not write interruption report: ${reportError instanceof Error ? reportError.message : String(reportError)}`
+    );
+  }
+  process.exit(proofFailure !== null ? 1 : signal === 'SIGINT' ? 130 : 143);
+}
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    void handleInterruption(signal);
+  });
 }
 
 async function startServer(root) {
@@ -211,15 +257,16 @@ try {
   const installedReal = realpathSync(installedIndex);
   check('installed package is not a repository path', !installedReal.startsWith(realpathSync(repoRoot) + sep), installedReal);
 
-  server = await startServer(consumerDir);
-  const port = server.address().port;
+  resources.server = await startServer(consumerDir);
+  const serverAddress = resources.server.address();
+  const port = serverAddress.port;
   const baseUrl = `http://127.0.0.1:${port}`;
-  check('proof server binds loopback only', server.address().address === '127.0.0.1', String(server.address().address));
+  check('proof server binds loopback only', serverAddress.address === '127.0.0.1', String(serverAddress.address));
 
   const { chromium } = await import('playwright-core');
-  browser = await chromium.launch({ headless: true });
-  context = await browser.newContext({ viewport: { width: 1100, height: 900 } });
-  const page = await context.newPage();
+  resources.browser = await chromium.launch({ headless: true });
+  resources.context = await resources.browser.newContext({ viewport: { width: 1100, height: 900 } });
+  const page = await resources.context.newPage();
   page.on('request', (request) => requests.push(request.url()));
   page.on('pageerror', (error) => pageErrors.push(String(error)));
   page.on('console', (message) => {
@@ -359,14 +406,14 @@ try {
   summary = {
     proof: 'player-core packed browser embedding (synthetic caller-side fencing)',
     browser: {
-      name: browser.browserType().name(),
-      version: browser.version(),
+      name: resources.browser.browserType().name(),
+      version: resources.browser.version(),
       mode: 'headless'
     },
     server: {
       pid: process.pid,
       port,
-      address: server.address().address,
+      address: serverAddress.address,
       proofRoot: workRoot,
       consumer: consumerDir,
       bind: '127.0.0.1 only'
@@ -388,23 +435,13 @@ try {
   proofFailure = error;
   console.error(error instanceof Error ? error.stack ?? error.message : String(error));
 } finally {
-  try {
-    if (context !== null) {
-      await context.close();
-      context = null;
-    }
-    if (browser !== null) {
-      await browser.close();
-      browser = null;
-    }
-    await closeServer(server);
-    server = null;
-    cleanupStatus = 'browser, context and loopback server closed';
-  } catch (cleanupError) {
-    cleanupStatus = `CLEANUP FAILURE: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`;
+  const cleanup = await shutdown.shutdown();
+  cleanupStatus =
+    interruptedSignal === null ? cleanup.status : `interrupted by ${interruptedSignal}; ${cleanup.status}`;
+  if (cleanup.errors.length > 0) {
     console.error(cleanupStatus);
     if (proofFailure === null) {
-      proofFailure = cleanupError;
+      proofFailure = new Error(cleanup.status);
     }
   }
 

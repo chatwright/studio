@@ -1,10 +1,13 @@
 import { PresentationTransport, buildTimeline, settledStateAt } from '@chatwright/player-core';
 
 import {
+  REQUIRED_PARTS,
   admitEnvelope,
   createContext,
-  createEnvelope,
   createExecutionOwner,
+  createObservation,
+  createObservedEnvelope,
+  observationRejection,
   storedCompletionEligible
 } from './adapter.mjs';
 
@@ -63,7 +66,12 @@ let context = createContext();
 let playing = false;
 let timer = null;
 let completedEnvelopeA = null;
+let completedObservationsA = null;
 let lastReleasedTicket = null;
+
+function passingObservations(target = context) {
+  return REQUIRED_PARTS.map((part) => createObservation(target, part));
+}
 let logLine = 'no external action performed';
 
 const counters = {
@@ -203,13 +211,21 @@ function startAttempt(overrides) {
   play();
 }
 
-function releaseFreshEnvelope(envelope, label) {
+function releaseFreshEnvelope(observations, label, overrides = {}) {
   if (transport.state.wait === null) {
     counters.duplicateRejections += 1;
     logLine = `${label}: no current ticket`;
     render();
     return false;
   }
+  const observed = observationRejection(context, observations);
+  if (observed !== null) {
+    counters.staleRejections += 1;
+    logLine = `${label}: incomplete required parts (${observed})`;
+    render();
+    return false;
+  }
+  const envelope = createObservedEnvelope(context, observations, overrides);
   const admitted = admitEnvelope(context, envelope);
   if (!admitted.accepted) {
     counters.staleRejections += 1;
@@ -229,7 +245,8 @@ function releaseFreshEnvelope(envelope, label) {
   lastReleasedTicket = ticket;
   if (context.attemptId === 'attempt-a') {
     completedEnvelopeA = envelope;
-    owner.record(context, envelope);
+    completedObservationsA = observations;
+    owner.record(context, envelope, observations);
   }
   logLine = `${label}: accepted once, playback resumes inside the segment`;
   if (playing) {
@@ -240,11 +257,16 @@ function releaseFreshEnvelope(envelope, label) {
 }
 
 function releaseAssistedPass() {
-  releaseFreshEnvelope(createEnvelope(context, { assisted: true }), 'assisted pass');
+  releaseFreshEnvelope(passingObservations(), 'assisted pass', { assisted: true });
 }
 
 function releaseStale() {
-  const stale = completedEnvelopeA ?? createEnvelope(createContext());
+  if (completedEnvelopeA === null) {
+    const staleContext = createContext({ attemptId: 'attempt-stale' });
+    completedObservationsA = passingObservations(staleContext);
+    completedEnvelopeA = createObservedEnvelope(staleContext, completedObservationsA);
+  }
+  const stale = completedEnvelopeA;
   if (transport.state.wait === null) {
     counters.duplicateRejections += 1;
     logLine = 'stale result: no current ticket';
@@ -253,7 +275,7 @@ function releaseStale() {
   }
   const admitted = admitEnvelope(context, stale);
   if (admitted.accepted) {
-    releaseFreshEnvelope(stale, 'attempt-A result');
+    releaseFreshEnvelope(completedObservationsA, 'attempt-A result');
     return;
   }
   counters.staleRejections += 1;

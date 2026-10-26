@@ -122,12 +122,20 @@ never thrown.
   current cursor, status, active segment and opaque ticket.
 
 `advance()` moves one step or stops at an unreleased barrier with a live ticket.
-Doing nothing keeps it waiting. `releaseWait(ticket)` accepts only the exact
+A host may schedule the next tick only while `state.canAdvance` is true; that
+admission includes the tick that opens a wait or reaches `segment-end`/`ended`,
+so terminal transitions are reached without an undocumented extra advance.
+Doing nothing keeps a wait waiting. `releaseWait(ticket)` accepts only the exact
 current ticket object, once; it marks the wait satisfied but never advances,
 schedules a frame or restarts playback. `seek()` is a watch operation: it may
 preview anywhere, revokes any open ticket and never opens one. `enterSegment()`
 is the explicit outer Next at a segment end. `reset()` and `dispose()` revoke
 the current lifetime.
+
+The caller-declared plan is validated and frozen at construction.
+`transport.bindings` exposes that snapshot for a host that must retain the plan
+across a later rebuild: keep the snapshot, never the caller's mutable arrays or
+records, so a later edit cannot relocate a barrier or change a segment range.
 
 The caller owns validation. It constructs and matches its own context and
 envelope, then releases the ticket only after accepting a matching complete
@@ -179,19 +187,25 @@ Three independent checks exercise the public contract:
 
 - `pnpm --filter @chatwright/player-core test` builds the package and runs
   `node --test` against the compiled `dist/` exports, including the transport's
-  barrier, ticket, seek, reset and disposal semantics.
+  barrier, ticket, seek, reset, disposal and documented-`canAdvance` host
+  transition semantics.
 - `pnpm prove:player-core` (from the Studio repository root) builds and packs the
   package, inspects the tarball, installs it into a fresh temporary consumer
-  outside the repository, then runs a runtime proof (including caller-owned
-  envelope fencing) and a TypeScript declaration proof against that tarball
-  alone.
+  outside the repository, then runs a runtime proof (caller-owned envelope and
+  required-part fencing, recreated-wait consumption, raw catalogue length/SHA
+  pins) and a TypeScript declaration proof against that tarball alone.
 - `pnpm prove:player-core-browser` builds, packs and installs the same way,
   serves only the consumer's files on an ephemeral loopback port and drives a
   real Chromium browser through Play, waiting, assisted pass, stale result,
   Watch/seek, explicit Next, stored-completion revisit and duplicate release.
-  Assertions read the settled transcript and effect/credit counters. The
-  browser proof is a synthetic caller-side fencing proof, not a production
-  DataTug adapter or grading claim.
+  Assertions read the settled transcript and effect/credit counters. SIGINT and
+  SIGTERM use the same idempotent awaited shutdown as the normal `finally`.
+- `node --test scripts/player-core-proof/browser-lifecycle.test.mjs` proves
+  interrupted, repeated and partially failing shutdown in child processes,
+  including that the owned loopback port is gone.
+
+The browser proof is a synthetic caller-side fencing proof, not a production
+DataTug adapter or grading claim.
 
 ## Licence
 

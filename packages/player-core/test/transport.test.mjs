@@ -358,6 +358,102 @@ describe('PresentationTransport — pause and cancellation semantics', () => {
   });
 });
 
+describe('PresentationTransport — canAdvance admits every required host transition', () => {
+  /**
+   * The documented host loop: a host schedules another advance only while the
+   * current state says `canAdvance`. Reaching a wait or a terminal state must
+   * therefore be possible without the host guessing at an extra tick.
+   */
+  function driveToRest(transport) {
+    let ticks = 0;
+    while (transport.state.canAdvance) {
+      if (++ticks > 64) {
+        throw new Error('host never reached a rest state');
+      }
+      transport.advance();
+    }
+    return transport.state;
+  }
+
+  it('reaches waiting after a preview seek to the segment end beyond a barrier', () => {
+    const transport = new PresentationTransport(
+      3,
+      plan(
+        [{ id: 'one', startIndex: 0, endIndex: 2 }],
+        [{ id: 'gate', segmentId: 'one', atIndex: 1 }]
+      )
+    );
+    assert.equal(transport.seek(2).status, 'preview');
+    assert.equal(transport.state.canAdvance, true, 'the open barrier keeps admission live');
+
+    const reached = driveToRest(transport);
+    assert.equal(reached.status, 'waiting');
+    assert.equal(reached.cursor, 1);
+    assert.equal(reached.wait?.barrierId, 'gate');
+    assert.equal(reached.canAdvance, false);
+  });
+
+  it('reaches waiting in a one-step segment whose only index is a barrier', () => {
+    const transport = new PresentationTransport(
+      1,
+      plan(
+        [{ id: 'only', startIndex: 0, endIndex: 0 }],
+        [{ id: 'gate', segmentId: 'only', atIndex: 0 }]
+      )
+    );
+    assert.equal(transport.enterSegment('only').status, 'idle');
+    assert.equal(transport.state.canAdvance, true, 'the unresolved barrier keeps admission live');
+
+    const reached = driveToRest(transport);
+    assert.equal(reached.status, 'waiting');
+    assert.equal(reached.cursor, 0);
+    assert.equal(reached.wait?.atIndex, 0);
+  });
+
+  it('reaches segment-end for ordinary segmented playback', () => {
+    const transport = new PresentationTransport(3, plan([{ id: 'one', startIndex: 0, endIndex: 2 }]));
+    const reached = driveToRest(transport);
+    assert.equal(reached.status, 'segment-end');
+    assert.equal(reached.cursor, 2);
+    assert.equal(reached.canAdvance, false);
+  });
+
+  it('reaches ended for ordinary unsegmented playback', () => {
+    const transport = new PresentationTransport(3);
+    const reached = driveToRest(transport);
+    assert.equal(reached.status, 'ended');
+    assert.equal(reached.cursor, 2);
+    assert.equal(reached.canAdvance, false);
+  });
+
+  it('reaches segment-end after a preview seek to the end without a barrier', () => {
+    const transport = new PresentationTransport(3, plan([{ id: 'one', startIndex: 0, endIndex: 2 }]));
+    assert.equal(transport.seek(2).status, 'preview');
+    assert.equal(driveToRest(transport).status, 'segment-end');
+  });
+
+  it('leaves exactly one documented advance after a paused release at a final-index barrier', () => {
+    const transport = new PresentationTransport(
+      3,
+      plan(
+        [{ id: 'one', startIndex: 0, endIndex: 2 }],
+        [{ id: 'gate', segmentId: 'one', atIndex: 2 }]
+      )
+    );
+    const waiting = driveToRest(transport);
+    assert.equal(waiting.status, 'waiting');
+    assert.ok(waiting.wait);
+
+    assert.equal(transport.releaseWait(waiting.wait), true);
+    const idle = transport.state;
+    assert.equal(idle.status, 'idle');
+    assert.equal(idle.cursor, 2);
+    assert.equal(idle.canAdvance, true, 'the released final barrier still admits its terminal tick');
+
+    assert.equal(driveToRest(transport).status, 'segment-end');
+  });
+});
+
 describe('PresentationTransport — caller-input validation and snapshotting', () => {
   const validSegments = [
     { id: 'a', startIndex: 0, endIndex: 1 },
@@ -451,6 +547,33 @@ describe('PresentationTransport — caller-input validation and snapshotting', (
     const state = transport.advance();
     assert.equal(state.status, 'waiting');
     assert.equal(state.cursor, 0);
+    assert.equal(transport.advance().status, 'waiting');
+    assert.equal(transport.state.cursor, 0);
+  });
+
+  it('exposes frozen validated bindings for a host that retains the plan', () => {
+    const segments = [
+      { id: 'a', startIndex: 0, endIndex: 0 },
+      { id: 'b', startIndex: 1, endIndex: 1 }
+    ];
+    const barriers = [{ id: 'gate', segmentId: 'a', atIndex: 0 }];
+    const transport = new PresentationTransport(2, { segments, barriers });
+
+    segments.length = 0;
+    barriers[0].atIndex = 1;
+
+    const bindings = transport.bindings;
+    assert.equal(Object.isFrozen(bindings), true);
+    assert.equal(Object.isFrozen(bindings.segments), true);
+    assert.equal(Object.isFrozen(bindings.barriers), true);
+    assert.deepEqual(
+      bindings.segments.map((segment) => [segment.id, segment.startIndex, segment.endIndex]),
+      [
+        ['a', 0, 0],
+        ['b', 1, 1]
+      ]
+    );
+    assert.deepEqual(bindings.barriers.map((barrier) => [barrier.id, barrier.atIndex]), [['gate', 0]]);
     assert.equal(transport.advance().status, 'waiting');
     assert.equal(transport.state.cursor, 0);
   });

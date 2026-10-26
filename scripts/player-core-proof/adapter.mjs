@@ -33,6 +33,18 @@ export const ENVELOPE_FIELDS = Object.freeze([
 const OUTCOMES = new Set(['passed', 'failed', 'cancelled', 'timed-out', 'error']);
 const HASH = /^[0-9a-f]{64}$/;
 
+/**
+ * The caller declares which named parts a whole-challenge result must observe.
+ * A positive result is derived from observations for every one of these parts
+ * in the same context; an envelope summary alone is never evidence.
+ */
+export const REQUIRED_PARTS = Object.freeze(['inspect', 'query', 'conclude']);
+
+/** Identity fields an observation must share with the context it belongs to. */
+const CONTEXT_FIELDS = Object.freeze(
+  ENVELOPE_FIELDS.filter((field) => field !== 'outcome' && field !== 'complete' && field !== 'assisted')
+);
+
 function deepFreeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.freeze(value);
@@ -71,18 +83,96 @@ export function createContext(overrides = {}) {
   });
 }
 
+/**
+ * Build an envelope body. The summary defaults to a non-passing baseline: a
+ * caller cannot obtain a positive result merely by constructing an envelope.
+ * Positive callers use `createObservedEnvelope`, which derives the summary from
+ * required-part observations. The raw constructor remains available so proofs
+ * can deliberately forge a passed+complete summary and show it is insufficient.
+ */
 export function createEnvelope(context, overrides = {}) {
   const envelope = {};
   for (const field of ENVELOPE_FIELDS) {
     envelope[field] = context[field];
   }
   Object.assign(envelope, {
-    outcome: 'passed',
-    complete: true,
+    outcome: 'failed',
+    complete: false,
     assisted: false,
     ...overrides
   });
   return deepFreeze(envelope);
+}
+
+/** One same-context observation for a declared required named part. */
+export function createObservation(context, part, overrides = {}) {
+  if (!REQUIRED_PARTS.includes(part)) {
+    throw new Error(`unknown required part: ${String(part)}`);
+  }
+  const observation = {};
+  for (const field of CONTEXT_FIELDS) {
+    observation[field] = context[field];
+  }
+  Object.assign(observation, { part, outcome: 'passed', ...overrides });
+  if (!OUTCOMES.has(observation.outcome)) {
+    throw new Error(`unknown part outcome: ${String(observation.outcome)}`);
+  }
+  return deepFreeze(observation);
+}
+
+/**
+ * Validate the whole-attempt observation set: every required part present
+ * exactly once, every observation bound to this exact context, and every part
+ * passed. Returns a reason string or `null` for a complete positive result.
+ */
+export function observationRejection(context, observations) {
+  if (!Array.isArray(observations)) {
+    return 'observations-not-an-array';
+  }
+  const byPart = new Map();
+  for (const candidate of observations) {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
+      return 'invalid-observation';
+    }
+    if (!REQUIRED_PARTS.includes(candidate.part)) {
+      return `unknown-part:${String(candidate.part)}`;
+    }
+    if (!OUTCOMES.has(candidate.outcome)) {
+      return `unknown-part-outcome:${String(candidate.outcome)}`;
+    }
+    for (const field of CONTEXT_FIELDS) {
+      if (!sameValue(candidate[field], context[field])) {
+        return `observation-context-mismatch:${field}`;
+      }
+    }
+    if (byPart.has(candidate.part)) {
+      return `duplicate-part:${candidate.part}`;
+    }
+    byPart.set(candidate.part, candidate);
+  }
+  for (const part of REQUIRED_PARTS) {
+    const observation = byPart.get(part);
+    if (!observation) {
+      return `missing-part:${part}`;
+    }
+    if (observation.outcome !== 'passed') {
+      return `failed-part:${part}:${observation.outcome}`;
+    }
+  }
+  return null;
+}
+
+/**
+ * The only positive-envelope constructor: outcome and completion are derived
+ * from the required-part observations, never supplied by the caller.
+ */
+export function createObservedEnvelope(context, observations, overrides = {}) {
+  const complete = observationRejection(context, observations) === null;
+  return createEnvelope(context, {
+    ...overrides,
+    outcome: complete ? 'passed' : 'failed',
+    complete
+  });
 }
 
 /**
@@ -159,7 +249,16 @@ export function createExecutionOwner() {
     ]);
 
   return {
-    record(context, envelope) {
+    /**
+     * Retain a completion only when the whole-attempt observations independently
+     * prove every required part passed in this context. A forged envelope that
+     * claims `passed`+`complete` cannot substitute for missing or failed parts.
+     */
+    record(context, envelope, observations) {
+      const observed = observationRejection(context, observations);
+      if (observed !== null) {
+        throw new Error(`execution owner rejected completion: ${observed}`);
+      }
       const admitted = admitEnvelope(context, envelope);
       if (!admitted.accepted) {
         throw new Error(`execution owner rejected completion: ${admitted.reason}`);
@@ -181,7 +280,14 @@ export function createExecutionOwner() {
           checkpointId: context.checkpointId,
           outcome: envelope.outcome,
           complete: envelope.complete,
-          assisted: envelope.assisted
+          assisted: envelope.assisted,
+          requiredParts: deepFreeze([...REQUIRED_PARTS]),
+          parts: deepFreeze(
+            REQUIRED_PARTS.map((part) => ({
+              part,
+              outcome: observations.find((candidate) => candidate.part === part).outcome
+            }))
+          )
         })
       );
     },
@@ -189,6 +295,55 @@ export function createExecutionOwner() {
       return records.get(key(context)) ?? null;
     }
   };
+}
+
+/**
+ * Caller-owned once-only consumption across presentation waits. The key is the
+ * result identity (including attempt and submission generation), not a ticket:
+ * recreating a presentation wait with unchanged identity cannot consume or
+ * credit the same result twice, while a genuinely new attempt/generation can.
+ * Bounded by the number of consumed identities; it keeps no ticket history.
+ */
+export function createConsumptionLedger() {
+  const consumed = new Set();
+  const key = (context) =>
+    JSON.stringify([
+      context.project,
+      context.authorityGeneration,
+      context.contentPin,
+      context.declarationSha256,
+      context.narrativeSha256,
+      context.trainingPackageSha256,
+      context.walkthroughId,
+      context.chapterId,
+      context.stepId,
+      context.challengeId,
+      context.challengeRevision,
+      context.checkpointId,
+      context.attemptId,
+      context.submissionGeneration
+    ]);
+
+  return Object.freeze({
+    consume(context, envelope) {
+      const rejection = envelopeRejection(context, envelope);
+      if (rejection !== null) {
+        return { consumed: false, reason: rejection };
+      }
+      const identity = key(context);
+      if (consumed.has(identity)) {
+        return { consumed: false, reason: 'already-consumed' };
+      }
+      consumed.add(identity);
+      return { consumed: true, reason: null };
+    },
+    has(context) {
+      return consumed.has(key(context));
+    },
+    get size() {
+      return consumed.size;
+    }
+  });
 }
 
 /**
@@ -215,7 +370,11 @@ export function storedCompletionEligible(context, record) {
     record.checkpointId === context.checkpointId &&
     record.outcome === 'passed' &&
     record.complete === true &&
-    typeof record.assisted === 'boolean'
+    typeof record.assisted === 'boolean' &&
+    Array.isArray(record.parts) &&
+    REQUIRED_PARTS.every((part) =>
+      record.parts.some((observed) => observed.part === part && observed.outcome === 'passed')
+    )
   );
 }
 
