@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 
 import { PresentationTransport, buildTimeline, settledStateAt } from '@chatwright/player-core';
 
@@ -349,17 +350,33 @@ export const TRANSPORT_CHECKS = [
   {
     name: 'localised pinned messages resolve before timing and retain grading identity',
     run() {
+      const pinnedBytes = {
+        en: '{"schemaVersion":1,"locale":"en","messages":{"retry.explanation":"Repeated requests need an idempotency key."}}',
+        fr: '{"schemaVersion":1,"locale":"fr","messages":{"retry.explanation":"Les requêtes répétées ont besoin d’une clé."}}'
+      };
+      const pinnedDigests = {
+        en: 'e83f6779ddf7d2da312c67ba2ba9288af96b73e2afe891fefcfb348d3a9ef827',
+        fr: '2d8f5f62b4077487fb918ff7a626dc454845e8cdda9259d70c458b9b07476572'
+      };
+      for (const [locale, bytes] of Object.entries(pinnedBytes)) {
+        const digest = createHash('sha256').update(bytes).digest('hex');
+        assert.equal(digest, pinnedDigests[locale], `${locale} pinned catalogue bytes`);
+      }
+
       const catalogues = [
-        { locale: 'en', messages: { 'retry.explanation': 'Repeated requests need an idempotency key.' } },
-        { locale: 'fr', messages: { 'retry.explanation': 'Les requêtes répétées ont besoin d’une clé.' } }
+        JSON.parse(pinnedBytes.en),
+        JSON.parse(pinnedBytes.fr)
       ];
       const context = createContext();
       const english = resolveCatalogue(catalogues, 'en', 'en');
       const french = resolveCatalogue(catalogues, 'en', 'fr-FR');
+      assert.equal(english('retry.explanation'), 'Repeated requests need an idempotency key.');
+      assert.equal(french('retry.explanation'), 'Les requêtes répétées ont besoin d’une clé.');
       assert.notEqual(english('retry.explanation'), french('retry.explanation'));
       assert.equal(context.challengeId, 'retry-query');
       assert.equal(context.challengeRevision, 1);
       assert.equal(context.checkpointId, 'result');
+      assert.equal(context.stepId, 'solve');
       assert.throws(() => english('missing.key'), /missing pinned message key/);
     }
   },
