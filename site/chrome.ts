@@ -178,6 +178,7 @@ export function renderFooter(extraFooterHtml?: string): string {
     `<span>An independent open-source project by Sneat.co</span>` +
     `<nav class="foot-links" aria-label="Footer">` +
     `<a href="/pricing">Pricing</a>` +
+    `<a href="/about/tech-stack/">Tech stack</a>` +
     `<a href="https://github.com/chatwright/recipes">chatwright/recipes</a>` +
     `<a href="https://github.com/chatwright/runtime-ts">chatwright/runtime-ts</a>` +
     `<a href="https://specscore.md/">Developed spec-first with SpecScore</a>` +
