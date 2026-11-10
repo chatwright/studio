@@ -7,6 +7,7 @@
 // from the rules below. The page modules are the same string templates the
 // former Worker returned at request time, now prerendered byte-for-byte.
 import { landingDocument } from './landing';
+import { techStackPageDocument } from './about/tech-stack/page';
 import { vanityModuleRepos, vanityPageDocument } from './vanity';
 import { runBundleV1PageDocument } from './formats/run-bundle/v1/page';
 import runBundleV1Schema from './formats/run-bundle/v1/schema.json';
@@ -34,6 +35,7 @@ const sitemapDocument = `<?xml version="1.0" encoding="UTF-8"?>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  <url><loc>https://chatwright.dev/about/tech-stack/</loc></url>
 </urlset>
 `;
 
@@ -49,6 +51,7 @@ const schemaDocument = (schema: unknown): string => `${JSON.stringify(schema, nu
 // to it), `formats/run-bundle/v1.html` answers `/formats/run-bundle/v1`, etc.
 export const sitePages: Record<string, string> = {
   'index.html': landingDocument,
+  'about/tech-stack/index.html': techStackPageDocument,
   '404.html': notFoundDocument(),
   'robots.txt': robotsDocument,
   'sitemap.xml': sitemapDocument,
