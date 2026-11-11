@@ -12,7 +12,7 @@
 // TypeScript importing JSON, so it is bundled with esbuild to a temporary
 // module and imported from there.
 import { build } from 'esbuild';
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, copyFileSync, readdirSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync, copyFileSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -35,7 +35,7 @@ await build({
   outfile: renderModule,
   logLevel: 'warning'
 });
-const { sitePages, redirectRules, headerRules } = await import(pathToFileURL(renderModule).href);
+const { sitePages, redirectRules, headerRules, studioShell, studioDeepLinks, sitemapDocument } = await import(pathToFileURL(renderModule).href);
 rmSync(renderModule);
 
 rmSync(siteDir, { recursive: true, force: true });
@@ -53,7 +53,18 @@ for (const file of readdirSync(installDir)) {
 }
 
 cpSync(angularBrowserDir, studioDir, { recursive: true });
-copyFileSync(join(studioDir, 'index.html'), join(studioDir, '404.html'));
+const shell = readFileSync(join(studioDir, 'index.html'), 'utf8');
+const studioPages = { 'studio/index.html': studioShell(shell, '') };
+for (const route of studioDeepLinks) {
+  studioPages[`studio/${route}.html`] = studioShell(shell, route);
+}
+for (const [file, content] of Object.entries(studioPages)) {
+  const target = join(siteDir, file);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, content);
+}
+writeFileSync(join(studioDir, '404.html'), studioShell(shell, 'not-found'));
+writeFileSync(join(siteDir, 'sitemap.xml'), sitemapDocument({ ...sitePages, ...studioPages }));
 
 writeFileSync(join(siteDir, '_redirects'), `${redirectRules().join('\n')}\n`);
 writeFileSync(join(siteDir, '_headers'), headerRules);

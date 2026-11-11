@@ -1,8 +1,5 @@
-// Studio (Angular) routes that must answer 200 with the app shell on a hard
-// load or deep link. `_redirects` rewrites cannot express "only when no file
-// matches" (a rewrite wins over an existing asset), so the SPA fallback is
-// an explicit list rather than `/studio/*`. src/app/studio-deep-links.spec.ts
-// fails when app.routes.ts gains a path that is missing here.
+// Known Angular routes emitted as static HTML shells with route-specific metadata.
+// site/pages.spec.ts checks this list against the router to prevent missing deep links.
 export const studioDeepLinks: readonly string[] = [
   'playground',
   'player',

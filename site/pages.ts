@@ -20,23 +20,11 @@ import { pricingReturnPageDocument } from './pricing/return-page';
 import { billingPageDocument } from './billing/page';
 import { badgeSvgDocument } from './badge';
 import { tryGithubPageDocument, tryGithubPrefix } from './try-github';
-import { studioDeepLinks } from './studio-deep-links';
 
 const robotsDocument = `User-agent: *
 Allow: /
 
 Sitemap: https://chatwright.dev/sitemap.xml
-`;
-
-const sitemapDocument = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://chatwright.dev/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url><loc>https://chatwright.dev/about/tech-stack/</loc></url>
-</urlset>
 `;
 
 // Re-serialising the imported schema modules (rather than shipping a second
@@ -54,7 +42,6 @@ export const sitePages: Record<string, string> = {
   'about/tech-stack/index.html': techStackPageDocument,
   '404.html': notFoundDocument(),
   'robots.txt': robotsDocument,
-  'sitemap.xml': sitemapDocument,
   'formats/run-bundle/v1.html': runBundleV1PageDocument,
   'formats/run-bundle/v1/schema.json': schemaDocument(runBundleV1Schema),
   'formats/chatwright-md/v1.html': chatwrightMdV1PageDocument,
@@ -70,6 +57,24 @@ export const sitePages: Record<string, string> = {
     Object.entries(vanityModuleRepos).map(([root, repo]) => [`go/${root}.html`, vanityPageDocument(root, repo)])
   )
 };
+
+// Canonical HTML pages opt in automatically; account, resolver and vanity
+// pages already declare noindex. Assets and error pages never enter the sitemap.
+export function sitemapDocument(pages: Record<string, string>): string {
+  const urls = new Set<string>();
+  for (const [file, html] of Object.entries(pages)) {
+    if (!file.endsWith('.html') || /<meta\b[^>]*name="robots"[^>]*content="[^"]*noindex/i.test(html)) continue;
+    const canonical = html.match(/<link\b[^>]*rel="canonical"[^>]*href="(https:\/\/chatwright\.dev\/[^"?#]*)"/i)?.[1];
+    if (canonical) urls.add(canonical);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${[...urls].sort().map((url) => `  <url><loc>${url}</loc></url>`).join('\n')}
+</urlset>
+`;
+}
+
+sitePages['sitemap.xml'] = sitemapDocument(sitePages);
 
 // The former Worker answered unknown paths with a plain-text "Not found".
 function notFoundDocument(): string {
@@ -97,10 +102,8 @@ export function redirectRules(): string[] {
     // Former Worker: /prototype[/...] → 308 /studio[/...]; /studio → 308 /studio/.
     '/prototype /studio/ 308',
     '/studio /studio/ 308',
-    // Studio deep links answer 200 with the app shell. Anything else under
-    // /studio/ that is not a file gets studio/404.html (the same shell,
-    // status 404), whose router `**` route redirects to the playground.
-    ...studioDeepLinks.map((link) => `/studio/${link} /studio/ 200`),
+    // Unknown Studio paths retain the 404 app shell; known paths are assets.
+    // Each known deep link is emitted as its own HTML shell with route metadata.
     // Go vanity import paths: the module roots themselves.
     ...roots.map((root) => `/${root} /go/${root} 200`),
     // Dynamic (splat) rules.
@@ -123,3 +126,6 @@ export const headerRules = `/install.sh
 /badge.svg
   Cache-Control: public, max-age=86400
 `;
+
+export { studioShell } from './studio-shell';
+export { studioDeepLinks } from './studio-deep-links';

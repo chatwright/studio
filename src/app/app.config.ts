@@ -2,9 +2,10 @@ import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { providePrimeNG } from 'primeng/config';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, TitleStrategy, withComponentInputBinding } from '@angular/router';
 
 import { routes } from './app.routes';
+import { StudioTitleStrategy } from './studio-title-strategy';
 import { primeUILicense } from './primeui-license.local';
 
 /**
@@ -44,6 +45,7 @@ const ChatwrightPreset = definePreset(Aura, {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    { provide: TitleStrategy, useClass: StudioTitleStrategy },
     provideRouter(routes, withComponentInputBinding()),
     providePrimeNG({
       license: primeUILicense,
