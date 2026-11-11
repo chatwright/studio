@@ -6,6 +6,7 @@
 // Angular build into dist/site/studio/, and writes `_redirects`/`_headers`
 // from the rules below. The page modules are the same string templates the
 // former Worker returned at request time, now prerendered byte-for-byte.
+import { guidePages } from './guides/page';
 import { landingDocument } from './landing';
 import { techStackPageDocument } from './about/tech-stack/page';
 import { vanityModuleRepos, vanityPageDocument } from './vanity';
@@ -39,6 +40,7 @@ const schemaDocument = (schema: unknown): string => `${JSON.stringify(schema, nu
 // to it), `formats/run-bundle/v1.html` answers `/formats/run-bundle/v1`, etc.
 export const sitePages: Record<string, string> = {
   'index.html': landingDocument,
+  ...guidePages,
   'about/tech-stack/index.html': techStackPageDocument,
   '404.html': notFoundDocument(),
   'robots.txt': robotsDocument,

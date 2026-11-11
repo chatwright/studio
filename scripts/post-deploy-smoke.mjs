@@ -42,6 +42,10 @@ if (!root.includes('href="/pricing"')) {
 
 // Check the HTML served before Angular runs, including deep-link metadata.
 for (const [path, title] of [
+  ['/guides', 'Telegram bot testing guides — Chatwright'],
+  ['/guides/test-telegram-bot-locally', 'Test a Telegram bot locally — Chatwright'],
+  ['/guides/test-inline-buttons-and-message-edits', 'Regression-test inline buttons and message edits — Chatwright'],
+  ['/guides/telegram-bot-tests-in-ci', 'Run Telegram bot tests in CI and keep replayable evidence — Chatwright'],
   ['/studio/player', 'Bot Conversation Replay Player | Chatwright'],
   ['/studio/playground', 'Telegram Bot Playground | Chatwright']
 ]) {
@@ -52,7 +56,7 @@ for (const [path, title] of [
   }
 }
 const sitemap = await (await fetchOK('/sitemap.xml')).text();
-for (const path of ['/quickstart', '/recipes', '/pricing', '/studio/player', '/studio/playground']) {
+for (const path of ['/quickstart', '/recipes', '/pricing', '/studio/player', '/studio/playground', '/guides', '/guides/test-telegram-bot-locally', '/guides/test-inline-buttons-and-message-edits', '/guides/telegram-bot-tests-in-ci']) {
   if (!sitemap.includes(`<loc>https://chatwright.dev${path}</loc>`)) {
     throw new Error(`Sitemap is missing ${path}`);
   }

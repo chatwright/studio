@@ -177,6 +177,7 @@ export function renderFooter(extraFooterHtml?: string): string {
     `<footer><div class="wrap">` +
     `<span>An independent open-source project by Sneat.co</span>` +
     `<nav class="foot-links" aria-label="Footer">` +
+    `<a href="/guides">Guides</a>` +
     `<a href="/pricing">Pricing</a>` +
     `<a href="/about/tech-stack/">Tech stack</a>` +
     `<a href="https://github.com/chatwright/recipes">chatwright/recipes</a>` +

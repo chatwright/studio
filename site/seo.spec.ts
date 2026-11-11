@@ -12,6 +12,7 @@ describe('SEO delivery', () => {
     const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
     expect(urls).toEqual([
       '/', '/about/tech-stack/', '/formats/chatwright-md/v1', '/formats/run-bundle/v1',
+      '/guides', '/guides/telegram-bot-tests-in-ci', '/guides/test-inline-buttons-and-message-edits', '/guides/test-telegram-bot-locally',
       '/pricing', '/quickstart', '/recipes', '/studio/player', '/studio/playground'
     ].map((path) => `https://chatwright.dev${path}`));
     // New public pages enter automatically; duplicate canonical URLs appear once.

@@ -77,6 +77,7 @@ export const quickstartPageDocument = String.raw`<!doctype html>
         <p class="lede"><code>chatwright run</code> executes a self-contained scenario file — a bot, an AI goal, its tasks and budgets — and writes a replayable <code>*.chatwright.json</code> run bundle. No manifest. No Go scenario to register or rebuild. The fastest way in is <code>chatwright run example</code>: a worked example embedded in the binary itself, so there's something real to run the moment you install it.</p>
         <div class="note"><strong>Go CLI, today.</strong> <code>chatwright run</code> ships in <a href="https://github.com/chatwright/cli">chatwright/cli</a> v0.4.0, over <code>chatwright.dev/runtime</code> v0.4.0. It is not available in the browser runtime or Chatwright Studio's Playground yet — see <a href="#today">What's true today</a> before you point it at a bot of your own.</div>
 
+        <p>Testing your own bot? Follow the <a href="/guides">practical Telegram testing guides</a> for local webhook tests, inline-button regressions and CI evidence.</p>
         <h2 id="install">Install the CLI</h2>
         <p>Canonical, macOS/Linux:</p>
         <figure><pre><code>curl -fsSL https://chatwright.dev/install.sh | sh</code></pre></figure>
