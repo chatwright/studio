@@ -30,7 +30,7 @@ const shell = await shellResponse.text();
 
 const rootResponse = await fetchOK('/');
 const root = await rootResponse.text();
-if (!root.includes('The platform is emulated.') || !root.includes('/studio/player')) {
+if (!root.includes('Test Telegram bots locally. Replay every interaction.') || !root.includes('/studio/player')) {
   throw new Error('Root domain is not the Chatwright landing page with the player hero');
 }
 if (!root.includes('conversational UX') || !root.includes('/formats/chatwright-md/v1')) {
@@ -38,6 +38,24 @@ if (!root.includes('conversational UX') || !root.includes('/formats/chatwright-m
 }
 if (!root.includes('href="/pricing"')) {
   throw new Error('Root domain landing page is missing the /pricing link');
+}
+
+// Check the HTML served before Angular runs, including deep-link metadata.
+for (const [path, title] of [
+  ['/studio/player', 'Bot Conversation Replay Player | Chatwright'],
+  ['/studio/playground', 'Telegram Bot Playground | Chatwright']
+]) {
+  const html = await (await fetchOK(path)).text();
+  if (!html.includes(`<title>${title}</title>`) ||
+      !html.includes(`rel="canonical" href="https://chatwright.dev${path}"`)) {
+    throw new Error(`${path} is missing its route-specific search metadata`);
+  }
+}
+const sitemap = await (await fetchOK('/sitemap.xml')).text();
+for (const path of ['/quickstart', '/recipes', '/pricing', '/studio/player', '/studio/playground']) {
+  if (!sitemap.includes(`<loc>https://chatwright.dev${path}</loc>`)) {
+    throw new Error(`Sitemap is missing ${path}`);
+  }
 }
 
 await fetchOK('/formats/chatwright-md/v1');
